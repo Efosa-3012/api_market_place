@@ -107,7 +107,7 @@ bankRouter.get('/me', requireBankSession, (req, res) => {
 // GET /bank/consents/:id — everything the consent screen needs to render
 bankRouter.get('/consents/:id', requireBankSession, async (req, res, next) => {
   try {
-    const consent = await consentService.get(String(req.params.id));
+    const consent = await consentService.openForCustomer(String(req.params.id), req.bankCustomer!.customer_id);
     const accounts = await coreBanking.listCustomerAccounts(req.bankCustomer!.customer_id);
     res.json({
       consent: publicConsent(consent),

@@ -33,6 +33,9 @@ export class ApiError extends Error {
   static conflict(code: string, message: string) {
     return new ApiError(409, code, message);
   }
+  static gone(code: string, message: string) {
+    return new ApiError(410, code, message);
+  }
   static tooManyRequests(message = 'Rate limit exceeded') {
     return new ApiError(429, 'rate_limited', message);
   }

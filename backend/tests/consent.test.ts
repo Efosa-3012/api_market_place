@@ -15,6 +15,8 @@ const CLIENT_SECRET = 'test-client-secret';
 const REDIRECT_URI = 'http://localhost:3000/callback';
 const USERNAME = 'test-customer';
 const PASSWORD = 'test-password';
+const OTHER_USERNAME = 'other-customer';
+const OTHER_CUSTOMER_ID = 'customer-demo-002';
 
 // Ids that exist in the in-memory core banking adapter.
 const CUSTOMER_ID = 'customer-demo-001';
@@ -85,7 +87,27 @@ beforeAll(async () => {
        password_hash = EXCLUDED.password_hash`,
     [CUSTOMER_ID, USERNAME, await bcrypt.hash(PASSWORD, 4), 'Test Customer'],
   );
+  await pool.query(
+    `INSERT INTO bank_customers (customer_id, username, password_hash, full_name)
+     VALUES ($1, $2, $3, $4)
+     ON CONFLICT (customer_id) DO UPDATE SET username = EXCLUDED.username,
+       password_hash = EXCLUDED.password_hash`,
+    [OTHER_CUSTOMER_ID, OTHER_USERNAME, await bcrypt.hash(PASSWORD, 4), 'Other Customer'],
+  );
 });
+
+async function login(username: string) {
+  const res = await request(app).post('/bank/login').send({ username, password: PASSWORD }).expect(200);
+  return res.body.session_token as string;
+}
+
+async function startConsent() {
+  const res = await request(app)
+    .get('/oauth/authorize')
+    .query({ response_type: 'code', client_id: CLIENT_ID, redirect_uri: REDIRECT_URI, scope: ALL_SCOPES, format: 'json' })
+    .expect(201);
+  return res.body.consent_id as string;
+}
 
 afterAll(async () => {
   // The audit middleware writes fire-and-forget; give those inserts a tick to
@@ -171,5 +193,53 @@ describe('consent enforcement', () => {
 
     // RFC 6749 §5.2 shape, not our standard envelope.
     expect(res.body.error).toBe('invalid_grant');
+  });
+});
+
+describe('consent request ownership', () => {
+  it('binds a pending consent to the first customer who opens it', async () => {
+    const consentId = await startConsent();
+    const ada = await login(USERNAME);
+    const other = await login(OTHER_USERNAME);
+
+    await request(app).get(`/bank/consents/${consentId}`).set('authorization', `Bearer ${ada}`).expect(200);
+
+    // A different customer can neither see it nor approve it with their own accounts.
+    const view = await request(app).get(`/bank/consents/${consentId}`).set('authorization', `Bearer ${other}`);
+    expect(view.status).toBe(404);
+
+    const approve = await request(app)
+      .post(`/bank/consents/${consentId}/authorise`)
+      .set('authorization', `Bearer ${other}`)
+      .send({ account_ids: [UNCONSENTED_ACCOUNT] });
+    expect(approve.status).toBe(404);
+
+    // The customer it belongs to can still complete it.
+    await request(app)
+      .post(`/bank/consents/${consentId}/authorise`)
+      .set('authorization', `Bearer ${ada}`)
+      .send({ account_ids: [CONSENTED_ACCOUNT] })
+      .expect(200);
+  });
+
+  it('expires a pending consent the customer never acted on', async () => {
+    const consentId = await startConsent();
+    const ada = await login(USERNAME);
+
+    // Age the request past CONSENT_REQUEST_TTL_MINUTES.
+    await pool.query(`UPDATE consents SET created_at = now() - interval '1 day' WHERE id = $1`, [consentId]);
+
+    const view = await request(app).get(`/bank/consents/${consentId}`).set('authorization', `Bearer ${ada}`);
+    expect(view.status).toBe(410);
+    expect(view.body.error.code).toBe('consent_request_expired');
+
+    const approve = await request(app)
+      .post(`/bank/consents/${consentId}/authorise`)
+      .set('authorization', `Bearer ${ada}`)
+      .send({ account_ids: [CONSENTED_ACCOUNT] });
+    expect(approve.status).toBe(410);
+
+    const { rows } = await pool.query(`SELECT status FROM consents WHERE id = $1`, [consentId]);
+    expect(rows[0].status).toBe('expired');
   });
 });

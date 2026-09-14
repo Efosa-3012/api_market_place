@@ -110,6 +110,7 @@ export class MemoryCoreBankingAdapter implements CoreBankingAdapter {
     return balances.filter((b) => b.account_id === accountId);
   }
 
+  /** Supports type/sort/limit/cursor. `from`/`to` are accepted but ignored — use the HTTP adapter to test date filters. */
   async listTransactions(accountId: string, q: TransactionQuery = {}): Promise<Page<Transaction>> {
     let items = transactions.filter((t) => t.account_id === accountId);
     if (q.type) items = items.filter((t) => t.type === q.type);

@@ -12,6 +12,7 @@ const schema = z.object({
   ACCESS_TOKEN_TTL_SECONDS: z.coerce.number().default(86400),
   AUTH_CODE_TTL_SECONDS: z.coerce.number().default(300),
   CONSENT_TTL_DAYS: z.coerce.number().default(90),
+  CONSENT_REQUEST_TTL_MINUTES: z.coerce.number().positive().default(15),
 
   CONSENT_UI_URL: z.string().url().default('http://localhost:3000/consent'),
 

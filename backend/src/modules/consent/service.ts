@@ -1,6 +1,6 @@
 import { randomBytes } from 'node:crypto';
 import { config } from '../../config.js';
-import { pool, withTransaction } from '../../lib/db.js';
+import { pool, withTransaction, type Queryable } from '../../lib/db.js';
 import { ApiError } from '../../lib/errors.js';
 
 export const SCOPES = ['accounts:read', 'balances:read', 'transactions:read'] as const;
@@ -35,9 +35,36 @@ const withClientSql = `
     FROM consents c JOIN clients cl ON cl.id = c.client_id`;
 
 /**
+ * A pending request the customer never acted on is expired after
+ * CONSENT_REQUEST_TTL_MINUTES so abandoned rows cannot pile up or be approved
+ * days later. Returns true if the row was (or already is) expired.
+ *
+ * Callers inside a transaction must COMMIT before throwing, or the status
+ * change is rolled back with the error — see `requestExpired` below.
+ */
+async function expireIfStale(tx: Queryable, consent: Consent): Promise<boolean> {
+  if (consent.status === 'expired') return true;
+  if (consent.status !== 'awaiting_authorisation') return false;
+  const ageMs = Date.now() - new Date(consent.created_at).getTime();
+  if (ageMs < config.CONSENT_REQUEST_TTL_MINUTES * 60 * 1000) return false;
+  await tx.query(`UPDATE consents SET status = 'expired' WHERE id = $1 AND status = 'awaiting_authorisation'`, [
+    consent.id,
+  ]);
+  consent.status = 'expired';
+  return true;
+}
+
+const EXPIRED = Symbol('consent request expired');
+
+function requestExpired(): never {
+  throw ApiError.gone('consent_request_expired', 'This connection request has expired, start again from the app');
+}
+
+/**
  * Consent lifecycle:
  *   awaiting_authorisation --> authorised --> revoked | expired
  *                         \--> rejected
+ *                         \--> expired   (not acted on within CONSENT_REQUEST_TTL_MINUTES)
  */
 export const consentService = {
   async create(input: { clientRowId: string; scopes: string[]; redirectUri: string; state?: string }) {
@@ -57,14 +84,44 @@ export const consentService = {
   },
 
   /**
+   * Load a consent on behalf of the logged-in customer, for the consent screen.
+   *
+   * The first customer to open a pending request is bound to it, so nobody
+   * else can view or approve it afterwards: a consent belongs to exactly one
+   * customer from the moment they see it. Any other customer gets 404, not
+   * 403, so the id leaks nothing. Pending requests that are older than
+   * CONSENT_REQUEST_TTL_MINUTES are expired on the way through.
+   */
+  async openForCustomer(id: string, customerId: string): Promise<ConsentWithClient> {
+    const result = await withTransaction(async (tx) => {
+      const { rows } = await tx.query<ConsentWithClient>(`${withClientSql} WHERE c.id = $1 FOR UPDATE OF c`, [id]);
+      const consent = rows[0];
+      if (!consent || (consent.customer_id && consent.customer_id !== customerId)) {
+        throw ApiError.notFound('consent_not_found', 'Consent not found');
+      }
+      if (await expireIfStale(tx, consent)) return EXPIRED;
+      if (!consent.customer_id && consent.status === 'awaiting_authorisation') {
+        await tx.query(`UPDATE consents SET customer_id = $2 WHERE id = $1`, [id, customerId]);
+        consent.customer_id = customerId;
+      }
+      return consent;
+    });
+    if (result === EXPIRED) requestExpired();
+    return result;
+  },
+
+  /**
    * Customer approves: bind the consent to them, record chosen accounts, set
    * expiry, and mint a single-use authorization code for the client.
    */
   async authorise(id: string, customerId: string, accountIds: string[]) {
-    return withTransaction(async (tx) => {
+    const result = await withTransaction(async (tx) => {
       const { rows } = await tx.query<Consent>(`SELECT * FROM consents WHERE id = $1 FOR UPDATE`, [id]);
       const consent = rows[0];
-      if (!consent) throw ApiError.notFound('consent_not_found', 'Consent not found');
+      if (!consent || (consent.customer_id && consent.customer_id !== customerId)) {
+        throw ApiError.notFound('consent_not_found', 'Consent not found');
+      }
+      if (await expireIfStale(tx, consent)) return EXPIRED;
       if (consent.status !== 'awaiting_authorisation') {
         throw ApiError.conflict('consent_not_pending', `Consent is already ${consent.status}`);
       }
@@ -90,12 +147,16 @@ export const consentService = {
 
       return { consent: updated.rows[0]!, code };
     });
+    if (result === EXPIRED) requestExpired();
+    return result;
   },
 
   async reject(id: string, customerId: string) {
     const { rows } = await pool.query<Consent>(
       `UPDATE consents SET status = 'rejected', customer_id = $2
-        WHERE id = $1 AND status = 'awaiting_authorisation' RETURNING *`,
+        WHERE id = $1 AND status = 'awaiting_authorisation'
+          AND (customer_id IS NULL OR customer_id = $2)
+        RETURNING *`,
       [id, customerId],
     );
     const consent = rows[0];

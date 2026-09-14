@@ -251,11 +251,15 @@ paths:
     get:
       tags: [Bank UI]
       summary: Consent request details + the customer's accounts (for the consent screen)
+      description: |
+        Opening a pending request binds it to the logged-in customer; any other customer then
+        gets 404. Requests not acted on within `CONSENT_REQUEST_TTL_MINUTES` (default 15) expire.
       security: [{ bankSession: [] }]
       parameters: [{ name: id, in: path, required: true, schema: { type: string, format: uuid } }]
       responses:
         '200': { description: OK }
-        '404': { $ref: '#/components/responses/Error' }
+        '404': { description: Not found, or belongs to another customer }
+        '410': { description: '`consent_request_expired` — the customer took too long; the app must start again' }
 
   /bank/consents/{id}/authorise:
     post:
@@ -283,7 +287,9 @@ paths:
                   status: { type: string, example: authorised }
                   expires_at: { type: string, format: date-time }
                   redirect_to: { type: string, format: uri }
+        '404': { description: Not found, or belongs to another customer }
         '409': { description: Consent is no longer pending }
+        '410': { description: '`consent_request_expired`' }
 
   /bank/consents/{id}/reject:
     post:
