@@ -40,6 +40,10 @@ Smoke-test the entire consent journey with curl:
 bash backend/scripts/demo-flow.sh
 ```
 
+Or in Postman: import `backend/postman/api-marketplace.postman_collection.json` and run the
+folders top to bottom (or use the Collection Runner). Each request stores what the next one
+needs — consent id, session, code, token — in collection variables.
+
 ### Demo data
 
 | What | Value |
