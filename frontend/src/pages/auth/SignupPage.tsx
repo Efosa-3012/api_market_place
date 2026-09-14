@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 
 import SignupLayout from '../../components/auth/SignupLayout'
 import AccountDetailsStep from '../../components/auth/signup/AccountDetailsStep'
@@ -37,6 +37,8 @@ const headings = {
 }
 
 export default function SignupPage() {
+  const navigate = useNavigate()
+
   const [step, setStep] = useState<SignupStep>(1)
   const [data, setData] = useState<SignupData>(initialSignupData)
   const [error, setError] = useState('')
@@ -44,14 +46,31 @@ export default function SignupPage() {
 
   const headingRef = useRef<HTMLHeadingElement>(null)
   const errorRef = useRef<HTMLParagraphElement>(null)
+  const successDialogRef = useRef<HTMLDialogElement>(null)
 
   useEffect(() => {
-    headingRef.current?.focus()
+    if (!complete) {
+      headingRef.current?.focus()
+    }
   }, [step, complete])
 
   useEffect(() => {
-    if (error) errorRef.current?.focus()
+    const dialog = successDialogRef.current
+
+    if (complete && dialog && !dialog.open) {
+      dialog.showModal()
+    }
+  }, [complete])
+
+  useEffect(() => {
+    if (error) {
+      errorRef.current?.focus()
+    }
   }, [error])
+
+  function goToLogin() {
+    navigate('/login', { replace: true })
+  }
 
   function update<K extends keyof SignupData>(
     field: K,
@@ -60,13 +79,11 @@ export default function SignupPage() {
     setData((current) => ({
       ...current,
       [field]: value,
-      ...(
-        field === 'email' ||
-        field === 'phone' ||
-        field === 'countryCode'
-          ? { verificationCode: '' }
-          : {}
-      ),
+      ...(field === 'email' ||
+      field === 'phone' ||
+      field === 'countryCode'
+        ? { verificationCode: '' }
+        : {}),
     }))
 
     setError('')
@@ -112,7 +129,11 @@ export default function SignupPage() {
     }
 
     if (step === 4) {
-      if (getPasswordChecks(data.password).some((check) => !check.passed)) {
+      const passwordIsValid = getPasswordChecks(data.password).every(
+        (check) => check.passed,
+      )
+
+      if (!passwordIsValid) {
         return 'Your password must meet every requirement listed above.'
       }
 
@@ -126,6 +147,8 @@ export default function SignupPage() {
 
   function handleContinue(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+
+    if (complete) return
 
     const validationError = validateStep()
 
@@ -141,13 +164,16 @@ export default function SignupPage() {
       return
     }
 
-    // UI demo only: no account is created or authenticated.
+    // Frontend-only completion.
+    // When the backend is connected, submit the registration data here
+    // and only clear the fields/show success after the request succeeds.
     setData((current) => ({
       ...current,
       password: '',
       confirmPassword: '',
       verificationCode: '',
     }))
+
     setComplete(true)
   }
 
@@ -156,55 +182,8 @@ export default function SignupPage() {
     setStep((current) => Math.max(1, current - 1) as SignupStep)
   }
 
-  function restart() {
-    setData({ ...initialSignupData })
-    setError('')
-    setStep(1)
-    setComplete(false)
-  }
-
   const buttonClass =
     'min-h-10 cursor-pointer rounded-lg bg-[#0450ff] px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#003bd0] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600'
-
-  if (complete) {
-    return (
-      <SignupLayout>
-        <div
-          aria-hidden="true"
-          className="mb-6 grid size-14 place-items-center rounded-full bg-blue-50 text-2xl text-blue-600"
-        >
-          ✓
-        </div>
-
-        <h1
-          ref={headingRef}
-          tabIndex={-1}
-          className="text-2xl font-semibold tracking-tight outline-none"
-        >
-          Signup preview complete
-        </h1>
-
-        <p className="mt-4 text-sm leading-6 text-[#58708f]">
-          You’ve completed all four screens. This is a frontend demo;
-          no account has been created.
-        </p>
-
-        <div className="mt-8 flex flex-wrap gap-3">
-          <Link to="/login" className={buttonClass}>
-            View sign-in
-          </Link>
-
-          <button
-            type="button"
-            onClick={restart}
-            className="min-h-11 cursor-pointer rounded-lg bg-[#f0f0f0] px-5 text-sm text-[#465b78] hover:bg-gray-200 focus-visible:outline-2 focus-visible:outline-blue-600"
-          >
-            Start again
-          </button>
-        </div>
-      </SignupLayout>
-    )
-  }
 
   return (
     <SignupLayout>
@@ -221,7 +200,7 @@ export default function SignupPage() {
         {headings[step].description}
       </p>
 
-      <form onSubmit={handleContinue} className="mt-8">
+      <form onSubmit={handleContinue} className="mt-5">
         {step === 1 && (
           <AccountDetailsStep data={data} update={update} />
         )}
@@ -243,14 +222,14 @@ export default function SignupPage() {
             ref={errorRef}
             role="alert"
             tabIndex={-1}
-            className="mt-5 rounded-md bg-red-50 p-3 text-sm leading-5 text-red-700 outline-none focus-visible:ring-2 focus-visible:ring-red-600"
+            className="mt-4 rounded-md bg-red-50 p-3 text-sm leading-5 text-red-700 outline-none focus-visible:ring-2 focus-visible:ring-red-600"
           >
             {error}
           </p>
         )}
 
         <div
-          className={`mt-7 flex items-center ${
+          className={`mt-4 flex items-center ${
             step === 1 ? '' : 'justify-between gap-4'
           }`}
         >
@@ -258,7 +237,7 @@ export default function SignupPage() {
             <button
               type="button"
               onClick={handleBack}
-              className="min-h-11 cursor-pointer rounded-lg bg-[#eeeeef] px-5 text-sm font-medium text-[#465b78] hover:bg-gray-200 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600"
+              className="min-h-10 cursor-pointer rounded-lg bg-[#eeeeef] px-5 text-sm font-medium text-[#465b78] hover:bg-gray-200 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600"
             >
               Back
             </button>
@@ -266,7 +245,10 @@ export default function SignupPage() {
 
           <button
             type="submit"
-            className={`${buttonClass} ${step === 1 ? 'w-full' : ''}`}
+            disabled={complete}
+            className={`${buttonClass} ${
+              step === 1 ? 'w-full' : ''
+            } disabled:cursor-not-allowed disabled:opacity-60`}
           >
             {step === 4 ? 'Verify & Create Account' : 'Continue'}
           </button>
@@ -284,6 +266,47 @@ export default function SignupPage() {
           </p>
         )}
       </form>
+
+      <dialog
+        ref={successDialogRef}
+        aria-labelledby="signup-success-title"
+        aria-describedby="signup-success-description"
+        onCancel={(event) => {
+          event.preventDefault()
+          goToLogin()
+        }}
+        className="fixed inset-0 m-auto max-h-[calc(100dvh-48px)] w-[calc(100%_-_48px)] max-w-sm overflow-y-auto rounded-2xl border-0 bg-white p-8 text-center shadow-xl backdrop:bg-black/50"
+      >
+        <div
+          aria-hidden="true"
+          className="mx-auto mb-5 flex size-14 items-center justify-center rounded-full bg-green-50 text-3xl text-green-600"
+        >
+          ✓
+        </div>
+
+        <h2
+          id="signup-success-title"
+          className="text-2xl font-semibold text-[#151c2d]"
+        >
+          Registration successful
+        </h2>
+
+        <p
+          id="signup-success-description"
+          className="mt-3 text-sm leading-6 text-[#58708f]"
+        >
+          Continue to sign in to the API Marketplace.
+        </p>
+
+        <button
+          type="button"
+          autoFocus
+          onClick={goToLogin}
+          className={`${buttonClass} mt-6 w-full`}
+        >
+          Continue to sign in
+        </button>
+      </dialog>
     </SignupLayout>
   )
 }

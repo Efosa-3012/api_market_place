@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 
 export default function LoginPage() {
+  const navigate = useNavigate()
   const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -11,13 +13,13 @@ export default function LoginPage() {
   const canSubmit = identifier.trim().length > 0 && password.length > 0
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
+  event.preventDefault()
 
-    if (!canSubmit) return
+  if (!canSubmit) return
 
-    // Replace with the authentication service when the backend is ready.
-    setMessage('Sign-in is not connected yet. Please try again once it is available.')
-  }
+  // When authentication is connected, navigate only after it succeeds.
+  navigate('/app/marketplace', { replace: true })
+}
 
   return (
     <section
