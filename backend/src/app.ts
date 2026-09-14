@@ -3,15 +3,18 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import cors from 'cors';
 import express from 'express';
+import helmet from 'helmet';
 import { pinoHttp } from 'pino-http';
 import swaggerUi from 'swagger-ui-express';
 import YAML from 'yaml';
+import { config } from './config.js';
 import { coreBanking } from './core-banking/index.js';
 import { pool } from './lib/db.js';
 import { logger } from './lib/logger.js';
 import { auditLog } from './middleware/auditLog.js';
 import { correlationId } from './middleware/correlationId.js';
 import { errorHandler, notFound } from './middleware/errorHandler.js';
+import { publicRateLimit } from './middleware/rateLimit.js';
 import { analyticsRouter } from './modules/analytics/routes.js';
 import { oauthRouter } from './modules/auth/routes.js';
 import { bankRouter } from './modules/bank/routes.js';
@@ -35,7 +38,11 @@ export function createApp() {
       autoLogging: { ignore: (req) => req.url === '/health' },
     }),
   );
-  app.use(cors({ origin: true, credentials: true }));
+  // Standard security headers. CSP is off because Swagger UI at /docs needs
+  // inline scripts, and every other route returns JSON, where CSP adds nothing.
+  app.use(helmet({ contentSecurityPolicy: false }));
+  // Explicit browser allowlist — a bank API must never reflect arbitrary origins.
+  app.use(cors({ origin: config.CORS_ORIGINS, credentials: true }));
   app.use(express.json({ limit: '100kb' }));
   app.use(express.urlencoded({ extended: false })); // /oauth/token is form-encoded per RFC 6749
 
@@ -54,7 +61,8 @@ export function createApp() {
   app.use('/docs', swaggerUi.serve, swaggerUi.setup(openapiDoc, { customSiteTitle: 'Open Banking API Marketplace' }));
 
   // --- Modules -------------------------------------------------------------
-  app.use('/oauth', oauthRouter); // partner-facing OAuth 2.0 endpoints
+  app.use('/oauth', publicRateLimit, oauthRouter); // partner-facing OAuth 2.0 endpoints
+  app.use('/bank/login', publicRateLimit);
   app.use('/bank', bankRouter); // backend for the bank's own consent UI (login, approve, connected apps)
   app.use('/api/v1', resourcesRouter); // partner-facing resource APIs (token + consent enforced)
   app.use('/portal', portalRouter); // developer portal backend

@@ -21,6 +21,7 @@ const testEnv = {
   // These tests are about consent enforcement, not quotas. Keep the limiter out
   // of the way so it can never flake a run.
   RATE_LIMIT_MAX: '100000',
+  PUBLIC_RATE_LIMIT_MAX: '100000',
 };
 
 for (const [key, value] of Object.entries(testEnv)) process.env[key] = value;

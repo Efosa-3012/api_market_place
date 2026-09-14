@@ -33,3 +33,25 @@ export const partnerRateLimit = rateLimit({
       ),
     ),
 });
+
+/**
+ * Per-IP limit on the endpoints anyone can hit without a token. /oauth/authorize
+ * writes a consent row per call and /bank/login and /oauth/token check secrets,
+ * so without this a single host could flood the consents table or brute-force
+ * credentials. Legitimate traffic here is a handful of calls per customer journey.
+ */
+export const publicRateLimit = rateLimit({
+  windowMs: config.RATE_LIMIT_WINDOW_MS,
+  limit: config.PUBLIC_RATE_LIMIT_MAX,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  keyGenerator: (req) => ipKeyGenerator(req.ip ?? ''),
+  handler: (_req, _res, next) =>
+    next(
+      ApiError.tooManyRequests(
+        `Too many requests from this address: limit is ${config.PUBLIC_RATE_LIMIT_MAX} per ${Math.round(
+          config.RATE_LIMIT_WINDOW_MS / 1000,
+        )}s`,
+      ),
+    ),
+});

@@ -61,7 +61,7 @@ customer    ──(5) POST /bank/connected-apps/:id/revoke ──▶ next partne
 ```
 
 The `api_calls` table is the audit trail and the analytics source (who, on whose behalf, under
-which consent, when, outcome). See `backend/HANDOVER.md` for what's still to be built.
+which consent, when, outcome).
 
 ## Backend layout
 
@@ -78,8 +78,8 @@ backend/src
     ├── consent/            consent state machine + authorization codes
     ├── bank/               /bank/* — backend for the bank's own login/consent/connected-apps pages
     ├── resources/          /api/v1/accounts (partner-facing, consent enforced on every call)
-    ├── portal/             /portal/* — developer signup, app registration   (see HANDOVER.md)
-    └── analytics/          /analytics/* — dashboard data from api_calls     (see HANDOVER.md)
+    ├── portal/             /portal/* — developer signup, app registration
+    └── analytics/          /analytics/* — dashboard data from api_calls  
 ```
 
 Errors always look like `{ "error": { "code", "message", "correlation_id" } }` (except

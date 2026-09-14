@@ -16,6 +16,13 @@ const schema = z.object({
 
   CONSENT_UI_URL: z.string().url().default('http://localhost:3000/consent'),
 
+  // Browser origins allowed to call us (consent UI, portal, dashboard, sample app).
+  // Server-to-server partner calls send no Origin header and are unaffected.
+  CORS_ORIGINS: z
+    .string()
+    .default('http://localhost:3000,http://localhost:3001')
+    .transform((s) => s.split(',').map((o) => o.trim()).filter(Boolean)),
+
   CORE_BANKING_URL: z.string().url().default('http://localhost:8081'),
   CORE_BANKING_API_KEY: z.string().default(''),
   CORE_BANKING_ADAPTER: z.enum(['http', 'memory']).default('http'),
@@ -23,6 +30,9 @@ const schema = z.object({
   // Per-client quota on /api/v1/*. Keyed by client_id, not IP.
   RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(60_000),
   RATE_LIMIT_MAX: z.coerce.number().int().positive().default(60),
+  // Per-IP limit on the unauthenticated endpoints that write or check secrets:
+  // /oauth/* and /bank/login. Stops consent-row flooding and credential stuffing.
+  PUBLIC_RATE_LIMIT_MAX: z.coerce.number().int().positive().default(30),
 
   // Shared secret for the analytics dashboard, sent as X-Admin-Key. MVP-grade:
   // in production these endpoints sit behind the bank's staff SSO.
