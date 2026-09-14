@@ -9,7 +9,6 @@ import YAML from 'yaml';
 import { coreBanking } from './core-banking/index.js';
 import { pool } from './lib/db.js';
 import { logger } from './lib/logger.js';
-import { auditLog } from './middleware/auditLog.js';
 import { correlationId } from './middleware/correlationId.js';
 import { errorHandler, notFound } from './middleware/errorHandler.js';
 import { analyticsRouter } from './modules/analytics/routes.js';
@@ -37,7 +36,6 @@ export function createApp() {
   app.use(cors({ origin: true, credentials: true }));
   app.use(express.json({ limit: '100kb' }));
   app.use(express.urlencoded({ extended: false })); // /oauth/token is form-encoded per RFC 6749
-  app.use(auditLog);
 
   // --- Health & docs -------------------------------------------------------
   app.get('/health', async (_req, res) => {

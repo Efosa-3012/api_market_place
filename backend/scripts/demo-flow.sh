@@ -47,8 +47,7 @@ curl -s -X POST "$B/oauth/token" -u "$CLIENT_ID:$CLIENT_SECRET" \
 
 step "7. App reads data with the token"
 curl -s "$B/api/v1/accounts" -H "authorization: Bearer $ACCESS_TOKEN"; echo
-curl -s "$B/api/v1/accounts/$ACCOUNT/balances" -H "authorization: Bearer $ACCESS_TOKEN"; echo
-curl -s "$B/api/v1/accounts/$ACCOUNT/transactions?limit=2" -H "authorization: Bearer $ACCESS_TOKEN"; echo
+curl -s "$B/api/v1/accounts/$ACCOUNT" -H "authorization: Bearer $ACCESS_TOKEN"; echo
 
 step "7b. An account the customer did NOT share -> 404"
 curl -s "$B/api/v1/accounts/acct-demo-002" -H "authorization: Bearer $ACCESS_TOKEN"; echo

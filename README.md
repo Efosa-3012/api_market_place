@@ -56,12 +56,12 @@ fintech app ──(1) GET /oauth/authorize ──▶ backend ──▶ 302 to ba
                                                           ▼
 fintech app ◀──(2) redirect ?code=... ◀── POST /bank/consents/:id/authorise
 fintech app ──(3) POST /oauth/token ─────▶ JWT { sub: customer, client_id, consent_id, scope }
-fintech app ──(4) GET /api/v1/accounts ──▶ authenticate ▸ rate-limit ▸ scope ▸ consented account ▸ core banking adapter
+fintech app ──(4) GET /api/v1/accounts ──▶ authenticate ▸ scope ▸ consented account ▸ core banking adapter
 customer    ──(5) POST /bank/connected-apps/:id/revoke ──▶ next partner call: 403 consent_revoked
 ```
 
-Every request is written to `api_calls` (who, on whose behalf, under which consent, when, outcome) —
-that table is the audit trail and the analytics source.
+The `api_calls` table is the audit trail and the analytics source (who, on whose behalf, under
+which consent, when, outcome). See `backend/HANDOVER.md` for what's still to be built.
 
 ## Backend layout
 
@@ -72,14 +72,14 @@ backend/src
 ├── core-banking/           adapter interface + HTTP client for the Go mock + in-memory fake
 ├── db/migrations/          schema (consents are the central object)
 ├── db/seed.ts              deterministic demo data
-├── middleware/             correlationId, auditLog, authenticate (token+consent check), rateLimit, errorHandler
+├── middleware/             correlationId, authenticate (token+consent check), errorHandler
 └── modules/
     ├── auth/               /oauth/authorize, /oauth/token
     ├── consent/            consent state machine + authorization codes
     ├── bank/               /bank/* — backend for the bank's own login/consent/connected-apps pages
-    ├── resources/          /api/v1/accounts... (partner-facing, consent enforced on every call)
-    ├── portal/             /portal/* — developer signup, app registration   (TODO)
-    └── analytics/          /analytics/* — dashboard data from api_calls     (TODO)
+    ├── resources/          /api/v1/accounts (partner-facing, consent enforced on every call)
+    ├── portal/             /portal/* — developer signup, app registration   (see HANDOVER.md)
+    └── analytics/          /analytics/* — dashboard data from api_calls     (see HANDOVER.md)
 ```
 
 Errors always look like `{ "error": { "code", "message", "correlation_id" } }` (except

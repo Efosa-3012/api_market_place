@@ -127,7 +127,6 @@ paths:
                   meta: { type: object, properties: { consent_id: { type: string } } }
         '401': { $ref: '#/components/responses/Error' }
         '403': { $ref: '#/components/responses/Forbidden' }
-        '429': { $ref: '#/components/responses/Error' }
 
   /api/v1/accounts/{accountId}:
     get:
@@ -143,58 +142,6 @@ paths:
               schema: { type: object, properties: { data: { $ref: '#/components/schemas/Account' } } }
         '404': { description: Not found, or not one of the consented accounts }
         '403': { $ref: '#/components/responses/Forbidden' }
-
-  /api/v1/accounts/{accountId}/balances:
-    get:
-      tags: [Accounts]
-      summary: List balances (requires `balances:read`)
-      security: [{ bearerToken: [] }]
-      parameters: [{ $ref: '#/components/parameters/accountId' }]
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data: { type: array, items: { $ref: '#/components/schemas/Balance' } }
-        '403': { $ref: '#/components/responses/Forbidden' }
-        '404': { description: Not found }
-
-  /api/v1/accounts/{accountId}/transactions:
-    get:
-      tags: [Accounts]
-      summary: List transactions (requires `transactions:read`)
-      security: [{ bearerToken: [] }]
-      parameters:
-        - { $ref: '#/components/parameters/accountId' }
-        - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 20 } }
-        - { name: cursor, in: query, schema: { type: string }, description: From `meta.pagination.next_cursor` }
-        - { name: from, in: query, schema: { type: string }, description: RFC 3339 timestamp or YYYY-MM-DD }
-        - { name: to, in: query, schema: { type: string } }
-        - { name: type, in: query, schema: { type: string, enum: [credit, debit] } }
-        - { name: sort, in: query, schema: { type: string, enum: [booked_at_desc, booked_at_asc] } }
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data: { type: array, items: { $ref: '#/components/schemas/Transaction' } }
-                  meta:
-                    type: object
-                    properties:
-                      pagination:
-                        type: object
-                        properties:
-                          limit: { type: integer }
-                          has_more: { type: boolean }
-                          next_cursor: { type: string }
-        '403': { $ref: '#/components/responses/Forbidden' }
-        '404': { description: Not found }
 
   /bank/login:
     post:

@@ -18,9 +18,6 @@ const schema = z.object({
   CORE_BANKING_URL: z.string().url().default('http://localhost:8081'),
   CORE_BANKING_API_KEY: z.string().default(''),
   CORE_BANKING_ADAPTER: z.enum(['http', 'memory']).default('http'),
-
-  RATE_LIMIT_WINDOW_MS: z.coerce.number().default(60_000),
-  RATE_LIMIT_MAX: z.coerce.number().default(60),
 });
 
 const parsed = schema.safeParse(process.env);

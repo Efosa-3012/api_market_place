@@ -56,9 +56,6 @@ export const authenticate: RequestHandler = async (req, _res, next) => {
     const row = rows[0];
     if (!row) throw ApiError.unauthorized('invalid_token', 'Token does not match a known consent');
 
-    // Attribute the call now, so a rejected request still lands against the right client in the audit log.
-    req.audit = { clientRowId: row.client_row_id, consentId: row.consent_id, customerId: row.customer_id };
-
     if (row.client_status !== 'active') {
       throw ApiError.forbidden('client_deactivated', 'This client application has been deactivated');
     }

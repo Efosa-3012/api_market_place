@@ -45,7 +45,6 @@ const requireBankSession: RequestHandler = async (req, _res, next) => {
     );
     if (!rows[0]) throw ApiError.unauthorized('bank_session_expired', 'Your session has expired, log in again');
     req.bankCustomer = rows[0];
-    req.audit = { customerId: rows[0].customer_id };
     next();
   } catch (err) {
     next(err);
