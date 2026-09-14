@@ -28,3 +28,6 @@ Thumbs.db
 
 # Local run artifacts
 .server.log
+
+# Local agent instructions
+CLAUDE.md

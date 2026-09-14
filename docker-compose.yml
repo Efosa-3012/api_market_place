@@ -63,6 +63,7 @@ services:
       CONSENT_UI_URL: http://localhost:3000/consent
       CORE_BANKING_URL: http://core-banking:8081
       CORE_BANKING_API_KEY: mockcore-api-key
+      ADMIN_KEY: dev-admin-key-change-me
     ports:
       - '4000:4000'
     depends_on:

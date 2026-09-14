@@ -24,6 +24,10 @@ tags:
     description: Account information APIs (require a consented access token)
   - name: Bank UI
     description: Used only by the bank's own consent pages — not for partners
+  - name: Portal
+    description: Developer self-service. Sign up, register apps, manage credentials.
+  - name: Analytics
+    description: Admin dashboard data. Requires the `X-Admin-Key` header; never exposed to partners.
   - name: Platform
 
 paths:
@@ -127,6 +131,7 @@ paths:
                   meta: { type: object, properties: { consent_id: { type: string } } }
         '401': { $ref: '#/components/responses/Error' }
         '403': { $ref: '#/components/responses/Forbidden' }
+        '429': { $ref: '#/components/responses/RateLimited' }
 
   /api/v1/accounts/{accountId}:
     get:
@@ -142,6 +147,80 @@ paths:
               schema: { type: object, properties: { data: { $ref: '#/components/schemas/Account' } } }
         '404': { description: Not found, or not one of the consented accounts }
         '403': { $ref: '#/components/responses/Forbidden' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+
+
+  /api/v1/accounts/{accountId}/balances:
+    get:
+      tags: [Accounts]
+      summary: Balances for one consented account
+      description: Requires the `balances:read` scope.
+      security: [{ bearerToken: [] }]
+      parameters: [{ $ref: '#/components/parameters/accountId' }]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { type: array, items: { $ref: '#/components/schemas/Balance' } }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '404': { description: Not found, or not one of the consented accounts }
+
+  /api/v1/accounts/{accountId}/transactions:
+    get:
+      tags: [Accounts]
+      summary: Transactions for one consented account
+      description: |
+        Requires the `transactions:read` scope. Paginated with an opaque cursor: pass
+        `meta.pagination.next_cursor` back as `cursor` to fetch the next page.
+      security: [{ bearerToken: [] }]
+      parameters:
+        - { $ref: '#/components/parameters/accountId' }
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+        - name: cursor
+          in: query
+          description: Opaque cursor from a previous response's `meta.pagination.next_cursor`
+          schema: { type: string }
+        - name: from
+          in: query
+          description: ISO 8601 date or date-time
+          schema: { type: string, example: '2026-01-01' }
+        - name: to
+          in: query
+          description: ISO 8601 date or date-time
+          schema: { type: string, example: '2026-01-31' }
+        - name: type
+          in: query
+          schema: { type: string, enum: [credit, debit] }
+        - name: sort
+          in: query
+          description: Defaults to newest first
+          schema: { type: string, enum: [booked_at_desc, booked_at_asc] }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { type: array, items: { $ref: '#/components/schemas/Transaction' } }
+                  meta:
+                    type: object
+                    properties:
+                      pagination: { $ref: '#/components/schemas/Pagination' }
+        '400': { $ref: '#/components/responses/Error' }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '404': { description: Not found, or not one of the consented accounts }
 
   /bank/login:
     post:
@@ -233,6 +312,283 @@ paths:
         '200': { description: Revoked }
         '404': { description: No active consent with that id for this customer }
 
+  /analytics/summary:
+    get:
+      tags: [Analytics]
+      summary: Headline tiles — traffic, error rate, p95 latency, consent counts
+      security: [{ adminKey: [] }]
+      parameters: [{ $ref: '#/components/parameters/window' }]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  window: { type: string, example: 24h }
+                  calls: { type: integer }
+                  errors: { type: integer }
+                  error_rate: { type: number, example: 0.1667, description: Ratio of calls with status >= 400 }
+                  p95_latency_ms: { type: integer }
+                  active_consents: { type: integer }
+                  revocations: { type: integer, description: Consents revoked within the window }
+                  total_consents: { type: integer }
+        '401': { $ref: '#/components/responses/AdminUnauthorized' }
+
+  /analytics/calls-per-client:
+    get:
+      tags: [Analytics]
+      summary: Traffic broken down by registered client
+      description: Every registered client is listed, including those with no traffic yet.
+      security: [{ adminKey: [] }]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        client_id: { type: string, example: budgetbuddy }
+                        name: { type: string, example: BudgetBuddy }
+                        status: { type: string, enum: [active, deactivated] }
+                        calls: { type: integer }
+                        errors: { type: integer }
+        '401': { $ref: '#/components/responses/AdminUnauthorized' }
+
+  /analytics/timeseries:
+    get:
+      tags: [Analytics]
+      summary: Calls per 5-minute bucket
+      description: Empty buckets are included so the chart has a continuous x-axis.
+      security: [{ adminKey: [] }]
+      parameters: [{ $ref: '#/components/parameters/window' }]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  window: { type: string, example: 24h }
+                  bucket_seconds: { type: integer, example: 300 }
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        bucket: { type: string, format: date-time }
+                        calls: { type: integer }
+                        errors: { type: integer }
+        '401': { $ref: '#/components/responses/AdminUnauthorized' }
+
+  /analytics/recent-calls:
+    get:
+      tags: [Analytics]
+      summary: Live audit feed, newest first
+      security: [{ adminKey: [] }]
+      parameters:
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 200, default: 50 }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { type: array, items: { $ref: '#/components/schemas/ApiCall' } }
+        '401': { $ref: '#/components/responses/AdminUnauthorized' }
+
+  /analytics/consents:
+    get:
+      tags: [Analytics]
+      summary: Consent counts by status
+      description: All five statuses are always present, with zero counts where applicable.
+      security: [{ adminKey: [] }]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        status:
+                          type: string
+                          enum: [awaiting_authorisation, authorised, rejected, revoked, expired]
+                        count: { type: integer }
+                  total: { type: integer }
+        '401': { $ref: '#/components/responses/AdminUnauthorized' }
+
+  /portal/signup:
+    post:
+      tags: [Portal]
+      summary: Create a developer account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password, name]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string, minLength: 8 }
+                name: { type: string }
+                company: { type: string }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  developer: { $ref: '#/components/schemas/Developer' }
+                  portal_token: { type: string, description: Bearer token for the other Portal endpoints }
+        '400': { $ref: '#/components/responses/Error' }
+        '409': { description: '`code` is `email_taken`' }
+
+  /portal/login:
+    post:
+      tags: [Portal]
+      summary: Log in to the developer portal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  developer: { $ref: '#/components/schemas/Developer' }
+                  portal_token: { type: string }
+        '401': { description: '`code` is `invalid_credentials`' }
+
+  /portal/apps:
+    get:
+      tags: [Portal]
+      summary: List your registered apps
+      security: [{ portalToken: [] }]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { type: array, items: { $ref: '#/components/schemas/PortalApp' } }
+        '401': { $ref: '#/components/responses/PortalUnauthorized' }
+    post:
+      tags: [Portal]
+      summary: Register an app and receive credentials
+      description: |
+        The `client_secret` in this response is shown **once**. Only its bcrypt hash is
+        stored, so it cannot be retrieved again — use rotate-secret to replace a lost one.
+      security: [{ portalToken: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, redirect_uris]
+              properties:
+                name: { type: string }
+                description: { type: string }
+                redirect_uris:
+                  type: array
+                  minItems: 1
+                  maxItems: 5
+                  items: { type: string, format: uri }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PortalApp'
+                  - type: object
+                    properties:
+                      client_secret: { type: string, description: Shown once and never again }
+                      warning: { type: string }
+        '400': { $ref: '#/components/responses/Error' }
+        '401': { $ref: '#/components/responses/PortalUnauthorized' }
+
+  /portal/apps/{id}/rotate-secret:
+    post:
+      tags: [Portal]
+      summary: Issue a new client secret
+      description: The previous secret stops working immediately. Existing consents are untouched.
+      security: [{ portalToken: [] }]
+      parameters: [{ $ref: '#/components/parameters/appId' }]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PortalApp'
+                  - type: object
+                    properties:
+                      client_secret: { type: string }
+                      warning: { type: string }
+        '401': { $ref: '#/components/responses/PortalUnauthorized' }
+        '404': { description: No such app under your account }
+        '409': { description: '`code` is `client_deactivated`' }
+
+  /portal/apps/{id}/deactivate:
+    post:
+      tags: [Portal]
+      summary: Kill an app and every consent under it
+      description: |
+        The blast-radius switch. Sets the client to `deactivated` and revokes every consent
+        customers granted it, so every access token issued under that client fails on its
+        very next call with `client_deactivated`. Safe to call more than once.
+      security: [{ portalToken: [] }]
+      parameters: [{ $ref: '#/components/parameters/appId' }]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PortalApp'
+                  - type: object
+                    properties:
+                      consents_revoked: { type: integer, description: How many consents this call killed }
+        '401': { $ref: '#/components/responses/PortalUnauthorized' }
+        '404': { description: No such app under your account }
+
 components:
   securitySchemes:
     bearerToken:
@@ -248,15 +604,56 @@ components:
       type: http
       scheme: bearer
       description: Session token from `POST /bank/login`
+    portalToken:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Portal token from `POST /portal/signup` or `POST /portal/login`
+    adminKey:
+      type: apiKey
+      in: header
+      name: X-Admin-Key
+      description: Shared admin key for the analytics dashboard
   parameters:
     accountId:
       name: accountId
       in: path
       required: true
       schema: { type: string, example: acct-demo-001 }
+    appId:
+      name: id
+      in: path
+      required: true
+      description: The app's internal id (the `id` field, not `client_id`)
+      schema: { type: string, format: uuid }
+    window:
+      name: window
+      in: query
+      schema:
+        type: string
+        enum: ['1h', '6h', '24h', '7d']
+        default: '24h'
   responses:
     Error:
       description: Error
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    PortalUnauthorized:
+      description: '`code` is `portal_token_required`, `invalid_portal_token` or `portal_token_expired`.'
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    AdminUnauthorized:
+      description: '`code` is `admin_key_required` or `invalid_admin_key`.'
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    RateLimited:
+      description: |
+        Per-client quota exceeded (`code` is `rate_limited`). The quota is keyed on the
+        client_id in your access token, so it is not shared with other partners.
+        See the `RateLimit` response header for the current limit, remaining and reset.
       content:
         application/json:
           schema: { $ref: '#/components/schemas/Error' }
@@ -314,3 +711,47 @@ components:
         counterparty: { type: string }
         booked_at: { type: string, format: date-time }
         value_date: { type: string, format: date-time }
+    Pagination:
+      type: object
+      properties:
+        limit: { type: integer, example: 2 }
+        has_more: { type: boolean }
+        next_cursor: { type: string, description: Pass back as `cursor` to fetch the next page }
+    ApiCall:
+      type: object
+      description: One audited request through the gateway.
+      properties:
+        id: { type: string }
+        correlation_id: { type: string }
+        client_id: { type: [string, 'null'], description: Null for unauthenticated calls }
+        client_name: { type: [string, 'null'] }
+        consent_id: { type: [string, 'null'] }
+        customer_id: { type: [string, 'null'] }
+        method: { type: string, example: GET }
+        path: { type: string, example: /api/v1/accounts, description: Query string stripped }
+        status_code: { type: integer, example: 403 }
+        error_code: { type: [string, 'null'], example: consent_revoked }
+        duration_ms: { type: integer }
+        ip: { type: [string, 'null'] }
+        created_at: { type: string, format: date-time }
+    Developer:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        email: { type: string, format: email }
+        name: { type: string }
+        company: { type: [string, 'null'] }
+        created_at: { type: string, format: date-time }
+    PortalApp:
+      type: object
+      description: A registered app. The client secret is never part of this shape.
+      properties:
+        id: { type: string, format: uuid, description: Internal id, used in portal URLs }
+        client_id: { type: string, example: cl_8Fq2ZtR1vKmN4xPd }
+        name: { type: string }
+        description: { type: [string, 'null'] }
+        redirect_uris: { type: array, items: { type: string, format: uri } }
+        allowed_scopes: { type: array, items: { type: string } }
+        status: { type: string, enum: [active, deactivated] }
+        created_at: { type: string, format: date-time }
+        deactivated_at: { type: [string, 'null'], format: date-time }

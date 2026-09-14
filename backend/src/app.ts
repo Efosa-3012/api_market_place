@@ -9,6 +9,7 @@ import YAML from 'yaml';
 import { coreBanking } from './core-banking/index.js';
 import { pool } from './lib/db.js';
 import { logger } from './lib/logger.js';
+import { auditLog } from './middleware/auditLog.js';
 import { correlationId } from './middleware/correlationId.js';
 import { errorHandler, notFound } from './middleware/errorHandler.js';
 import { analyticsRouter } from './modules/analytics/routes.js';
@@ -26,6 +27,7 @@ export function createApp() {
 
   // --- Gateway layer: applies to everything -------------------------------
   app.use(correlationId);
+  app.use(auditLog); // one api_calls row per request, on response finish
   app.use(
     pinoHttp({
       logger,

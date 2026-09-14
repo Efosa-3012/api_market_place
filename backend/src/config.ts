@@ -18,6 +18,14 @@ const schema = z.object({
   CORE_BANKING_URL: z.string().url().default('http://localhost:8081'),
   CORE_BANKING_API_KEY: z.string().default(''),
   CORE_BANKING_ADAPTER: z.enum(['http', 'memory']).default('http'),
+
+  // Per-client quota on /api/v1/*. Keyed by client_id, not IP.
+  RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(60_000),
+  RATE_LIMIT_MAX: z.coerce.number().int().positive().default(60),
+
+  // Shared secret for the analytics dashboard, sent as X-Admin-Key. MVP-grade:
+  // in production these endpoints sit behind the bank's staff SSO.
+  ADMIN_KEY: z.string().min(16, 'ADMIN_KEY must be at least 16 characters'),
 });
 
 const parsed = schema.safeParse(process.env);

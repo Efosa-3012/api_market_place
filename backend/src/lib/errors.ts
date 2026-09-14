@@ -33,6 +33,9 @@ export class ApiError extends Error {
   static conflict(code: string, message: string) {
     return new ApiError(409, code, message);
   }
+  static tooManyRequests(message = 'Rate limit exceeded') {
+    return new ApiError(429, 'rate_limited', message);
+  }
   static upstream(message = 'Core banking service is unavailable') {
     return new ApiError(502, 'upstream_unavailable', message);
   }
