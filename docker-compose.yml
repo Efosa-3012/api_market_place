@@ -1,0 +1,75 @@
+# Whole stack with one command:  docker compose up --build
+#
+#   postgres      :5433   (host port; avoids clashing with a local Postgres) two databases: marketplace (ours) and mock_banking (core banking)
+#   core-banking  :8081   the Go mock core — built from a sibling clone at ../core-banking
+#   backend       :4000   this repo's API marketplace backend (docs at /docs)
+#
+# Prerequisite: git clone https://github.com/Derakoptes/core-banking.git next to this repo.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: marketplace
+    ports:
+      - '5433:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./infra/postgres-init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  core-banking:
+    build:
+      context: ../core-banking
+      dockerfile_inline: |
+        FROM golang:1.27-alpine AS build
+        WORKDIR /src
+        COPY go.mod go.sum ./
+        RUN go mod download
+        COPY . .
+        RUN CGO_ENABLED=0 go build -o /out/server ./cmd && CGO_ENABLED=0 go build -o /out/seed ./cmd/seed
+        FROM alpine:3.20
+        COPY --from=build /out/server /out/seed /usr/local/bin/
+        # config.Load() fatals without a .env file even when env vars are set; godotenv never overrides real env vars
+        WORKDIR /app
+        RUN touch /app/.env
+        CMD ["sh", "-c", "seed && server"]
+    environment:
+      API_KEY: mockcore-api-key
+      MOCKCORE_AUTH_ALLOW_ANONYMOUS: 'false'
+      MOCKCORE_HTTP_ADDR: 0.0.0.0:8081
+      MOCKCORE_DATABASE_URL: postgres://postgres:postgres@postgres:5432/mock_banking?sslmode=disable
+      MOCKCORE_DB_AUTO_MIGRATE: 'true'
+    ports:
+      - '8081:8081'
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  backend:
+    build: ./backend
+    environment:
+      PORT: 4000
+      NODE_ENV: production
+      LOG_LEVEL: info
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/marketplace
+      JWT_SECRET: dev-only-secret-change-me-in-any-real-deployment
+      CONSENT_UI_URL: http://localhost:3000/consent
+      CORE_BANKING_URL: http://core-banking:8081
+      CORE_BANKING_API_KEY: mockcore-api-key
+    ports:
+      - '4000:4000'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      core-banking:
+        condition: service_started
+
+volumes:
+  pgdata:

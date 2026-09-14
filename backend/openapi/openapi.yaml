@@ -1,0 +1,369 @@
+openapi: 3.1.0
+info:
+  title: Open Banking API Marketplace
+  version: 0.1.0
+  description: |
+    The bank's front door for third-party developers. Partners register an app on the
+    developer portal, obtain customer consent through the OAuth 2.0 authorization code
+    flow, and then read account data on the customer's behalf — scoped, revocable, and
+    fully audited.
+
+    **Flow**: `GET /oauth/authorize` → customer logs in and approves on the bank's consent
+    page → your app receives `?code=` → `POST /oauth/token` → call `/api/v1/*` with the
+    bearer token. The customer can revoke at any time; the next call then fails with
+    `consent_revoked`.
+
+    All errors (except `/oauth/token`, which follows RFC 6749) use the shape
+    `{ "error": { "code", "message", "correlation_id" } }`.
+servers:
+  - url: http://localhost:4000
+tags:
+  - name: OAuth
+    description: Partner-facing authorization endpoints
+  - name: Accounts
+    description: Account information APIs (require a consented access token)
+  - name: Bank UI
+    description: Used only by the bank's own consent pages — not for partners
+  - name: Platform
+
+paths:
+  /health:
+    get:
+      tags: [Platform]
+      summary: Liveness and dependency check
+      responses:
+        '200': { description: Healthy }
+        '503': { description: A dependency is down }
+
+  /oauth/authorize:
+    get:
+      tags: [OAuth]
+      summary: Start the consent flow
+      description: |
+        Redirect the customer's browser here. We create a consent request and forward the
+        customer to the bank's consent page. Add `format=json` (or `Accept: application/json`)
+        to receive the consent URL as JSON instead of a 302.
+      parameters:
+        - { name: response_type, in: query, required: true, schema: { type: string, enum: [code] } }
+        - { name: client_id, in: query, required: true, schema: { type: string } }
+        - { name: redirect_uri, in: query, required: true, schema: { type: string, format: uri } }
+        - name: scope
+          in: query
+          required: true
+          description: Space-separated. Any of `accounts:read`, `balances:read`, `transactions:read`.
+          schema: { type: string, example: 'accounts:read balances:read transactions:read' }
+        - { name: state, in: query, schema: { type: string } }
+        - { name: format, in: query, schema: { type: string, enum: [json] } }
+      responses:
+        '302': { description: Redirect to the bank consent page (or back to redirect_uri with `error=invalid_scope`) }
+        '201':
+          description: JSON form
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  consent_id: { type: string, format: uuid }
+                  consent_url: { type: string, format: uri }
+        '400': { $ref: '#/components/responses/Error' }
+
+  /oauth/token:
+    post:
+      tags: [OAuth]
+      summary: Exchange an authorization code for an access token
+      description: Client authentication via HTTP Basic (`client_id:client_secret`) or form fields.
+      security: [{ clientBasic: [] }, {}]
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [grant_type, code, redirect_uri]
+              properties:
+                grant_type: { type: string, enum: [authorization_code] }
+                code: { type: string }
+                redirect_uri: { type: string, format: uri }
+                client_id: { type: string }
+                client_secret: { type: string }
+      responses:
+        '200':
+          description: Token issued
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token: { type: string }
+                  token_type: { type: string, example: Bearer }
+                  expires_in: { type: integer, example: 86400 }
+                  scope: { type: string }
+                  consent_id: { type: string, format: uuid }
+        '400':
+          description: RFC 6749 error (`invalid_grant`, `invalid_request`, `unsupported_grant_type`)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OAuthError' }
+        '401':
+          description: '`invalid_client`'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OAuthError' }
+
+  /api/v1/accounts:
+    get:
+      tags: [Accounts]
+      summary: List the accounts the customer chose to share
+      security: [{ bearerToken: [] }]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { type: array, items: { $ref: '#/components/schemas/Account' } }
+                  meta: { type: object, properties: { consent_id: { type: string } } }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '429': { $ref: '#/components/responses/Error' }
+
+  /api/v1/accounts/{accountId}:
+    get:
+      tags: [Accounts]
+      summary: Get one account
+      security: [{ bearerToken: [] }]
+      parameters: [{ $ref: '#/components/parameters/accountId' }]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { type: object, properties: { data: { $ref: '#/components/schemas/Account' } } }
+        '404': { description: Not found, or not one of the consented accounts }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /api/v1/accounts/{accountId}/balances:
+    get:
+      tags: [Accounts]
+      summary: List balances (requires `balances:read`)
+      security: [{ bearerToken: [] }]
+      parameters: [{ $ref: '#/components/parameters/accountId' }]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { type: array, items: { $ref: '#/components/schemas/Balance' } }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { description: Not found }
+
+  /api/v1/accounts/{accountId}/transactions:
+    get:
+      tags: [Accounts]
+      summary: List transactions (requires `transactions:read`)
+      security: [{ bearerToken: [] }]
+      parameters:
+        - { $ref: '#/components/parameters/accountId' }
+        - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 20 } }
+        - { name: cursor, in: query, schema: { type: string }, description: From `meta.pagination.next_cursor` }
+        - { name: from, in: query, schema: { type: string }, description: RFC 3339 timestamp or YYYY-MM-DD }
+        - { name: to, in: query, schema: { type: string } }
+        - { name: type, in: query, schema: { type: string, enum: [credit, debit] } }
+        - { name: sort, in: query, schema: { type: string, enum: [booked_at_desc, booked_at_asc] } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { type: array, items: { $ref: '#/components/schemas/Transaction' } }
+                  meta:
+                    type: object
+                    properties:
+                      pagination:
+                        type: object
+                        properties:
+                          limit: { type: integer }
+                          has_more: { type: boolean }
+                          next_cursor: { type: string }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { description: Not found }
+
+  /bank/login:
+    post:
+      tags: [Bank UI]
+      summary: Mock internet-banking login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username, password]
+              properties: { username: { type: string, example: ada }, password: { type: string, example: password123 } }
+      responses:
+        '200':
+          description: 'Session issued. Send as `Authorization: Bearer <session_token>` to the other Bank UI endpoints.'
+        '401': { $ref: '#/components/responses/Error' }
+
+  /bank/me:
+    get:
+      tags: [Bank UI]
+      summary: Current logged-in customer
+      security: [{ bankSession: [] }]
+      responses:
+        '200': { description: OK }
+
+  /bank/consents/{id}:
+    get:
+      tags: [Bank UI]
+      summary: Consent request details + the customer's accounts (for the consent screen)
+      security: [{ bankSession: [] }]
+      parameters: [{ name: id, in: path, required: true, schema: { type: string, format: uuid } }]
+      responses:
+        '200': { description: OK }
+        '404': { $ref: '#/components/responses/Error' }
+
+  /bank/consents/{id}/authorise:
+    post:
+      tags: [Bank UI]
+      summary: Customer approves and selects accounts
+      security: [{ bankSession: [] }]
+      parameters: [{ name: id, in: path, required: true, schema: { type: string, format: uuid } }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [account_ids]
+              properties: { account_ids: { type: array, items: { type: string }, minItems: 1 } }
+      responses:
+        '200':
+          description: Approved. Send the browser to `redirect_to`.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  consent_id: { type: string }
+                  status: { type: string, example: authorised }
+                  expires_at: { type: string, format: date-time }
+                  redirect_to: { type: string, format: uri }
+        '409': { description: Consent is no longer pending }
+
+  /bank/consents/{id}/reject:
+    post:
+      tags: [Bank UI]
+      summary: Customer declines
+      security: [{ bankSession: [] }]
+      parameters: [{ name: id, in: path, required: true, schema: { type: string, format: uuid } }]
+      responses:
+        '200': { description: Rejected. Send the browser to `redirect_to` (carries `error=access_denied`). }
+
+  /bank/connected-apps:
+    get:
+      tags: [Bank UI]
+      summary: Apps the customer has granted access to
+      security: [{ bankSession: [] }]
+      responses:
+        '200': { description: OK }
+
+  /bank/connected-apps/{consentId}/revoke:
+    post:
+      tags: [Bank UI]
+      summary: Revoke an app's access. The app's next API call fails immediately.
+      security: [{ bankSession: [] }]
+      parameters: [{ name: consentId, in: path, required: true, schema: { type: string, format: uuid } }]
+      responses:
+        '200': { description: Revoked }
+        '404': { description: No active consent with that id for this customer }
+
+components:
+  securitySchemes:
+    bearerToken:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Access token from `POST /oauth/token`
+    clientBasic:
+      type: http
+      scheme: basic
+      description: '`client_id:client_secret`'
+    bankSession:
+      type: http
+      scheme: bearer
+      description: Session token from `POST /bank/login`
+  parameters:
+    accountId:
+      name: accountId
+      in: path
+      required: true
+      schema: { type: string, example: acct-demo-001 }
+  responses:
+    Error:
+      description: Error
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Forbidden:
+      description: |
+        Consent problem. `code` is one of `consent_revoked`, `consent_expired`,
+        `consent_not_authorised`, `client_deactivated`, `insufficient_scope`.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code: { type: string, example: consent_revoked }
+            message: { type: string }
+            correlation_id: { type: string }
+            details: {}
+    OAuthError:
+      type: object
+      properties:
+        error: { type: string, example: invalid_grant }
+        error_description: { type: string }
+    Account:
+      type: object
+      properties:
+        account_id: { type: string, example: acct-demo-001 }
+        account_number_masked: { type: string, example: '****0001' }
+        account_type: { type: string, example: current }
+        currency: { type: string, example: NGN }
+        status: { type: string, example: active }
+        opened_at: { type: string, format: date-time }
+    Balance:
+      type: object
+      properties:
+        account_id: { type: string }
+        type: { type: string, example: available }
+        amount: { type: string, example: '1250500.50' }
+        currency: { type: string }
+        credit_limit: { type: string }
+        as_of: { type: string, format: date-time }
+    Transaction:
+      type: object
+      properties:
+        transaction_id: { type: string }
+        account_id: { type: string }
+        type: { type: string, enum: [credit, debit] }
+        amount: { type: string }
+        currency: { type: string }
+        reference: { type: string }
+        narration: { type: string }
+        counterparty: { type: string }
+        booked_at: { type: string, format: date-time }
+        value_date: { type: string, format: date-time }

@@ -25,3 +25,6 @@ npm-debug.log*
 Thumbs.db
 .vscode/
 .idea/
+
+# Local run artifacts
+.server.log
