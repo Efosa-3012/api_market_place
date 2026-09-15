@@ -2,6 +2,9 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
+import { portalSession } from '../lib/api'
+import { portal } from '../lib/portal'
+
 interface HeaderProps {
   menuOpen?: boolean
   onMenuClick?: () => void
@@ -13,6 +16,13 @@ export default function Header({
 }: HeaderProps) {
   const navigate = useNavigate()
   const [search, setSearch] = useState('')
+  const developer = portalSession.developer()
+  const initial = (developer?.name ?? 'D').trim().charAt(0).toUpperCase()
+
+  function signOut() {
+    portal.logout()
+    navigate('/login', { replace: true })
+  }
 
   function handleSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -139,19 +149,40 @@ export default function Header({
           </div>
         </details>
 
-        <Link
-          to="/app/settings"
-          className="flex items-center gap-3 border-l border-[#e6ebf3] pl-3"
-        >
-          <span className="grid size-9 shrink-0 place-items-center rounded-full bg-[#0b2858] text-sm text-white">
-            D
-          </span>
+        <details className="relative border-l border-[#e6ebf3] pl-3">
+          <summary
+            aria-label="Account menu"
+            className="flex cursor-pointer list-none items-center gap-3 rounded-md focus-visible:outline-2 focus-visible:outline-blue-600 [&::-webkit-details-marker]:hidden"
+          >
+            <span className="grid size-9 shrink-0 place-items-center rounded-full bg-[#0b2858] text-sm text-white">
+              {initial}
+            </span>
 
-          <span className="hidden text-xs leading-5 md:block">
-            <span className="block font-semibold">Developer</span>
-            <span className="text-[#58708f]">My Workspace</span>
-          </span>
-        </Link>
+            <span className="hidden text-left text-xs leading-5 md:block">
+              <span className="block max-w-40 truncate font-semibold">{developer?.name ?? 'Developer'}</span>
+              <span className="block max-w-40 truncate text-[#58708f]">
+                {developer?.company ?? developer?.email ?? 'My Workspace'}
+              </span>
+            </span>
+          </summary>
+
+          <div className="absolute right-0 top-12 w-56 rounded-lg border border-[#e6ebf3] bg-white p-2 shadow-lg">
+            <p className="truncate px-2 py-1 text-xs text-[#58708f]">{developer?.email}</p>
+            <Link
+              to="/app/settings"
+              className="block rounded px-2 py-2 text-sm hover:bg-blue-50"
+            >
+              Settings
+            </Link>
+            <button
+              type="button"
+              onClick={signOut}
+              className="block w-full cursor-pointer rounded px-2 py-2 text-left text-sm text-red-600 hover:bg-red-50"
+            >
+              Sign out
+            </button>
+          </div>
+        </details>
       </div>
     </header>
   )

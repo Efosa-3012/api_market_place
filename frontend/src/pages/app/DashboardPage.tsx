@@ -1,44 +1,57 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 
-// Mock workspace data until the backend is connected.
-const workspace = {
-  firstName: 'Zainab',
-  company: 'Meridian Payments Ltd',
-  accountType: 'Business account',
+import { portalSession } from '../../lib/api'
+import { portal, type App } from '../../lib/portal'
+
+interface SummaryCard {
+  label: string
+  value: string
+  detail: string
+  positive?: boolean
+  linkLabel: string
+  to: string
 }
 
-const summaryCards = [
-  {
-    label: 'Active APIs',
-    value: '8',
-    detail: '',
-    linkLabel: 'View My APIs',
-    to: '/app/my-apis',
-  },
-  {
-    label: 'API Calls This Month',
-    value: '124.5K',
-    detail: '↑ 12% from last month',
-    positive: true,
-    linkLabel: 'View Developer Portal',
-    to: '/app/developer-portal',
-  },
-  {
-    label: 'Current Plan',
-    value: 'Pay-as-you-use',
-    detail: 'Next billing date: Oct 31, 2024',
-    linkLabel: 'View Billing',
-    to: '/app/billing',
-  },
-  {
-    label: 'Support Tickets',
-    value: '1 open',
-    detail: 'Updated 2 days ago',
-    linkLabel: 'View Support',
-    to: '/#support',
-  },
-]
+/** Cards derived from the developer's real apps; the rest are platform-level placeholders. */
+function buildSummaryCards(apps: App[] | null): SummaryCard[] {
+  const active = apps?.filter((a) => a.status === 'active').length
+  return [
+    {
+      label: 'Active apps',
+      value: apps === null ? '—' : String(active),
+      detail:
+        apps === null
+          ? 'Loading…'
+          : active === 0
+            ? 'Register an app to get credentials'
+            : 'With client credentials',
+      linkLabel: 'View My Apps',
+      to: '/app/my-apis',
+    },
+    {
+      label: 'Environment',
+      value: 'Sandbox',
+      detail: 'Mock core banking data',
+      linkLabel: 'View API docs',
+      to: '/app/developer-portal',
+    },
+    {
+      label: 'Current Plan',
+      value: 'Sandbox (free)',
+      detail: 'Production plans require verification',
+      linkLabel: 'View Billing',
+      to: '/app/billing',
+    },
+    {
+      label: 'Support Tickets',
+      value: '0 open',
+      detail: 'No open tickets',
+      linkLabel: 'View Support',
+      to: '/#support',
+    },
+  ]
+}
 
 const setupSteps = [
   {
@@ -64,10 +77,10 @@ const setupSteps = [
   },
   {
     title: 'Create sandbox credentials',
-    description: 'Get credentials for your test integration.',
+    description: 'Register an app to get a client ID and secret.',
     complete: false,
-    to: '/app/developer-portal',
-    action: 'Open portal',
+    to: '/app/my-apis',
+    action: 'Register app',
   },
   {
     title: 'Make your first test request',
@@ -162,10 +175,33 @@ function ResourceIcon({ name }: { name: string }) {
 
 export default function DashboardPage() {
   const [setupOpen, setSetupOpen] = useState(false)
+  const [apps, setApps] = useState<App[] | null>(null)
 
-  const completedSteps = setupSteps.filter((step) => step.complete).length
+  const developer = portalSession.developer()
+  const workspace = {
+    firstName: (developer?.name ?? 'Developer').split(' ')[0],
+    company: developer?.company ?? developer?.email ?? 'My workspace',
+    accountType: developer?.company ? 'Business account' : 'Developer account',
+  }
+
+  useEffect(() => {
+    portal
+      .listApps()
+      .then(setApps)
+      .catch(() => setApps([]))
+  }, [])
+
+  const summaryCards = buildSummaryCards(apps)
+
+  // "Create sandbox credentials" is done once the developer has an app.
+  const steps = setupSteps.map((step) =>
+    step.title === 'Create sandbox credentials'
+      ? { ...step, complete: (apps?.length ?? 0) > 0 }
+      : step,
+  )
+  const completedSteps = steps.filter((step) => step.complete).length
   const progress = Math.round(
-    (completedSteps / setupSteps.length) * 100,
+    (completedSteps / steps.length) * 100,
   )
 
   const panelClass =
@@ -322,7 +358,7 @@ export default function DashboardPage() {
 
           <div id="integration-checklist" hidden={!setupOpen}>
             <ol className="mx-5 border-t border-[#edf0f5]">
-              {setupSteps.map((step) => (
+              {steps.map((step) => (
                 <li
                   key={step.title}
                   className="flex flex-col gap-3 border-b border-[#edf0f5] py-4 last:border-b-0 sm:flex-row sm:items-center sm:justify-between"

@@ -2,6 +2,9 @@ import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
+import { ApiError } from '../../lib/api'
+import { portal } from '../../lib/portal'
+
 import SignupLayout from '../../components/auth/SignupLayout'
 import AccountDetailsStep from '../../components/auth/signup/AccountDetailsStep'
 import VerificationStep from '../../components/auth/signup/VerificationStep'
@@ -43,6 +46,7 @@ export default function SignupPage() {
   const [data, setData] = useState<SignupData>(initialSignupData)
   const [error, setError] = useState('')
   const [complete, setComplete] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
 
   const headingRef = useRef<HTMLHeadingElement>(null)
   const errorRef = useRef<HTMLParagraphElement>(null)
@@ -68,8 +72,8 @@ export default function SignupPage() {
     }
   }, [error])
 
-  function goToLogin() {
-    navigate('/login', { replace: true })
+  function goToDashboard() {
+    navigate('/app/dashboard', { replace: true })
   }
 
   function update<K extends keyof SignupData>(
@@ -145,10 +149,10 @@ export default function SignupPage() {
     return ''
   }
 
-  function handleContinue(event: FormEvent<HTMLFormElement>) {
+  async function handleContinue(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
-    if (complete) return
+    if (complete || submitting) return
 
     const validationError = validateStep()
 
@@ -164,17 +168,37 @@ export default function SignupPage() {
       return
     }
 
-    // Frontend-only completion.
-    // When the backend is connected, submit the registration data here
-    // and only clear the fields/show success after the request succeeds.
-    setData((current) => ({
-      ...current,
-      password: '',
-      confirmPassword: '',
-      verificationCode: '',
-    }))
-
-    setComplete(true)
+    // The backend keeps email, password, name and company. Phone, role, CAC
+    // number, TIN and intended usage are collected for the KYB story but not
+    // stored yet — they'd go on a verification record when production
+    // onboarding is built.
+    setSubmitting(true)
+    try {
+      await portal.signup({
+        email: data.email.trim(),
+        password: data.password,
+        name: `${data.firstName.trim()} ${data.lastName.trim()}`,
+        company: data.companyName.trim() || undefined,
+      })
+      // Sign-up also logs the developer in; the success dialog sends them on.
+      setData((current) => ({
+        ...current,
+        password: '',
+        confirmPassword: '',
+        verificationCode: '',
+      }))
+      setComplete(true)
+    } catch (err) {
+      if (err instanceof ApiError && err.code === 'email_taken') {
+        setError('An account with that email already exists. Sign in instead.')
+      } else if (err instanceof ApiError && err.code === 'validation_error') {
+        setError('Check your email address and password and try again.')
+      } else {
+        setError(err instanceof Error ? err.message : 'Registration failed. Try again.')
+      }
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   function handleBack() {
@@ -245,12 +269,12 @@ export default function SignupPage() {
 
           <button
             type="submit"
-            disabled={complete}
+            disabled={complete || submitting}
             className={`${buttonClass} ${
               step === 1 ? 'w-full' : ''
             } disabled:cursor-not-allowed disabled:opacity-60`}
           >
-            {step === 4 ? 'Verify & Create Account' : 'Continue'}
+            {step === 4 ? (submitting ? 'Creating account…' : 'Verify & Create Account') : 'Continue'}
           </button>
         </div>
 
@@ -273,7 +297,7 @@ export default function SignupPage() {
         aria-describedby="signup-success-description"
         onCancel={(event) => {
           event.preventDefault()
-          goToLogin()
+          goToDashboard()
         }}
         className="fixed inset-0 m-auto max-h-[calc(100dvh-48px)] w-[calc(100%_-_48px)] max-w-sm overflow-y-auto rounded-2xl border-0 bg-white p-8 text-center shadow-xl backdrop:bg-black/50"
       >
@@ -295,16 +319,16 @@ export default function SignupPage() {
           id="signup-success-description"
           className="mt-3 text-sm leading-6 text-[#58708f]"
         >
-          Continue to sign in to the API Marketplace.
+          You're signed in. Register your first app to get API credentials.
         </p>
 
         <button
           type="button"
           autoFocus
-          onClick={goToLogin}
+          onClick={goToDashboard}
           className={`${buttonClass} mt-6 w-full`}
         >
-          Continue to sign in
+          Go to my dashboard
         </button>
       </dialog>
     </SignupLayout>

@@ -1,10 +1,17 @@
 import { useState } from 'react'
-import { Outlet } from 'react-router-dom'
+import { Navigate, Outlet, useLocation } from 'react-router-dom'
 import Header from '../components/Header'
 import Sidebar from '../components/Sidebar'
+import { portalSession } from '../lib/api'
 
 export default function AppLayout() {
   const [menuOpen, setMenuOpen] = useState(false)
+  const location = useLocation()
+
+  // Everything under /app is the developer's workspace: no portal session, no entry.
+  if (!portalSession.isLoggedIn()) {
+    return <Navigate to="/login" replace state={{ from: location.pathname }} />
+  }
 
   return (
     <div className="min-h-dvh bg-white font-[Arial,Helvetica,sans-serif] text-[#151c2d]">

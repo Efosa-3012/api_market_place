@@ -31,3 +31,6 @@ Thumbs.db
 
 # Local agent instructions
 CLAUDE.md
+
+# Local run artifacts
+.vite.log

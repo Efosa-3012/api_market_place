@@ -6,6 +6,8 @@ export interface MarketplaceApi {
     pricing: 'Free' | 'Paid'
     authentication: 'OAuth 2.0' | 'API Key'
     popularity: 'Most used' | 'Trending' | 'New'
+    /** Only 'live' products have a working backend in this MVP. */
+    availability: 'live' | 'coming-soon'
 }
 
 export const marketplaceApis: MarketplaceApi[] = [
@@ -17,17 +19,19 @@ export const marketplaceApis: MarketplaceApi[] = [
             'Build reliable payment experiences with the Stanbic IBTC Transfer API. Initiate, manage, and track transfers between bank accounts and digital wallets through secure, consent-driven integrations.',
         pricing: 'Paid',
         authentication: 'OAuth 2.0',
+        availability: 'coming-soon',
         popularity: 'Most used',
     },
     {
         id: 'account-information',
         category: 'Accounts',
-        title: 'Connect to account information',
+        title: 'Account Information',
         description:
-            'Access approved account details, balances, and transaction information.',
-        pricing: 'Paid',
+            "Read a customer's accounts, balances and transactions with their explicit, revocable consent. Free for licensed third parties under the open banking framework.",
+        pricing: 'Free',
         authentication: 'OAuth 2.0',
         popularity: 'Most used',
+        availability: 'live',
     },
     {
         id: 'identity-verification',
@@ -37,6 +41,7 @@ export const marketplaceApis: MarketplaceApi[] = [
             'Build customer onboarding and verification experiences with identity services.',
         pricing: 'Free',
         authentication: 'API Key',
+        availability: 'coming-soon',
         popularity: 'Trending',
     },
     {
@@ -47,6 +52,7 @@ export const marketplaceApis: MarketplaceApi[] = [
             'Create seamless transfer experiences through secure banking connections.',
         pricing: 'Free',
         authentication: 'OAuth 2.0',
+        availability: 'coming-soon',
         popularity: 'Trending',
     },
     {
@@ -57,6 +63,7 @@ export const marketplaceApis: MarketplaceApi[] = [
             'Explore card-related capabilities for your financial products and services.',
         pricing: 'Free',
         authentication: 'API Key',
+        availability: 'coming-soon',
         popularity: 'New',
     },
     {
@@ -67,6 +74,7 @@ export const marketplaceApis: MarketplaceApi[] = [
             'Build lending products and services using connected banking capabilities.',
         pricing: 'Free',
         authentication: 'OAuth 2.0',
+        availability: 'coming-soon',
         popularity: 'New',
     },
     {
@@ -77,6 +85,7 @@ export const marketplaceApis: MarketplaceApi[] = [
             'Use sample exchange-rate data to prototype international payment experiences.',
         pricing: 'Paid',
         authentication: 'API Key',
+        availability: 'coming-soon',
         popularity: 'Trending',
     },
     {
@@ -87,6 +96,7 @@ export const marketplaceApis: MarketplaceApi[] = [
             'Explore a sample bank directory to support your payment forms and integrations.',
         pricing: 'Free',
         authentication: 'API Key',
+        availability: 'coming-soon',
         popularity: 'New',
     },
 ]

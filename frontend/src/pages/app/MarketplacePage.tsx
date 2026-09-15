@@ -104,6 +104,16 @@ function ApiCard({ api }: { api: MarketplaceApi }) {
           >
             {api.pricing}
           </span>
+
+          {api.availability === 'live' ? (
+            <span className="rounded-sm bg-green-50 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-green-700">
+              Live
+            </span>
+          ) : (
+            <span className="rounded-sm bg-[#f2f3f6] px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-[#8190a7]">
+              Coming soon
+            </span>
+          )}
         </div>
 
         <svg
@@ -135,13 +145,22 @@ function ApiCard({ api }: { api: MarketplaceApi }) {
         {api.description}
       </p>
 
-      <Link
-        to={`/app/marketplace/${api.id}`}
-        aria-label={`Explore ${api.title}`}
-        className="mt-auto flex min-h-10 items-center justify-center gap-1 bg-[#0450ff] px-4 py-2 text-xs font-bold text-white hover:bg-[#003bd0] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600"
-      >
-        EXPLORE API <span aria-hidden="true">→</span>
-      </Link>
+      {api.availability === 'live' ? (
+        <Link
+          to={`/app/marketplace/${api.id}`}
+          aria-label={`Explore ${api.title}`}
+          className="mt-auto flex min-h-10 items-center justify-center gap-1 bg-[#0450ff] px-4 py-2 text-xs font-bold text-white hover:bg-[#003bd0] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600"
+        >
+          EXPLORE API <span aria-hidden="true">→</span>
+        </Link>
+      ) : (
+        <span
+          aria-label={`${api.title} is coming soon`}
+          className="mt-auto flex min-h-10 cursor-not-allowed items-center justify-center gap-1 bg-[#eef0f4] px-4 py-2 text-xs font-bold text-[#8190a7]"
+        >
+          COMING SOON
+        </span>
+      )}
     </article>
   )
 }

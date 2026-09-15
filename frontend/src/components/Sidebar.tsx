@@ -16,7 +16,7 @@ const links = [
     icon: 'm3 10 9-7 9 7v10H3V10M9 20v-7h6v7',
   },
   {
-    label: 'My APIs',
+    label: 'My Apps',
     to: '/app/my-apis',
     icon: 'M4 8h16v12H4zM7 8V4h10v4M4 12h16',
   },

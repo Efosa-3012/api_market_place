@@ -1,25 +1,45 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
-import { Link } from 'react-router-dom'
-import { useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+
+import { ApiError } from '../../lib/api'
+import { portal } from '../../lib/portal'
 
 export default function LoginPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [message, setMessage] = useState('')
+  const [submitting, setSubmitting] = useState(false)
 
-  const canSubmit = identifier.trim().length > 0 && password.length > 0
+  const canSubmit = identifier.trim().length > 0 && password.length > 0 && !submitting
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-  event.preventDefault()
+  // Where RequireAuth sent us from, so login returns the user to the page they wanted.
+  const redirectTo = (location.state as { from?: string } | null)?.from ?? '/app/dashboard'
 
-  if (!canSubmit) return
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (!canSubmit) return
 
-  // When authentication is connected, navigate only after it succeeds.
-  navigate('/app/marketplace', { replace: true })
-}
+    setSubmitting(true)
+    setMessage('')
+    try {
+      await portal.login(identifier.trim(), password)
+      navigate(redirectTo, { replace: true })
+    } catch (err) {
+      if (err instanceof ApiError && err.code === 'invalid_credentials') {
+        setMessage('Incorrect email or password.')
+      } else if (err instanceof ApiError && err.code === 'validation_error') {
+        setMessage('Enter the email address you registered with.')
+      } else {
+        setMessage(err instanceof Error ? err.message : 'Something went wrong. Try again.')
+      }
+    } finally {
+      setSubmitting(false)
+    }
+  }
 
   return (
     <section
@@ -67,14 +87,14 @@ export default function LoginPage() {
               <input
                 id="login-identifier"
                 name="username"
-                type="text"
-                autoComplete="username"
+                type="email"
+                autoComplete="email"
                 autoCapitalize="none"
                 spellCheck={false}
                 required
                 value={identifier}
                 onChange={(event) => setIdentifier(event.target.value)}
-                placeholder="Enter your email or username"
+                placeholder="Enter your email"
                 className="h-12 w-full rounded-md border border-transparent bg-[#f7f7f8] px-4 text-sm text-[#151c2d] outline-none placeholder:text-[#8195b0] focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
               />
             </div>
@@ -131,7 +151,7 @@ export default function LoginPage() {
               disabled={!canSubmit}
               className="mt-7 flex h-11 w-full cursor-pointer items-center justify-center rounded-md bg-[#080da6] text-sm font-medium text-white transition-colors hover:bg-[#003894] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600 disabled:cursor-not-allowed disabled:bg-[#eff5ff] disabled:text-[#757575]"
             >
-              Log in
+              {submitting ? 'Logging in…' : 'Log in'}
             </button>
 
             <div className="mt-5 text-right">
