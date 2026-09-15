@@ -10,7 +10,23 @@ import type {
 /**
  * Tiny deterministic dataset for tests and for running the platform without
  * the Go service. Ids match the Go seed so switching adapters is seamless.
+ *
+ * Activity dates are anchored to process start, the same way the Go seed anchors
+ * to time.Now(). A fixed anchor would drift stale, and this fake is the fallback
+ * if the Go service is unavailable during a demo — it must not show transactions
+ * from months ago while the real service shows this week.
  */
+
+/** Process-start anchor, so a single run is internally consistent. */
+const ANCHOR = new Date();
+
+/** `n` days before the anchor, at `hour` UTC. */
+function daysAgo(n: number, hour = 0): string {
+  const d = new Date(ANCHOR);
+  d.setUTCDate(d.getUTCDate() - n);
+  d.setUTCHours(hour, 0, 0, 0);
+  return d.toISOString();
+}
 const accounts: Account[] = [
   {
     account_id: 'acct-demo-001',
@@ -22,7 +38,7 @@ const accounts: Account[] = [
     account_balance: '1250500.50',
     ledger_balance: '1250500.50',
     account_opening_date: '2025-06-01T00:00:00Z',
-    last_transaction_date: '2026-01-15T12:00:00Z',
+    last_transaction_date: daysAgo(0, 12),
     bank_sort_code: '200000',
     branch_name: 'Victoria Island',
     account_manager_name: 'Bola Adeyemi',
@@ -38,7 +54,7 @@ const accounts: Account[] = [
     account_balance: '84000.00',
     ledger_balance: '84000.00',
     account_opening_date: '2024-11-15T00:00:00Z',
-    last_transaction_date: '2026-01-14T09:30:00Z',
+    last_transaction_date: daysAgo(1, 9),
     bank_sort_code: '200000',
     branch_name: 'Ikeja',
     account_manager_name: 'Chidi Okeke',
@@ -70,7 +86,7 @@ const balances: Balance[] = accounts.flatMap((a) => [
     amount: a.account_balance,
     credit_limit: '0.00',
     available_balance: a.account_balance,
-    as_of: '2026-01-15T12:00:00Z',
+    as_of: daysAgo(0, 12),
   },
   {
     account_id: a.account_id,
@@ -79,7 +95,7 @@ const balances: Balance[] = accounts.flatMap((a) => [
     amount: a.ledger_balance,
     credit_limit: '0.00',
     available_balance: a.account_balance,
-    as_of: '2026-01-15T12:00:00Z',
+    as_of: daysAgo(0, 12),
   },
 ]);
 
@@ -93,8 +109,8 @@ const transactions: Transaction[] = Array.from({ length: 12 }, (_, i) => ({
   narration: i % 3 === 0 ? 'Salary payment' : 'POS purchase',
   counterparty: i % 3 === 0 ? 'Acme Ltd' : 'Shoprite',
   running_balance: '1250500.50',
-  booked_at: new Date(Date.UTC(2026, 0, 15 - i, 10)).toISOString(),
-  value_date: new Date(Date.UTC(2026, 0, 15 - i)).toISOString(),
+  booked_at: daysAgo(i, 10),
+  value_date: daysAgo(i),
 }));
 
 export class MemoryCoreBankingAdapter implements CoreBankingAdapter {

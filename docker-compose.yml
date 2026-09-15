@@ -24,6 +24,17 @@ services:
       timeout: 3s
       retries: 10
 
+  # Required by the Go core since its auth_api refactor (verification codes).
+  redis:
+    image: redis:7-alpine
+    ports:
+      - '6379:6379'
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
   core-banking:
     build:
       context: ../core-banking
@@ -46,10 +57,15 @@ services:
       MOCKCORE_HTTP_ADDR: 0.0.0.0:8081
       MOCKCORE_DATABASE_URL: postgres://postgres:postgres@postgres:5432/mock_banking?sslmode=disable
       MOCKCORE_DB_AUTO_MIGRATE: 'true'
+      # Required since the auth_api refactor; the service refuses to boot without it.
+      MOCKCORE_AUTH_VERIFICATION_SECRET: dev-only-verification-secret-change-me
+      MOCKCORE_REDIS_ADDR: redis:6379
     ports:
       - '8081:8081'
     depends_on:
       postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
 
   backend:
