@@ -28,7 +28,7 @@ export default function ConnectedAppsPage() {
   const [notice, setNotice] = useState('')
   // When access was removed, so the notice can count up: "cut off 12 s ago".
   const [revokedAt, setRevokedAt] = useState<Date | null>(null)
-  const [now, setNow] = useState(Date.now())
+  const [now, setNow] = useState(() => Date.now())
 
   useEffect(() => {
     if (!revokedAt) return

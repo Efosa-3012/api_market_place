@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { ApiError, portalSession } from '../../lib/api'
 import {
   WINDOW_LABELS,
@@ -111,10 +111,9 @@ export default function AdminDashboardPage() {
     void loadAll()
   }, [loadAll])
 
-  // Live mode refreshes only the feed — re-running every aggregate every five
-  // seconds would hammer the database for numbers that barely move.
-  const feedRef = useRef(loadFeed)
-  feedRef.current = loadFeed
+  // Live mode mostly refreshes the feed. The aggregate tiles only refresh every
+  // LIVE_SUMMARY_EVERY ticks, since re-running every aggregate every few seconds
+  // would hammer the database for numbers that barely move.
   useEffect(() => {
     if (!live) return
     let tick = 0
@@ -122,7 +121,7 @@ export default function AdminDashboardPage() {
       tick += 1
       const refreshTiles = tick % LIVE_SUMMARY_EVERY === 0
       void Promise.all([
-        feedRef.current(),
+        loadFeed(),
         refreshTiles
           ? Promise.all([admin.summary(range), admin.consents(), admin.callsPerClient()]).then(([summary, consents, clients]) =>
               setData((current) => (current ? { ...current, summary, consents, clients: clients.data } : current)),
@@ -135,7 +134,7 @@ export default function AdminDashboardPage() {
         })
     }, LIVE_POLL_MS)
     return () => clearInterval(timer)
-  }, [live, range])
+  }, [live, range, loadFeed])
 
   useEffect(() => {
     if (!loading) void loadFeed()
