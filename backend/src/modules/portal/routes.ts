@@ -7,6 +7,8 @@ import { config } from '../../config.js';
 import { pool } from '../../lib/db.js';
 import { ApiError } from '../../lib/errors.js';
 import { parse } from '../../lib/validate.js';
+import { coreBanking } from '../../core-banking/index.js';
+import { issueAccessToken } from '../auth/tokens.js';
 import { consentService } from '../consent/service.js';
 
 /**
@@ -293,6 +295,101 @@ portalRouter.post('/apps/:id/deactivate', requirePortalAuth, async (req, res, ne
     const consentsRevoked = await consentService.revokeAllForClient(client.id);
 
     res.json({ ...publicClient(rows[0]!), consents_revoked: consentsRevoked });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Sandbox — the portal's try-it console.
+//
+// A sandbox token is a REAL access token for the developer's app, bound to a
+// pre-authorised consent for a demo customer. It goes through the exact same
+// `authenticate` checks as a token from the OAuth flow, so what the developer
+// sees in the sandbox is what their production integration will see.
+// ---------------------------------------------------------------------------
+
+function publicSandboxConsent(c: { id: string; status: string; scopes: string[]; account_ids: string[]; customer_id: string | null; authorised_at: Date | null; expires_at: Date | null; revoked_at: Date | null }) {
+  return {
+    consent_id: c.id,
+    status: c.status,
+    scopes: c.scopes,
+    account_ids: c.account_ids,
+    customer_id: c.customer_id,
+    authorised_at: c.authorised_at,
+    expires_at: c.expires_at,
+    revoked_at: c.revoked_at,
+  };
+}
+
+// GET /portal/apps/:id/sandbox — current sandbox state + the demo customer's accounts
+portalRouter.get('/apps/:id/sandbox', requirePortalAuth, async (req, res, next) => {
+  try {
+    const { id } = parse(appIdParam, req.params);
+    const client = await findOwnClient(id, req.developer!.id);
+    const [consent, accounts] = await Promise.all([
+      consentService.activeSandboxForClient(client.id),
+      coreBanking.listCustomerAccounts(config.SANDBOX_CUSTOMER_ID),
+    ]);
+    res.json({
+      customer_id: config.SANDBOX_CUSTOMER_ID,
+      accounts: accounts.map((a) => ({
+        account_id: a.account_id,
+        account_type: a.account_type,
+        currency: a.currency,
+        status: a.status,
+      })),
+      consent: consent ? publicSandboxConsent(consent) : null,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /portal/apps/:id/sandbox-token — mint a sandbox access token
+portalRouter.post('/apps/:id/sandbox-token', requirePortalAuth, async (req, res, next) => {
+  try {
+    const { id } = parse(appIdParam, req.params);
+    const client = await findOwnClient(id, req.developer!.id);
+    if (client.status !== 'active') {
+      throw ApiError.conflict('client_deactivated', 'This app is deactivated and cannot be issued tokens');
+    }
+
+    let consent = await consentService.activeSandboxForClient(client.id);
+    if (!consent) {
+      const accounts = await coreBanking.listCustomerAccounts(config.SANDBOX_CUSTOMER_ID);
+      if (accounts.length === 0) {
+        throw ApiError.upstream('The sandbox customer has no accounts in core banking');
+      }
+      consent = await consentService.createSandbox({
+        clientRowId: client.id,
+        customerId: config.SANDBOX_CUSTOMER_ID,
+        scopes: client.allowed_scopes,
+        accountIds: accounts.map((a) => a.account_id),
+      });
+    }
+
+    const token = issueAccessToken({
+      clientId: client.client_id,
+      consentId: consent.id,
+      customerId: consent.customer_id!,
+      scopes: consent.scopes,
+    });
+
+    res.setHeader('Cache-Control', 'no-store');
+    res.json({ ...token, ...publicSandboxConsent(consent) });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /portal/apps/:id/sandbox/revoke — simulate the customer withdrawing consent
+portalRouter.post('/apps/:id/sandbox/revoke', requirePortalAuth, async (req, res, next) => {
+  try {
+    const { id } = parse(appIdParam, req.params);
+    const client = await findOwnClient(id, req.developer!.id);
+    const revoked = await consentService.revokeSandboxForClient(client.id);
+    res.json({ consents_revoked: revoked });
   } catch (err) {
     next(err);
   }

@@ -22,6 +22,7 @@ export interface Consent {
   expires_at: Date | null;
   revoked_at: Date | null;
   revoked_by: string | null;
+  sandbox: boolean;
 }
 
 export interface ConsentWithClient extends Consent {
@@ -190,11 +191,51 @@ export const consentService = {
   /** "Connected Apps" — what the customer has granted, newest first. */
   async listForCustomer(customerId: string) {
     const { rows } = await pool.query<ConsentWithClient>(
-      `${withClientSql} WHERE c.customer_id = $1 AND c.status IN ('authorised', 'revoked', 'expired')
+      `${withClientSql} WHERE c.customer_id = $1 AND NOT c.sandbox
+          AND c.status IN ('authorised', 'revoked', 'expired')
         ORDER BY c.authorised_at DESC NULLS LAST, c.created_at DESC`,
       [customerId],
     );
     return rows;
+  },
+
+  // ---------------------------------------------------------------------------
+  // Sandbox: pre-authorised consents for the portal's try-it console.
+  // ---------------------------------------------------------------------------
+
+  /** The active sandbox consent for a client, if any. */
+  async activeSandboxForClient(clientRowId: string) {
+    const { rows } = await pool.query<Consent>(
+      `SELECT * FROM consents WHERE client_id = $1 AND sandbox AND status = 'authorised'
+        ORDER BY created_at DESC LIMIT 1`,
+      [clientRowId],
+    );
+    return rows[0] ?? null;
+  },
+
+  /**
+   * Create an already-authorised sandbox consent. No customer interaction: this
+   * stands in for the demo customer approving every account and every scope the
+   * app is allowed, so a developer can call the APIs immediately.
+   */
+  async createSandbox(input: { clientRowId: string; customerId: string; scopes: string[]; accountIds: string[] }) {
+    const expiresAt = new Date(Date.now() + config.CONSENT_TTL_DAYS * 24 * 60 * 60 * 1000);
+    const { rows } = await pool.query<Consent>(
+      `INSERT INTO consents (client_id, customer_id, scopes, account_ids, status, redirect_uri, sandbox, authorised_at, expires_at)
+       VALUES ($1, $2, $3, $4, 'authorised', 'sandbox://portal', true, now(), $5) RETURNING *`,
+      [input.clientRowId, input.customerId, input.scopes, input.accountIds, expiresAt],
+    );
+    return rows[0]!;
+  },
+
+  /** Revoke a client's sandbox consents so the developer can see what a revoked token looks like. */
+  async revokeSandboxForClient(clientRowId: string) {
+    const { rowCount } = await pool.query(
+      `UPDATE consents SET status = 'revoked', revoked_at = now(), revoked_by = 'developer'
+        WHERE client_id = $1 AND sandbox AND status = 'authorised'`,
+      [clientRowId],
+    );
+    return rowCount ?? 0;
   },
 
   /**

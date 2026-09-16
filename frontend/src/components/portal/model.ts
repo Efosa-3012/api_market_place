@@ -48,60 +48,55 @@ export interface WebhookConfig {
   events: string[]
 }
 export const eventOptions = [
-  'transfer.completed',
-  'transfer.failed',
-  'transfer.pending',
-  'virtual-account.created',
-  'collection.received',
-  'kyc.verified',
+  'consent.authorised',
+  'consent.revoked',
+  'consent.expired',
+  'client.deactivated',
 ]
 export const endpoints: Endpoint[] = [
   {
-    id: 'transfer',
-    api: 'Transfer API',
-    title: 'Initiate transfer',
-    method: 'POST',
-    path: '/v1/transfers',
-    defaults: {
-      amount: 25000,
-      currency: 'NGN',
-      beneficiaryAccount: '0123456789',
-      bankCode: '221',
-      reference: 'PAY-102394',
-      narration: 'Test transfer from sandbox',
-    },
-  },
-  {
-    id: 'status',
-    api: 'Transfer API',
-    title: 'Get transfer status',
-    method: 'GET',
-    path: '/v1/transfers/{id}',
-    defaults: { id: 'TRF-102394' },
-  },
-  {
-    id: 'beneficiary',
-    api: 'Transfer API',
-    title: 'Validate beneficiary',
-    method: 'POST',
-    path: '/v1/beneficiaries/validate',
-    defaults: { beneficiaryAccount: '0123456789', bankCode: '221' },
-  },
-  {
-    id: 'balance',
+    id: 'accounts',
     api: 'Accounts API',
-    title: 'Get account balance',
+    title: 'List consented accounts',
     method: 'GET',
-    path: '/v1/accounts/balance',
-    defaults: { accountNumber: '0123456789' },
+    path: '/api/v1/accounts',
+    defaults: {},
   },
   {
-    id: 'identity',
-    api: 'Identity API',
-    title: 'Verify identity',
+    id: 'account',
+    api: 'Accounts API',
+    title: 'Get an account',
+    method: 'GET',
+    path: '/api/v1/accounts/{accountId}',
+    defaults: { accountId: 'acct-demo-001' },
+  },
+  {
+    id: 'balances',
+    api: 'Balances API',
+    title: 'List balances',
+    method: 'GET',
+    path: '/api/v1/accounts/{accountId}/balances',
+    defaults: { accountId: 'acct-demo-001' },
+  },
+  {
+    id: 'transactions',
+    api: 'Transactions API',
+    title: 'List transactions',
+    method: 'GET',
+    path: '/api/v1/accounts/{accountId}/transactions',
+    defaults: { accountId: 'acct-demo-001', limit: 20 },
+  },
+  {
+    id: 'token',
+    api: 'Consent & Authorization',
+    title: 'Exchange code for token',
     method: 'POST',
-    path: '/v1/identity/verify',
-    defaults: { identityNumber: '12345678901' },
+    path: '/oauth/token',
+    defaults: {
+      grant_type: 'authorization_code',
+      code: 'paste-the-code-from-the-redirect',
+      redirect_uri: 'http://localhost:3000/callback',
+    },
   },
 ]
 export const tabs: { id: PortalTab; title: string; description: string }[] = [
@@ -168,9 +163,8 @@ export function parseObject(text: string): Json {
   return value as Json
 }
 export function requestPath(endpoint: Endpoint, values: Json) {
-  return endpoint.path.replace(
-    '{id}',
-    encodeURIComponent(String(values.id ?? '')),
+  return endpoint.path.replace(/\{(\w+)\}/g, (_, key: string) =>
+    encodeURIComponent(String(values[key] ?? '')),
   )
 }
 export function simulate(
@@ -217,24 +211,34 @@ export function simulate(
   }
   const time = new Date().toISOString()
   const id = `req_${uid().slice(0, 12)}`
+  const account = {
+    account_id: String(values.accountId ?? 'acct-demo-001'),
+    account_number_masked: '****0001',
+    account_type: 'current',
+    currency: 'NGN',
+    status: 'active',
+    opened_at: '2025-06-01T00:00:00Z',
+  }
   const details =
-    endpoint.id === 'balance'
-      ? {
-          accountNumber: values.accountNumber,
-          availableBalance: 125000,
-          currency: 'NGN',
-        }
-      : endpoint.id === 'status'
-        ? { transactionId: values.id, status: 'COMPLETED' }
-        : endpoint.id === 'transfer'
+    endpoint.id === 'accounts'
+      ? { data: [account], meta: { consent_id: 'sandbox-consent' } }
+      : endpoint.id === 'account'
+        ? { data: account }
+        : endpoint.id === 'balances'
           ? {
-              ...values,
-              amount: Number(values.amount),
-              transactionId: `TRF-${uid().slice(0, 8)}`,
-              status: 'PENDING',
-              createdAt: time,
+              data: [
+                { account_id: account.account_id, type: 'available', amount: '1250500.50', currency: 'NGN', credit_limit: '0.00', as_of: time },
+                { account_id: account.account_id, type: 'ledger', amount: '1250500.50', currency: 'NGN', credit_limit: '0.00', as_of: time },
+              ],
             }
-          : { verified: true, ...values }
+          : endpoint.id === 'transactions'
+            ? {
+                data: [
+                  { transaction_id: 'txn-001-010', account_id: account.account_id, type: 'credit', amount: '5500.50', currency: 'NGN', reference: 'INT-202601-001', narration: 'Interest earned', counterparty: 'Stanbic IBTC', booked_at: time, value_date: time },
+                ],
+                meta: { pagination: { limit: Number(values.limit ?? 20), has_more: true, next_cursor: 'eyJhIjoi...' } },
+              }
+            : { access_token: 'eyJhbGciOiJIUzI1NiJ9.sandbox', token_type: 'Bearer', expires_in: 86400, scope: 'accounts:read balances:read transactions:read' }
   return {
     id,
     environment,

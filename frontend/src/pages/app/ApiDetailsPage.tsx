@@ -7,7 +7,7 @@ const primary =
 const secondary =
   'inline-flex min-h-10 items-center justify-center rounded-lg border border-[#dfe6f2] bg-white px-4 py-2.5 text-xs font-semibold text-[#34445e] hover:bg-blue-50'
 const panel = 'rounded-xl border border-[#dfe6f2] bg-white p-5 sm:p-8'
-const sandbox = '/app/developer-portal?tab=explorer&env=sandbox'
+const sandbox = '/app/sandbox'
 const docs = '/app/developer-portal?tab=documentation&env=sandbox'
 export default function ApiDetailsPage() {
   const { id } = useParams()

@@ -1,3 +1,6 @@
+/**
+ * Detail pages for the catalogue. Paths and shapes mirror backend/openapi/openapi.yaml.
+ */
 export type ApiDetails = {
   id: string
   name: string
@@ -11,201 +14,118 @@ export type ApiDetails = {
   request: Record<string, unknown> | null
   paid: boolean
 }
+
 export const apiDetails: ApiDetails[] = [
   {
-    id: 'transfer-api',
-    name: 'Transfer API',
-    category: 'Payments',
-    summary: 'Move money securely between bank accounts and digital wallets.',
-    overview:
-      'Whether you’re building a fintech app, payroll platform, or e-commerce solution, the Transfer API provides a way to initiate and manage fund transfers from your application.',
-    useCases: [
-      {
-        title: 'Peer-to-Peer Payments',
-        description: 'Send money between users.',
-      },
-      {
-        title: 'Business Disbursements',
-        description: 'Pay vendors, suppliers, and contractors.',
-      },
-      {
-        title: 'Payroll Systems',
-        description: 'Process employee salary payments.',
-      },
-      {
-        title: 'E-commerce Platforms',
-        description: 'Settle merchants and process payouts.',
-      },
-    ],
-    features: [
-      'Initiate single and bulk transfers',
-      'Validate beneficiary details',
-      'Track transaction status',
-      'Receive transaction notifications',
-      'Available in Sandbox and Production',
-      'Support for NGN transactions',
-    ],
-    method: 'POST',
-    path: '/v1/transfers',
-    request: {
-      amount: 25000,
-      currency: 'NGN',
-      beneficiaryAccount: '0123456789',
-      bankCode: '221',
-      reference: 'PAY-102394',
-      narration: 'Test transfer from sandbox',
-    },
-    paid: true,
-  },
-  {
-    id: 'account-information',
+    id: 'accounts-api',
     name: 'Accounts API',
     category: 'Accounts',
-    summary: 'Connect to account information.',
+    summary: 'List the accounts a customer has agreed to share.',
     overview:
-      'Build account views using approved account details, balances, and transaction information.',
+      'Returns only the accounts the customer ticked on the consent screen — never their full portfolio. Account numbers are masked and internal fields (branch, relationship manager, ledger internals) are never exposed. Requires the accounts:read scope.',
     useCases: [
-      {
-        title: 'Account Dashboards',
-        description: 'Display account information.',
-      },
-      { title: 'Budgeting Apps', description: 'Organize transaction history.' },
-      {
-        title: 'Reconciliation',
-        description: 'Compare balances and transactions.',
-      },
-      { title: 'Finance Tools', description: 'Support account reporting.' },
+      { title: 'Account aggregation', description: 'Show a customer all their Stanbic accounts inside your app.' },
+      { title: 'Onboarding', description: 'Confirm a customer holds an account before offering a product.' },
+      { title: 'Account selection', description: 'Let a customer pick which account a feature should use.' },
+      { title: 'Reconciliation', description: 'Match your records to the bank’s account identifiers.' },
     ],
     features: [
-      'Retrieve account details',
-      'Check account balances',
-      'Read transaction history',
-      'Use approved customer access',
+      'GET /api/v1/accounts — every consented account',
+      'GET /api/v1/accounts/{accountId} — one account',
+      'Masked account numbers; no internal bank fields',
+      '404 for any account outside the consent (no probing)',
+      'Per-client rate limit with RateLimit-* headers',
+      'Available in the sandbox with seeded demo customers',
     ],
     method: 'GET',
-    path: '/v1/accounts/balance?accountId=YOUR_ACCOUNT_ID',
-    request: null,
-    paid: true,
-  },
-  {
-    id: 'identity-verification',
-    name: 'Identity Verification API',
-    category: 'Identity & KYC',
-    summary: 'Verify with confidence.',
-    overview:
-      'Support customer onboarding and verification workflows with identity services.',
-    useCases: [
-      { title: 'Onboarding', description: 'Collect verification results.' },
-      {
-        title: 'Customer Profiles',
-        description: 'Check identity information.',
-      },
-      {
-        title: 'Verification Workflows',
-        description: 'Track verification status.',
-      },
-      { title: 'Service Access', description: 'Support identity checks.' },
-    ],
-    features: [
-      'Submit identity details',
-      'Retrieve verification results',
-      'Track verification status',
-      'Test with sandbox data',
-    ],
-    method: 'POST',
-    path: '/v1/identity/verify',
-    request: {
-      customerReference: 'CUSTOMER-001',
-      identityType: 'BVN',
-      identityNumber: 'SANDBOX_TEST_VALUE',
-    },
-    paid: false,
-  },
-  {
-    id: 'account-transfers',
-    name: 'Account Transfers API',
-    category: 'Transfers',
-    summary: 'Enable account-to-account transfers.',
-    overview: 'Create transfer experiences between connected bank accounts.',
-    useCases: [
-      { title: 'Wallet Funding', description: 'Move funds between accounts.' },
-      { title: 'Business Payments', description: 'Support account payouts.' },
-      {
-        title: 'Scheduled Transfers',
-        description: 'Build recurring payment flows.',
-      },
-      { title: 'Transfer Tracking', description: 'Show transaction progress.' },
-    ],
-    features: [
-      'Initiate transfers',
-      'Check transfer status',
-      'Validate recipients',
-      'Use sandbox test data',
-    ],
-    method: 'POST',
-    path: '/v1/transfers/initiate',
-    request: { amount: 25000, currency: 'NGN', reference: 'PAY-102394' },
-    paid: false,
-  },
-  {
-    id: 'card-services',
-    name: 'Cards API',
-    category: 'Cards',
-    summary: 'Build card-powered experiences.',
-    overview:
-      'Integrate card-related capabilities into financial products and services.',
-    useCases: [
-      { title: 'Card Management', description: 'Display card information.' },
-      { title: 'Customer Apps', description: 'Show card status.' },
-      { title: 'Support Tools', description: 'Assist with card enquiries.' },
-      { title: 'Card Workflows', description: 'Build card-related journeys.' },
-    ],
-    features: [
-      'Retrieve card status',
-      'Display card information',
-      'Build card service workflows',
-      'Explore sandbox responses',
-    ],
-    method: 'GET',
-    path: '/v1/cards/status?cardId=YOUR_CARD_ID',
+    path: '/api/v1/accounts',
     request: null,
     paid: false,
   },
   {
-    id: 'lending-services',
-    name: 'Loans API',
-    category: 'Loans',
-    summary: 'Create smarter lending experiences.',
+    id: 'balances-api',
+    name: 'Balances API',
+    category: 'Accounts',
+    summary: 'Available and ledger balances for a consented account.',
     overview:
-      'Build lending products and services using connected banking capabilities.',
+      'Each balance carries a type (available, ledger), amount, currency, credit limit and an as-of timestamp. Amounts are decimal strings — never floats — so nothing is lost in transit. Requires the balances:read scope and an account the customer shared.',
     useCases: [
-      {
-        title: 'Loan Applications',
-        description: 'Support application journeys.',
-      },
-      {
-        title: 'Status Tracking',
-        description: 'Display application progress.',
-      },
-      { title: 'Customer Portals', description: 'Show lending information.' },
-      { title: 'Lending Workflows', description: 'Connect application steps.' },
+      { title: 'Balance widgets', description: 'Show a live balance next to a payment or savings goal.' },
+      { title: 'Affordability checks', description: 'Confirm funds before a customer commits to a purchase plan.' },
+      { title: 'Cash-flow views', description: 'Roll balances across accounts into one picture.' },
+      { title: 'Alerts', description: 'Notify a customer when a balance crosses a threshold.' },
     ],
     features: [
-      'Submit loan applications',
-      'Retrieve application status',
-      'Display lending information',
-      'Test workflows in sandbox',
+      'GET /api/v1/accounts/{accountId}/balances',
+      'Available and ledger balance types',
+      'Decimal-string amounts with currency code',
+      'as_of timestamp on every balance',
+      'Consent and scope checked on every call',
+      'Multi-currency (NGN, USD, GBP demo accounts)',
+    ],
+    method: 'GET',
+    path: '/api/v1/accounts/{accountId}/balances',
+    request: null,
+    paid: false,
+  },
+  {
+    id: 'transactions-api',
+    name: 'Transactions API',
+    category: 'Accounts',
+    summary: 'Paginated, filterable transaction history.',
+    overview:
+      'Cursor-paginated transactions with amount, direction, reference, narration, counterparty, booking and value dates. Filter by date range, direction and sort order. Pass meta.pagination.next_cursor back as cursor for the next page. Requires the transactions:read scope.',
+    useCases: [
+      { title: 'Budgeting apps', description: 'Categorise spending and show trends over time.' },
+      { title: 'Lending decisions', description: 'Assess income and outgoings from real transaction data.' },
+      { title: 'Accounting tools', description: 'Import bank transactions for bookkeeping and reconciliation.' },
+      { title: 'Fraud and anomaly detection', description: 'Flag unusual patterns with the customer’s consent.' },
+    ],
+    features: [
+      'GET /api/v1/accounts/{accountId}/transactions',
+      'Query: limit (1–100), cursor, from, to, type (credit|debit), sort',
+      'Opaque cursor pagination via meta.pagination.next_cursor',
+      'Decimal-string amounts, ISO 8601 dates',
+      'Running balance and other ledger internals withheld',
+      'Consent and scope checked on every call',
+    ],
+    method: 'GET',
+    path: '/api/v1/accounts/{accountId}/transactions?limit=20&type=debit',
+    request: null,
+    paid: false,
+  },
+  {
+    id: 'consent-api',
+    name: 'Consent & Authorization',
+    category: 'Consent',
+    summary: 'How your app obtains — and loses — permission.',
+    overview:
+      'Standard OAuth 2.0 authorization-code flow. Send the customer to /oauth/authorize; they log in and approve on the bank’s own pages; you receive a single-use code and exchange it at /oauth/token for a bearer token bound to that consent. Tokens live 24 hours; consents live 90 days; the customer can revoke at any time and the next call fails with consent_revoked.',
+    useCases: [
+      { title: 'Connect my bank', description: 'The button every fintech needs — one redirect, no credentials handled.' },
+      { title: 'Scoped access', description: 'Ask only for what you need: accounts, balances, transactions.' },
+      { title: 'Customer control', description: 'Access ends when the customer says so, without changing their password.' },
+      { title: 'Blast-radius containment', description: 'A compromised app is deactivated once and every consent under it dies.' },
+    ],
+    features: [
+      'GET /oauth/authorize — start the flow (response_type=code)',
+      'POST /oauth/token — exchange the code (Basic auth: client_id:client_secret)',
+      'Single-use codes, 5-minute expiry',
+      'JWT access tokens bound to one consent, 24-hour lifetime',
+      'Consent re-checked on every API call — revocation is instant',
+      'RFC 6749 error responses',
     ],
     method: 'POST',
-    path: '/v1/loans/applications',
+    path: '/oauth/token',
     request: {
-      customerReference: 'CUSTOMER-001',
-      amount: 100000,
-      currency: 'NGN',
+      grant_type: 'authorization_code',
+      code: '<code from the redirect>',
+      redirect_uri: 'http://localhost:3000/callback',
     },
     paid: false,
   },
 ]
+
 export function findApiDetails(id?: string) {
   return apiDetails.find((api) => api.id === id)
 }

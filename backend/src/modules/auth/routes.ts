@@ -1,13 +1,12 @@
-import { randomUUID } from 'node:crypto';
 import bcrypt from 'bcryptjs';
 import { Router, type Request } from 'express';
-import jwt from 'jsonwebtoken';
 import { z } from 'zod';
 import { config } from '../../config.js';
 import { pool } from '../../lib/db.js';
 import { ApiError, OAuthError } from '../../lib/errors.js';
 import { parse } from '../../lib/validate.js';
 import { consentService, SCOPES } from '../consent/service.js';
+import { issueAccessToken } from './tokens.js';
 
 export const oauthRouter = Router();
 
@@ -137,21 +136,15 @@ oauthRouter.post('/token', async (req, res, next) => {
     const grant = await consentService.consumeAuthorizationCode(body.code, client.id, body.redirect_uri);
     if (!grant) throw new OAuthError(400, 'invalid_grant', 'Authorization code is invalid, expired, or already used');
 
-    const scope = grant.scopes.join(' ');
-    const accessToken = jwt.sign(
-      { client_id: client.client_id, consent_id: grant.consentId, scope },
-      config.JWT_SECRET,
-      { algorithm: 'HS256', subject: grant.customerId, expiresIn: config.ACCESS_TOKEN_TTL_SECONDS, jwtid: randomUUID() },
-    );
+    const token = issueAccessToken({
+      clientId: client.client_id,
+      consentId: grant.consentId,
+      customerId: grant.customerId,
+      scopes: grant.scopes,
+    });
 
     res.setHeader('Cache-Control', 'no-store');
-    res.json({
-      access_token: accessToken,
-      token_type: 'Bearer',
-      expires_in: config.ACCESS_TOKEN_TTL_SECONDS,
-      scope,
-      consent_id: grant.consentId,
-    });
+    res.json({ ...token, consent_id: grant.consentId });
   } catch (err) {
     next(err);
   }

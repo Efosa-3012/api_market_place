@@ -1,102 +1,68 @@
+/**
+ * The catalogue. Every entry here is a real, callable product on the gateway —
+ * see backend/openapi/openapi.yaml. Add an entry only when the endpoint exists.
+ */
 export interface MarketplaceApi {
     id: string
     category: string
     title: string
     description: string
     pricing: 'Free' | 'Paid'
-    authentication: 'OAuth 2.0' | 'API Key'
+    authentication: 'OAuth 2.0'
     popularity: 'Most used' | 'Trending' | 'New'
-    /** Only 'live' products have a working backend in this MVP. */
+    /** Only 'live' products have a working backend. */
     availability: 'live' | 'coming-soon'
+    /** OAuth scope a consent must include to call it. */
+    scope: string
 }
 
 export const marketplaceApis: MarketplaceApi[] = [
     {
-        id: 'transfer-api',
-        category: 'Payments',
-        title: 'Transfer API',
-        description:
-            'Build reliable payment experiences with the Stanbic IBTC Transfer API. Initiate, manage, and track transfers between bank accounts and digital wallets through secure, consent-driven integrations.',
-        pricing: 'Paid',
-        authentication: 'OAuth 2.0',
-        availability: 'coming-soon',
-        popularity: 'Most used',
-    },
-    {
-        id: 'account-information',
+        id: 'accounts-api',
         category: 'Accounts',
-        title: 'Account Information',
+        title: 'Accounts API',
         description:
-            "Read a customer's accounts, balances and transactions with their explicit, revocable consent. Free for licensed third parties under the open banking framework.",
+            "List the accounts a customer has chosen to share, with type, currency, status and a masked account number. The entry point for every account-information integration.",
         pricing: 'Free',
         authentication: 'OAuth 2.0',
         popularity: 'Most used',
         availability: 'live',
+        scope: 'accounts:read',
     },
     {
-        id: 'identity-verification',
-        category: 'Identity',
-        title: 'Verify with confidence',
+        id: 'balances-api',
+        category: 'Accounts',
+        title: 'Balances API',
         description:
-            'Build customer onboarding and verification experiences with identity services.',
-        pricing: 'Free',
-        authentication: 'API Key',
-        availability: 'coming-soon',
-        popularity: 'Trending',
-    },
-    {
-        id: 'account-transfers',
-        category: 'Transfers',
-        title: 'Enable account-to-account transfers',
-        description:
-            'Create seamless transfer experiences through secure banking connections.',
+            'Current available and ledger balances for a consented account. Power balance widgets, affordability checks and cash-flow views.',
         pricing: 'Free',
         authentication: 'OAuth 2.0',
-        availability: 'coming-soon',
-        popularity: 'Trending',
+        popularity: 'Most used',
+        availability: 'live',
+        scope: 'balances:read',
     },
     {
-        id: 'card-services',
-        category: 'Cards',
-        title: 'Build card-powered experiences',
+        id: 'transactions-api',
+        category: 'Accounts',
+        title: 'Transactions API',
         description:
-            'Explore card-related capabilities for your financial products and services.',
-        pricing: 'Free',
-        authentication: 'API Key',
-        availability: 'coming-soon',
-        popularity: 'New',
-    },
-    {
-        id: 'lending-services',
-        category: 'Loans',
-        title: 'Create smarter lending experiences',
-        description:
-            'Build lending products and services using connected banking capabilities.',
+            'Paginated transaction history for a consented account, filterable by date range and direction. Built for budgeting, reconciliation and lending decisions.',
         pricing: 'Free',
         authentication: 'OAuth 2.0',
-        availability: 'coming-soon',
-        popularity: 'New',
-    },
-    {
-        id: 'exchange-rates',
-        category: 'Forex',
-        title: 'Explore foreign exchange rates',
-        description:
-            'Access exchange-rate data for international payment experiences.',
-        pricing: 'Paid',
-        authentication: 'API Key',
-        availability: 'coming-soon',
         popularity: 'Trending',
+        availability: 'live',
+        scope: 'transactions:read',
     },
     {
-        id: 'bank-directory',
-        category: 'Others',
-        title: 'Discover bank information',
+        id: 'consent-api',
+        category: 'Consent',
+        title: 'Consent & Authorization',
         description:
-            'Explore bank information for your payment forms and integrations.',
+            "The OAuth 2.0 authorization-code flow every partner uses to obtain a customer's permission: scoped, time-limited, and revocable by the customer at any moment.",
         pricing: 'Free',
-        authentication: 'API Key',
-        availability: 'coming-soon',
+        authentication: 'OAuth 2.0',
         popularity: 'New',
+        availability: 'live',
+        scope: '—',
     },
 ]

@@ -93,25 +93,25 @@ const setupSteps = [
 
 const updates = [
   {
-    title: 'Transfer API v1.1 is now available',
+    title: 'Transactions API now supports cursor pagination',
     description:
-      'Improved transfer status tracking and new validation features.',
-    date: 'Oct 28, 2024',
-    dateTime: '2024-10-28',
+      'Pass meta.pagination.next_cursor back as cursor to page through history.',
+    date: 'Sep 15, 2026',
+    dateTime: '2026-09-15',
   },
   {
     title: 'Scheduled maintenance',
     description:
       'Sandbox environment maintenance on Sunday, Nov 3, 02:00–04:00.',
-    date: 'Oct 26, 2024',
-    dateTime: '2024-10-26',
+    date: 'Sep 14, 2026',
+    dateTime: '2026-09-14',
   },
   {
     title: 'New documentation experience',
     description:
       'Explore updated guides to help you build your integration.',
-    date: 'Oct 20, 2024',
-    dateTime: '2024-10-20',
+    date: 'Sep 13, 2026',
+    dateTime: '2026-09-13',
   },
 ]
 

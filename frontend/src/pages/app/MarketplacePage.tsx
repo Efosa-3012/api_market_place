@@ -3,18 +3,9 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { marketplaceApis } from '../../data/marketplace'
 import type { MarketplaceApi } from '../../data/marketplace'
 
-const categories = [
-  'Payments',
-  'Accounts',
-  'Identity',
-  'Cards',
-  'Loans',
-  'Forex',
-  'Transfers',
-  'Others',
-]
+const categories = ['Accounts', 'Consent']
 
-const authenticationTypes = ['OAuth 2.0', 'API Key']
+const authenticationTypes = ['OAuth 2.0']
 const popularityOptions = ['Most used', 'Trending', 'New']
 
 interface FilterGroupProps {

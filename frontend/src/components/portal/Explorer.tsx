@@ -167,7 +167,7 @@ export default function Explorer({
       </div>
       <Link
         className="inline-block text-xs text-blue-600"
-        to={`/app/marketplace/${endpoint.api === 'Transfer API' ? 'transfer-api' : endpoint.api === 'Accounts API' ? 'account-information' : 'identity-verification'}`}
+        to={`/app/marketplace/${endpoint.api === 'Accounts API' ? 'accounts-api' : endpoint.api === 'Balances API' ? 'balances-api' : endpoint.api === 'Transactions API' ? 'transactions-api' : 'consent-api'}`}
       >
         View API details →
       </Link>

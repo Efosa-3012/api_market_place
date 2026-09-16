@@ -42,7 +42,14 @@ export function createApp() {
   // inline scripts, and every other route returns JSON, where CSP adds nothing.
   app.use(helmet({ contentSecurityPolicy: false }));
   // Explicit browser allowlist — a bank API must never reflect arbitrary origins.
-  app.use(cors({ origin: config.CORS_ORIGINS, credentials: true }));
+  app.use(
+    cors({
+      origin: config.CORS_ORIGINS,
+      credentials: true,
+      // Let browser clients (the portal sandbox) read the headers partners care about.
+      exposedHeaders: ['X-Correlation-Id', 'RateLimit', 'RateLimit-Policy', 'Retry-After', 'WWW-Authenticate'],
+    }),
+  );
   app.use(express.json({ limit: '100kb' }));
   app.use(express.urlencoded({ extended: false })); // /oauth/token is form-encoded per RFC 6749
 

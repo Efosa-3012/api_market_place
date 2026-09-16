@@ -13,6 +13,8 @@ const schema = z.object({
   AUTH_CODE_TTL_SECONDS: z.coerce.number().default(300),
   CONSENT_TTL_DAYS: z.coerce.number().default(90),
   CONSENT_REQUEST_TTL_MINUTES: z.coerce.number().positive().default(15),
+  // Demo customer whose accounts back developer sandbox tokens (must exist in core banking).
+  SANDBOX_CUSTOMER_ID: z.string().default('customer-demo-001'),
 
   CONSENT_UI_URL: z.string().url().default('http://localhost:3000/consent'),
 
