@@ -99,11 +99,11 @@ const seed: Member[] = [
   },
 ]
 const inputClass =
-  'mt-2 w-full rounded-lg border border-[#dfe6f2] bg-white px-3 py-2.5 text-sm text-[#132238]'
+  'mt-2 w-full rounded-lg border border-line bg-white px-3 py-2.5 text-sm text-ink'
 const primary =
-  'rounded-lg bg-[#0450ff] px-4 py-2.5 text-xs font-semibold text-white hover:bg-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600'
+  'rounded-lg bg-primary px-4 py-2.5 text-xs font-semibold text-white hover:bg-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600'
 const secondary =
-  'rounded-lg border border-[#dfe6f2] bg-white px-4 py-2.5 text-xs font-semibold text-[#465b78] hover:bg-slate-50'
+  'rounded-lg border border-line bg-white px-4 py-2.5 text-xs font-semibold text-body hover:bg-slate-50'
 const avatarColors = [
   'bg-blue-100 text-blue-600',
   'bg-indigo-100 text-indigo-600',
@@ -142,7 +142,7 @@ function Dialog({
         onClose()
       }}
       aria-labelledby="staff-dialog-title"
-      className="fixed inset-0 m-auto max-h-[90dvh] w-[calc(100%_-_2rem)] max-w-lg overflow-auto rounded-2xl bg-white p-6 text-[#132238] shadow-xl backdrop:bg-black/40"
+      className="fixed inset-0 m-auto max-h-[90dvh] w-[calc(100%_-_2rem)] max-w-lg overflow-auto rounded-2xl bg-white p-6 text-ink shadow-xl backdrop:bg-black/40"
     >
       <div className="mb-5 flex items-center justify-between gap-4">
         <h2 id="staff-dialog-title" className="text-lg font-semibold">
@@ -180,11 +180,11 @@ export default function AdminSettingsPage() {
   const active = members.filter((m) => m.status === 'Active').length,
     pending = members.length - active
   return (
-    <div className="min-h-[calc(100dvh-4rem)] min-w-0 bg-[#f7f8fb] p-4 text-[#132238] sm:p-6 xl:p-9">
+    <div className="min-h-[calc(100dvh-4rem)] min-w-0 bg-canvas p-4 text-ink sm:p-6 xl:p-9">
       <header className="mb-5 flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-[28px] font-bold tracking-tight">Settings</h1>
-          <p className="mt-1 max-w-sm text-sm leading-6 text-[#465b78]">
+          <p className="mt-1 max-w-sm text-sm leading-6 text-body">
             Internal access — who at Stanbic IBTC can do
             <br className="hidden sm:block" /> what on this console.
           </p>
@@ -214,13 +214,13 @@ export default function AdminSettingsPage() {
       )}
       <section
         aria-labelledby="staff-heading"
-        className="overflow-hidden rounded-xl border border-[#dfe6f2] bg-white"
+        className="overflow-hidden rounded-xl border border-line bg-white"
       >
         <div className="p-4">
           <h2 id="staff-heading" className="text-sm font-semibold">
             Staff access
           </h2>
-          <p className="mt-1 text-xs text-[#657790]">
+          <p className="mt-1 text-xs text-muted">
             {active} {active === 1 ? 'person has' : 'people have'} access to
             this console
             {pending
@@ -230,7 +230,7 @@ export default function AdminSettingsPage() {
         </div>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[780px] text-left text-xs">
-            <thead className="border-y border-[#e5e9f1] bg-[#f8f8f9] text-[10px] uppercase tracking-wide text-[#526783]">
+            <thead className="border-y border-line bg-canvas text-[11px] uppercase tracking-wide text-body">
               <tr>
                 {[
                   'Member',
@@ -270,19 +270,19 @@ export default function AdminSettingsPage() {
                       <span>
                         {member.name}
                         {member.self && (
-                          <span className="text-[#526783]"> (you)</span>
+                          <span className="text-body"> (you)</span>
                         )}
                       </span>
                     </div>
                   </th>
                   <td className="px-4 py-4">
-                    <span className="inline-block rounded bg-[#f1f5f9] px-2.5 py-1.5 text-[11px]">
+                    <span className="inline-block rounded bg-canvas px-2.5 py-1.5 text-[11px]">
                       {member.role}
                     </span>
                   </td>
                   <td className="px-4 py-4">
                     <span
-                      className={`inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-[11px] ${member.status === 'Active' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-[#526783]'}`}
+                      className={`inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-[11px] ${member.status === 'Active' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-body'}`}
                     >
                       <span
                         aria-hidden="true"
@@ -291,7 +291,7 @@ export default function AdminSettingsPage() {
                       {member.status}
                     </span>
                   </td>
-                  <td className="px-4 py-4 text-[#465b78]">
+                  <td className="px-4 py-4 text-body">
                     {member.status === 'Invited'
                       ? `Invited ${dateLabel(member.invitedAt!)}`
                       : member.lastActive}
@@ -337,12 +337,12 @@ export default function AdminSettingsPage() {
       </section>
       <section
         aria-labelledby="roles-heading"
-        className="mt-4 rounded-xl border border-[#dfe6f2] bg-white p-6"
+        className="mt-4 rounded-xl border border-line bg-white p-6"
       >
         <h2 id="roles-heading" className="text-sm font-semibold">
           What each role can do
         </h2>
-        <p className="mt-1 text-xs text-[#657790]">
+        <p className="mt-1 text-xs text-muted">
           Reference for what to grant when inviting someone.
         </p>
         <div className="mt-5 grid gap-4 sm:grid-cols-2 2xl:grid-cols-4 xl:grid-cols-4">
@@ -353,12 +353,12 @@ export default function AdminSettingsPage() {
             >
               <div
                 aria-hidden="true"
-                className={`mb-3 grid size-7 place-items-center rounded-md text-lg ${['bg-blue-600 text-white', 'bg-emerald-500 text-white', 'bg-purple-500 text-white', 'bg-slate-200 text-slate-600'][index]}`}
+                className={`mb-3 grid size-7 place-items-center rounded-lg text-lg ${['bg-blue-600 text-white', 'bg-emerald-500 text-white', 'bg-purple-500 text-white', 'bg-slate-200 text-slate-600'][index]}`}
               >
                 {role.icon}
               </div>
               <h3 className="text-sm font-semibold">{role.name}</h3>
-              <p className="mt-1 text-xs leading-5 text-[#657790]">
+              <p className="mt-1 text-xs leading-5 text-muted">
                 {role.description}
               </p>
             </article>
@@ -497,7 +497,7 @@ function StaffForm({
         if (problem) setError(problem)
       }}
     >
-      <label className="block text-xs font-medium text-[#526783]">
+      <label className="block text-xs font-medium text-body">
         Full name
         <input
           autoFocus={!initial}
@@ -512,7 +512,7 @@ function StaffForm({
           className={inputClass}
         />
       </label>
-      <label className="block text-xs font-medium text-[#526783]">
+      <label className="block text-xs font-medium text-body">
         Work email
         <input
           type="email"
@@ -527,7 +527,7 @@ function StaffForm({
           className={inputClass}
         />
       </label>
-      <label className="block text-xs font-medium text-[#526783]">
+      <label className="block text-xs font-medium text-body">
         Console role
         <select
           autoFocus={Boolean(initial)}
@@ -540,7 +540,7 @@ function StaffForm({
           ))}
         </select>
       </label>
-      <p className="rounded-lg bg-blue-50 p-3 text-xs leading-5 text-[#526783]">
+      <p className="rounded-lg bg-blue-50 p-3 text-xs leading-5 text-body">
         {roles.find((r) => r.name === role)?.description}
       </p>
       {error && (

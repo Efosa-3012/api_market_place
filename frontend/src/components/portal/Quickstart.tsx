@@ -32,7 +32,7 @@ export default function Quickstart({ summary }: { summary: PortalSummary | null 
       cta: { label: 'Go to My Apps', to: '/app/my-apis' },
       body: (
         <p>
-          You get a <code className="rounded bg-[#f1f4f9] px-1 py-0.5 font-mono text-[11px]">client_id</code> and a
+          You get a <code className="rounded bg-canvas px-1 py-0.5 font-mono text-xs">client_id</code> and a
           secret. The secret is shown once and stored only as a hash — if you lose it, rotate rather than recover.
           Customers grant consent to an app, never to you directly.
         </p>
@@ -73,7 +73,7 @@ export default function Quickstart({ summary }: { summary: PortalSummary | null 
       body: (
         <p>
           Every request your apps make is recorded with a{' '}
-          <code className="rounded bg-[#f1f4f9] px-1 py-0.5 font-mono text-[11px]">correlation_id</code>. It comes back
+          <code className="rounded bg-canvas px-1 py-0.5 font-mono text-xs">correlation_id</code>. It comes back
           on every response and in every error — quote it when you raise a support request and we can find the exact
           call.
         </p>
@@ -101,31 +101,31 @@ export default function Quickstart({ summary }: { summary: PortalSummary | null 
                 {index < steps.length - 1 && (
                   <span
                     aria-hidden="true"
-                    className={`absolute bottom-2 left-[13px] top-8 w-px ${step.done ? 'bg-emerald-300' : 'bg-[#e1e8f2]'}`}
+                    className={`absolute bottom-2 left-[13px] top-8 w-px ${step.done ? 'bg-emerald-300' : 'bg-line'}`}
                   />
                 )}
                 <span
                   aria-hidden="true"
-                  className={`z-10 grid size-7 shrink-0 place-items-center rounded-full text-[11px] font-semibold ${
+                  className={`z-10 grid size-7 shrink-0 place-items-center rounded-full text-xs font-semibold ${
                     step.done
                       ? 'bg-emerald-500 text-white'
-                      : 'border border-[#d6deea] bg-white text-[#65758e]'
+                      : 'border border-line bg-white text-muted'
                   }`}
                 >
                   {step.done ? '✓' : index + 1}
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-3">
-                    <h3 className="text-sm font-semibold text-[#142033]">{step.title}</h3>
+                    <h3 className="text-sm font-semibold text-ink">{step.title}</h3>
                     {step.done && (
-                      <span className="text-[11px] font-medium text-emerald-700">Done</span>
+                      <span className="text-xs font-medium text-emerald-700">Done</span>
                     )}
                   </div>
-                  <div className="mt-2 text-xs leading-6 text-[#465b78]">{step.body}</div>
+                  <div className="mt-2 text-xs leading-6 text-body">{step.body}</div>
                   {step.cta && (
                     <Link
                       to={step.cta.to}
-                      className="mt-3 inline-flex min-h-9 items-center rounded-lg border border-[#dfe6f0] bg-white px-3 text-xs font-semibold text-[#405371] hover:bg-blue-50"
+                      className="mt-3 inline-flex min-h-9 items-center rounded-lg border border-line bg-white px-3 text-xs font-semibold text-body hover:bg-blue-50"
                     >
                       {step.cta.label} →
                     </Link>
@@ -141,11 +141,11 @@ export default function Quickstart({ summary }: { summary: PortalSummary | null 
           subtitle="A customer can withdraw access at any moment, and it takes effect on your very next call."
           action={hasHandledRevocation ? <Chip tone="ok">Tried it</Chip> : <Chip tone="warn">Not tried yet</Chip>}
         >
-          <p className="text-xs leading-6 text-[#465b78]">
+          <p className="text-xs leading-6 text-body">
             Consent is not permanent. When a customer revokes in their banking app, your token keeps its shape and
             its expiry — but the gateway re-checks the consent on every request, so the next call returns{' '}
             <strong>403</strong> with the code{' '}
-            <code className="rounded bg-[#f1f4f9] px-1 py-0.5 font-mono text-[11px]">consent_revoked</code>. Your
+            <code className="rounded bg-canvas px-1 py-0.5 font-mono text-xs">consent_revoked</code>. Your
             integration should treat that as "ask the customer to reconnect", not as an outage.
           </p>
           <div className="mt-4">
@@ -162,14 +162,14 @@ export default function Quickstart({ summary }: { summary: PortalSummary | null 
 }`}
             />
           </div>
-          <p className="mt-4 text-xs leading-6 text-[#465b78]">
+          <p className="mt-4 text-xs leading-6 text-body">
             You can trigger this on demand: the Sandbox has a <strong>Revoke consent</strong> control that withdraws
             your sandbox consent, so you can watch a working call start failing and build the recovery path before
             you ever touch a real customer.
           </p>
           <Link
             to="/app/sandbox"
-            className="mt-4 inline-flex min-h-9 items-center rounded-lg border border-[#dfe6f0] bg-white px-3 text-xs font-semibold text-[#405371] hover:bg-blue-50"
+            className="mt-4 inline-flex min-h-9 items-center rounded-lg border border-line bg-white px-3 text-xs font-semibold text-body hover:bg-blue-50"
           >
             Simulate a revocation →
           </Link>
@@ -178,7 +178,7 @@ export default function Quickstart({ summary }: { summary: PortalSummary | null 
 
       <aside className="flex min-w-0 flex-col gap-5">
         <Panel title="How the live flow works" subtitle="What replaces the sandbox token in production.">
-          <ol className="flex flex-col gap-3 text-xs leading-5 text-[#465b78]">
+          <ol className="flex flex-col gap-3 text-xs leading-5 text-body">
             {[
               ['Send the customer to /oauth/authorize', 'with your client_id, redirect_uri and scopes.'],
               ['They log in on the bank’s page', 'You never see their credentials.'],
@@ -187,11 +187,11 @@ export default function Quickstart({ summary }: { summary: PortalSummary | null 
               ['Exchange it at /oauth/token', 'Server-side, with your client secret.'],
             ].map(([title, detail], i) => (
               <li key={title} className="flex gap-3">
-                <span className="mt-0.5 grid size-5 shrink-0 place-items-center rounded-full bg-[#eef2f8] text-[10px] font-semibold text-[#465b78]">
+                <span className="mt-0.5 grid size-5 shrink-0 place-items-center rounded-full bg-canvas text-xs font-semibold text-body">
                   {i + 1}
                 </span>
                 <span>
-                  <strong className="font-medium text-[#142033]">{title}</strong>
+                  <strong className="font-medium text-ink">{title}</strong>
                   <br />
                   {detail}
                 </span>

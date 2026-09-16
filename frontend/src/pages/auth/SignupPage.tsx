@@ -207,7 +207,7 @@ export default function SignupPage() {
   }
 
   const buttonClass =
-    'min-h-10 cursor-pointer rounded-lg bg-[#0450ff] px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#003bd0] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600'
+    'min-h-10 cursor-pointer rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600'
 
   return (
     <SignupLayout>
@@ -220,7 +220,7 @@ export default function SignupPage() {
         {headings[step].title}
       </h1>
 
-      <p className="mt-2 text-sm leading-5 text-[#58708f]">
+      <p className="mt-2 text-sm leading-5 text-muted">
         {headings[step].description}
       </p>
 
@@ -246,7 +246,7 @@ export default function SignupPage() {
             ref={errorRef}
             role="alert"
             tabIndex={-1}
-            className="mt-4 rounded-md bg-red-50 p-3 text-sm leading-5 text-red-700 outline-none focus-visible:ring-2 focus-visible:ring-red-600"
+            className="mt-4 rounded-lg bg-red-50 p-3 text-sm leading-5 text-red-700 outline-none focus-visible:ring-2 focus-visible:ring-red-600"
           >
             {error}
           </p>
@@ -261,7 +261,7 @@ export default function SignupPage() {
             <button
               type="button"
               onClick={handleBack}
-              className="min-h-10 cursor-pointer rounded-lg bg-[#eeeeef] px-5 text-sm font-medium text-[#465b78] hover:bg-gray-200 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600"
+              className="min-h-10 cursor-pointer rounded-lg bg-line px-5 text-sm font-medium text-body hover:bg-gray-200 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600"
             >
               Back
             </button>
@@ -279,7 +279,7 @@ export default function SignupPage() {
         </div>
 
         {step === 1 && (
-          <p className="mt-3 text-center text-sm text-[#003bce]">
+          <p className="mt-3 text-center text-sm text-primary-hover">
             Already have an account?{' '}
             <Link
               to="/login"
@@ -310,14 +310,14 @@ export default function SignupPage() {
 
         <h2
           id="signup-success-title"
-          className="text-2xl font-semibold text-[#151c2d]"
+          className="text-2xl font-semibold text-ink"
         >
           Registration successful
         </h2>
 
         <p
           id="signup-success-description"
-          className="mt-3 text-sm leading-6 text-[#58708f]"
+          className="mt-3 text-sm leading-6 text-muted"
         >
           You're signed in. Register your first app to get API credentials.
         </p>

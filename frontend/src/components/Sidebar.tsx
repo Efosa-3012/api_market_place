@@ -68,8 +68,8 @@ export default function Sidebar({ onNavigate }: SidebarProps) {
             className={({ isActive }) =>
               `${linkClass} ${
                 isActive
-                  ? 'bg-[#eef5ff] font-medium text-[#1010ff]'
-                  : 'text-[#465b78] hover:bg-[#f5f8fc]'
+                  ? 'bg-tint font-medium text-primary'
+                  : 'text-body hover:bg-canvas'
               }`
             }
           >
@@ -78,12 +78,12 @@ export default function Sidebar({ onNavigate }: SidebarProps) {
           </NavLink>
         ))}
 
-        <div className="my-3 border-t border-[#edf0f5]" />
+        <div className="my-3 border-t border-canvas" />
 
         <a
           href="/#support"
           onClick={onNavigate}
-          className={`${linkClass} text-[#465b78] hover:bg-[#f5f8fc]`}
+          className={`${linkClass} text-body hover:bg-canvas`}
         >
           <NavIcon path="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18M9 9a3 3 0 0 1 6 0c0 2-3 2-3 4M12 16v.5" />
           Support
@@ -95,8 +95,8 @@ export default function Sidebar({ onNavigate }: SidebarProps) {
           className={({ isActive }) =>
             `${linkClass} ${
               isActive
-                ? 'bg-[#eef5ff] font-medium text-[#1010ff]'
-                : 'text-[#465b78] hover:bg-[#f5f8fc]'
+                ? 'bg-tint font-medium text-primary'
+                : 'text-body hover:bg-canvas'
             }`
           }
         >
@@ -105,8 +105,8 @@ export default function Sidebar({ onNavigate }: SidebarProps) {
         </NavLink>
       </nav>
 
-      <div className="mt-8 rounded-xl bg-gradient-to-br from-[#dceaff] to-[#edf5ff] p-5">
-        <p className="text-sm font-bold leading-5 text-[#1010ff]">
+      <div className="mt-8 rounded-xl bg-gradient-to-br from-tint to-tint p-5">
+        <p className="text-sm font-bold leading-5 text-primary">
           Build
           <br />
           Innovate
@@ -114,14 +114,14 @@ export default function Sidebar({ onNavigate }: SidebarProps) {
           Transform
         </p>
 
-        <p className="mt-2 text-xs text-[#174cba]">
+        <p className="mt-2 text-xs text-primary-hover">
           with Stanbic IBTC APIs
         </p>
 
         <Link
           to="/app/developer-portal?tab=documentation"
           onClick={onNavigate}
-          className="mt-4 flex min-h-9 items-center justify-center gap-2 rounded-xl border border-blue-400 bg-white px-2 text-xs text-[#1010ff] hover:bg-blue-50"
+          className="mt-4 flex min-h-9 items-center justify-center gap-2 rounded-xl border border-blue-400 bg-white px-2 text-xs text-primary hover:bg-blue-50"
         >
           View Documentation <span aria-hidden="true">→</span>
         </Link>
@@ -130,15 +130,15 @@ export default function Sidebar({ onNavigate }: SidebarProps) {
       <Link
         to="/app/settings"
         onClick={onNavigate}
-        className="mt-4 flex items-center gap-3 border-t border-[#edf0f5] px-2 py-4"
+        className="mt-4 flex items-center gap-3 border-t border-canvas px-2 py-4"
       >
-        <span className="grid size-8 place-items-center rounded-full border border-[#e1e8f1] bg-[#f8fafc] text-xs font-medium uppercase">
+        <span className="grid size-8 place-items-center rounded-full border border-line bg-canvas text-xs font-medium uppercase">
           {(developer?.name ?? 'D').charAt(0)}
         </span>
 
         <span className="min-w-0 text-xs leading-4">
           <span className="block truncate font-medium">{developer?.name ?? 'Developer'}</span>
-          <span className="block truncate text-[#8b9bb2]">{developer?.company ?? 'My Workspace'}</span>
+          <span className="block truncate text-faint">{developer?.company ?? 'My Workspace'}</span>
         </span>
       </Link>
     </div>

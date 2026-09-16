@@ -62,7 +62,7 @@ export default function Activity({
           title="Traffic by app"
           subtitle={`Calls per registered app, ${windowLabel.toLowerCase()}.`}
           footer={
-            <Link to="/app/my-apis" className="font-medium text-[#0450ff] hover:underline">
+            <Link to="/app/my-apis" className="font-medium text-primary hover:underline">
               Manage apps →
             </Link>
           }
@@ -78,10 +78,10 @@ export default function Activity({
                 <li key={app.app_id} className="min-w-0">
                   <div className="flex flex-wrap items-baseline justify-between gap-2">
                     <span className="flex min-w-0 items-center gap-2">
-                      <span className="truncate text-sm font-medium text-[#142033]">{app.name}</span>
+                      <span className="truncate text-sm font-medium text-ink">{app.name}</span>
                       {app.status === 'deactivated' && <Chip tone="bad">Deactivated</Chip>}
                     </span>
-                    <span className="shrink-0 text-xs tabular-nums text-[#65758e]">
+                    <span className="shrink-0 text-xs tabular-nums text-muted">
                       {app.calls.toLocaleString()} calls
                       {app.errors > 0 && <span className="text-red-600"> · {app.errors} failed</span>}
                     </span>
@@ -89,7 +89,7 @@ export default function Activity({
                   <div className="mt-2">
                     <ShareBar fraction={app.calls / busiest} tone={app.status === 'deactivated' ? 'neutral' : 'accent'} />
                   </div>
-                  <p className="mt-1.5 font-mono text-[10px] text-[#8ea3c0]">{app.client_id}</p>
+                  <p className="mt-1.5 font-mono text-xs text-faint">{app.client_id}</p>
                 </li>
               ))}
             </ul>
@@ -101,7 +101,7 @@ export default function Activity({
           subtitle="The last calls your apps made, newest first."
           padded={false}
           footer={
-            <Link to="/app/developer-portal?tab=logs" className="font-medium text-[#0450ff] hover:underline">
+            <Link to="/app/developer-portal?tab=logs" className="font-medium text-primary hover:underline">
               Open full logs →
             </Link>
           }
@@ -114,7 +114,7 @@ export default function Activity({
                 action={
                   <Link
                     to="/app/sandbox"
-                    className="inline-flex min-h-9 items-center rounded-lg border border-[#dfe6f0] bg-white px-3 text-xs font-semibold text-[#405371] hover:bg-blue-50"
+                    className="inline-flex min-h-9 items-center rounded-lg border border-line bg-white px-3 text-xs font-semibold text-body hover:bg-blue-50"
                   >
                     Open the Sandbox →
                   </Link>
@@ -122,18 +122,18 @@ export default function Activity({
               />
             </div>
           ) : (
-            <ul className="divide-y divide-[#eef2f8]">
+            <ul className="divide-y divide-canvas">
               {recent.slice(0, 7).map((log) => (
                 <li key={log.id} className="flex items-center gap-3 px-5 py-3">
                   <StatusCode code={log.status_code} />
                   <MethodBadge method={log.method} />
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate font-mono text-[11px] text-[#142033]">{log.path}</span>
+                    <span className="block truncate font-mono text-xs text-ink">{log.path}</span>
                     {log.error_code && (
-                      <span className="text-[10px] text-red-700">{describeError(log.error_code)}</span>
+                      <span className="text-xs text-red-700">{describeError(log.error_code)}</span>
                     )}
                   </span>
-                  <span className="shrink-0 text-right text-[10px] tabular-nums text-[#8ea3c0]">
+                  <span className="shrink-0 text-right text-xs tabular-nums text-faint">
                     <span className="block">{relativeTime(log.created_at)}</span>
                     <span className="block">{log.duration_ms}ms</span>
                   </span>

@@ -1,1 +1,49 @@
 @import "tailwindcss";
+
+/*
+ * Design tokens. Every colour in the app resolves to one of these; the three
+ * surfaces (developer portal, bank pages, staff console) differ by header
+ * colour and voice, not by palette or component shape.
+ *
+ * Tailwind v4 turns each --color-* into utilities: bg-primary, text-body,
+ * border-line, hover:bg-primary-hover, placeholder:text-faint, and so on.
+ */
+@theme {
+  /* Action */
+  --color-primary: #0450ff;
+  --color-primary-hover: #003bd0;
+
+  /* Bank navy — the customer-facing surface */
+  --color-bank: #0b2858;
+  --color-bank-hover: #0f3a7d;
+
+  /* Text */
+  --color-ink: #142033;   /* headings */
+  --color-body: #465b78;  /* body copy */
+  --color-muted: #58708f; /* secondary copy, labels */
+  --color-faint: #8ea3c0; /* placeholders, timestamps, dividers text */
+
+  /* Surfaces */
+  --color-surface: #ffffff;
+  --color-canvas: #f7f9fc; /* page background, input fills */
+  --color-tint: #eef5ff;   /* selected / active emphasis */
+  --color-line: #e3e9f2;   /* every border and rule */
+
+  /* Shape */
+  --radius-control: 0.5rem;   /* buttons, inputs, chips */
+  --radius-card: 0.875rem;    /* panels, dialogs */
+
+  --font-sans: Arial, Helvetica, sans-serif;
+}
+
+/* Base: readable defaults so pages never have to set these. */
+html {
+  color: var(--color-ink);
+  background: var(--color-canvas);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Native <dialog> backdrop, used by every modal in the app. */
+dialog::backdrop {
+  background: rgb(15 23 42 / 0.45);
+}

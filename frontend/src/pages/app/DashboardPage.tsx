@@ -205,22 +205,22 @@ export default function DashboardPage() {
   )
 
   const panelClass =
-    'rounded-2xl border border-[#e3e9f2] bg-white shadow-sm'
+    'rounded-2xl border border-line bg-white shadow-sm'
 
   const focusClass =
     'focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600'
 
   return (
-    <div className="min-h-[calc(100dvh-64px)] bg-[#f7f9fc] p-4 sm:p-6 lg:p-8">
+    <div className="min-h-[calc(100dvh-64px)] bg-canvas p-4 sm:p-6 lg:p-8">
       <div className="mx-auto max-w-[1400px] space-y-4">
         {/* Workspace overview */}
         <section
           aria-labelledby="dashboard-title"
-          className="flex flex-col gap-5 rounded-lg bg-gradient-to-r from-[#0b1e2c] via-[#073db9] to-[#1054ff] px-6 py-6 text-white xl:flex-row xl:items-center xl:justify-between"
+          className="flex flex-col gap-5 rounded-lg bg-gradient-to-r from-ink via-primary-hover to-primary px-6 py-6 text-white xl:flex-row xl:items-center xl:justify-between"
         >
           <div>
             <div className="mb-2 flex items-center gap-2">
-              <span className="bg-white/10 px-2 py-1 text-[10px] uppercase tracking-wider">
+              <span className="bg-white/10 px-2 py-1 text-xs uppercase tracking-wider">
                 Workspace overview
               </span>
 
@@ -244,7 +244,7 @@ export default function DashboardPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            <span className="inline-flex min-h-8 items-center gap-2 rounded-md border border-white/40 px-3 text-xs">
+            <span className="inline-flex min-h-8 items-center gap-2 rounded-lg border border-white/40 px-3 text-xs">
               <span
                 aria-hidden="true"
                 className="size-2 rounded-full bg-amber-300"
@@ -254,7 +254,7 @@ export default function DashboardPage() {
 
             <Link
               to="/app/settings"
-              className={`inline-flex min-h-9 items-center justify-center gap-2 rounded-md bg-white px-3 text-xs font-medium text-[#33445d] hover:bg-blue-50 ${focusClass}`}
+              className={`inline-flex min-h-9 items-center justify-center gap-2 rounded-lg bg-white px-3 text-xs font-medium text-body hover:bg-blue-50 ${focusClass}`}
             >
               Complete verification
               <span aria-hidden="true">→</span>
@@ -272,7 +272,7 @@ export default function DashboardPage() {
               key={card.label}
               className={`${panelClass} flex min-h-40 flex-col p-5`}
             >
-              <h2 className="text-xs text-[#465b78]">
+              <h2 className="text-xs text-body">
                 {card.label}
               </h2>
 
@@ -284,7 +284,7 @@ export default function DashboardPage() {
                 className={`mt-2 min-h-4 text-xs ${
                   card.positive
                     ? 'text-emerald-600'
-                    : 'text-[#8190a7]'
+                    : 'text-muted'
                 }`}
               >
                 {card.detail}
@@ -293,7 +293,7 @@ export default function DashboardPage() {
               <div className="mt-auto pt-4">
                 <Link
                   to={card.to}
-                  className={`flex min-h-9 items-center gap-1 border-t border-[#edf0f5] pt-3 text-xs font-medium text-[#0450ff] hover:underline ${focusClass}`}
+                  className={`flex min-h-9 items-center gap-1 border-t border-canvas pt-3 text-xs font-medium text-primary hover:underline ${focusClass}`}
                 >
                   {card.linkLabel}
                   <span aria-hidden="true">→</span>
@@ -318,22 +318,22 @@ export default function DashboardPage() {
                   Get your first integration up and running
                 </span>
 
-                <span className="mt-1 block text-xs font-normal text-[#465b78]">
+                <span className="mt-1 block text-xs font-normal text-body">
                   Follow these steps to start building with our APIs.
                 </span>
               </span>
 
-              <span className="flex flex-wrap items-center gap-3 text-xs font-normal text-[#465b78]">
+              <span className="flex flex-wrap items-center gap-3 text-xs font-normal text-body">
                 <span>
                   {completedSteps} of {setupSteps.length} steps complete
                 </span>
 
                 <span
                   aria-hidden="true"
-                  className="h-2 w-28 overflow-hidden rounded-full bg-[#edf2f8]"
+                  className="h-2 w-28 overflow-hidden rounded-full bg-canvas"
                 >
                   <span
-                    className="block h-full rounded-full bg-[#0450ff]"
+                    className="block h-full rounded-full bg-primary"
                     style={{ width: `${progress}%` }}
                   />
                 </span>
@@ -357,11 +357,11 @@ export default function DashboardPage() {
           </h2>
 
           <div id="integration-checklist" hidden={!setupOpen}>
-            <ol className="mx-5 border-t border-[#edf0f5]">
+            <ol className="mx-5 border-t border-canvas">
               {steps.map((step) => (
                 <li
                   key={step.title}
-                  className="flex flex-col gap-3 border-b border-[#edf0f5] py-4 last:border-b-0 sm:flex-row sm:items-center sm:justify-between"
+                  className="flex flex-col gap-3 border-b border-canvas py-4 last:border-b-0 sm:flex-row sm:items-center sm:justify-between"
                 >
                   <div className="flex items-start gap-3">
                     <span
@@ -369,7 +369,7 @@ export default function DashboardPage() {
                       className={`mt-0.5 grid size-6 shrink-0 place-items-center rounded-full text-xs ${
                         step.complete
                           ? 'bg-emerald-50 text-emerald-600'
-                          : 'border border-[#d7e0ed] text-[#8b9bb2]'
+                          : 'border border-line text-faint'
                       }`}
                     >
                       {step.complete ? '✓' : '○'}
@@ -383,7 +383,7 @@ export default function DashboardPage() {
                         {step.title}
                       </p>
 
-                      <p className="mt-1 text-xs leading-5 text-[#58708f]">
+                      <p className="mt-1 text-xs leading-5 text-muted">
                         {step.description}
                       </p>
                     </div>
@@ -391,7 +391,7 @@ export default function DashboardPage() {
 
                   <Link
                     to={step.to}
-                    className={`shrink-0 rounded-md px-2 py-2 text-xs font-medium text-[#0450ff] hover:bg-blue-50 ${focusClass}`}
+                    className={`shrink-0 rounded-lg px-2 py-2 text-xs font-medium text-primary hover:bg-blue-50 ${focusClass}`}
                   >
                     {step.action} <span aria-hidden="true">→</span>
                   </Link>
@@ -416,7 +416,7 @@ export default function DashboardPage() {
                   What’s new
                 </h2>
 
-                <p className="mt-1 text-xs text-[#465b78]">
+                <p className="mt-1 text-xs text-body">
                   Latest updates from Stanbic IBTC APIs.
                 </p>
               </div>
@@ -431,13 +431,13 @@ export default function DashboardPage() {
                 strokeWidth="1.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                className="shrink-0 text-[#8190a7]"
+                className="shrink-0 text-muted"
               >
                 <path d="M4 10v4h4l8 4V6l-8 4H4ZM8 14l2 6M20 8l2-1M20 12h2M20 16l2 1" />
               </svg>
             </div>
 
-            <ul className="mt-3 divide-y divide-[#edf0f5]">
+            <ul className="mt-3 divide-y divide-canvas">
               {updates.map((update) => (
                 <li
                   key={update.title}
@@ -445,7 +445,7 @@ export default function DashboardPage() {
                 >
                   <span
                     aria-hidden="true"
-                    className="grid size-11 shrink-0 place-items-center rounded-lg bg-gradient-to-br from-[#111827] via-[#26395a] to-[#ef4fbc] font-mono text-xs text-white"
+                    className="grid size-11 shrink-0 place-items-center rounded-lg bg-gradient-to-br from-ink via-body to-[#ef4fbc] font-mono text-xs text-white"
                   >
                     {'</>'}
                   </span>
@@ -462,13 +462,13 @@ export default function DashboardPage() {
 
                       <time
                         dateTime={update.dateTime}
-                        className="shrink-0 text-[11px] leading-5 text-[#8190a7]"
+                        className="shrink-0 text-xs leading-5 text-muted"
                       >
                         {update.date}
                       </time>
                     </div>
 
-                    <p className="mt-1 text-xs leading-5 text-[#465b78]">
+                    <p className="mt-1 text-xs leading-5 text-body">
                       {update.description}
                     </p>
                   </div>
@@ -489,7 +489,7 @@ export default function DashboardPage() {
               Resources
             </h2>
 
-            <p className="mt-1 text-xs text-[#465b78]">
+            <p className="mt-1 text-xs text-body">
               Quick links to help you build.
             </p>
 
@@ -498,7 +498,7 @@ export default function DashboardPage() {
                 <Link
                   key={resource.title}
                   to={resource.to}
-                  className={`flex items-center gap-3 rounded-xl border border-[#edf0f5] p-3 hover:border-blue-200 hover:bg-blue-50/40 ${focusClass}`}
+                  className={`flex items-center gap-3 rounded-xl border border-canvas p-3 hover:border-blue-200 hover:bg-blue-50/40 ${focusClass}`}
                 >
                   <span
                     className={`grid size-10 shrink-0 place-items-center rounded-xl ${resource.color}`}
@@ -511,7 +511,7 @@ export default function DashboardPage() {
                       {resource.title}
                     </h3>
 
-                    <p className="mt-1 text-xs leading-4 text-[#58708f]">
+                    <p className="mt-1 text-xs leading-4 text-muted">
                       {resource.description}
                     </p>
                   </div>
@@ -524,7 +524,7 @@ export default function DashboardPage() {
                     fill="none"
                     stroke="currentColor"
                     strokeWidth="1.6"
-                    className="shrink-0 text-[#8b9bb2]"
+                    className="shrink-0 text-faint"
                   >
                     <path d="m9 6 6 6-6 6" />
                   </svg>

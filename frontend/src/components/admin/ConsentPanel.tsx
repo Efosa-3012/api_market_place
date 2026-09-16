@@ -55,21 +55,21 @@ export default function ConsentPanel({ consents }: { consents: ConsentBreakdown 
             {ORDER.filter((status) => (counts.get(status) ?? 0) > 0 || status === 'authorised').map((status) => (
               <div key={status} className="flex items-center gap-2">
                 <span aria-hidden="true" className={`size-2 shrink-0 rounded-full ${STATUS_STYLE[status].dot}`} />
-                <dt className="min-w-0 truncate text-[11px] text-[#65758e]">{STATUS_STYLE[status].label}</dt>
-                <dd className="ml-auto text-xs font-semibold tabular-nums text-[#142033]">
+                <dt className="min-w-0 truncate text-[11px] text-muted">{STATUS_STYLE[status].label}</dt>
+                <dd className="ml-auto text-xs font-semibold tabular-nums text-ink">
                   {counts.get(status) ?? 0}
                 </dd>
               </div>
             ))}
           </dl>
-          <p className="mt-4 text-[11px] leading-5 text-[#8ea3c0]">
+          <p className="mt-4 text-[11px] leading-5 text-faint">
             {consents.total} consents on record. {revoked > 0 ? `${revoked} were withdrawn — ` : ''}
             a revoked consent stops the partner on its very next call, with no token to invalidate.
           </p>
         </div>
 
-        <div className="border-t border-[#eef2f8] pt-4">
-          <h3 className="text-xs font-semibold text-[#142033]">Latest decisions</h3>
+        <div className="border-t border-canvas pt-4">
+          <h3 className="text-xs font-semibold text-ink">Latest decisions</h3>
           {consents.recent.length === 0 ? (
             <div className="mt-3">
               <EmptyState title="No consents yet" message="Customer decisions appear here as soon as they are made." />
@@ -86,11 +86,11 @@ export default function ConsentPanel({ consents }: { consents: ConsentBreakdown 
                       className={`mt-1.5 size-2 shrink-0 rounded-full ${STATUS_STYLE[consent.status].dot}`}
                     />
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-xs text-[#142033]">
+                      <p className="truncate text-xs text-ink">
                         <span className="font-medium">{consent.client_name}</span>
-                        {consent.sandbox && <span className="ml-1.5 text-[10px] text-[#8ea3c0]">sandbox</span>}
+                        {consent.sandbox && <span className="ml-1.5 text-[11px] text-faint">sandbox</span>}
                       </p>
-                      <p className="mt-0.5 text-[11px] leading-4 text-[#65758e]">
+                      <p className="mt-0.5 text-[11px] leading-4 text-muted">
                         {ended
                           ? revokedByLabel(consent.revoked_by)
                           : consent.status === 'authorised'
@@ -98,7 +98,7 @@ export default function ConsentPanel({ consents }: { consents: ConsentBreakdown 
                             : STATUS_STYLE[consent.status].label}
                       </p>
                     </div>
-                    <span className="shrink-0 text-[10px] tabular-nums text-[#8ea3c0]">{relativeTime(when)}</span>
+                    <span className="shrink-0 text-[11px] tabular-nums text-faint">{relativeTime(when)}</span>
                   </li>
                 )
               })}

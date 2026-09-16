@@ -49,7 +49,7 @@ export default function Documentation({
               key={doc.id}
               onClick={() => setSelected(doc.id)}
               aria-current={current?.id === doc.id ? 'page' : undefined}
-              className={`block w-full rounded-lg px-3 py-2 text-left text-xs ${current?.id === doc.id ? 'bg-blue-50 text-blue-600' : 'text-[#526783] hover:bg-slate-50'}`}
+              className={`block w-full rounded-lg px-3 py-2 text-left text-xs ${current?.id === doc.id ? 'bg-blue-50 text-blue-600' : 'text-body hover:bg-slate-50'}`}
             >
               {doc.title}
             </button>
@@ -65,7 +65,7 @@ export default function Documentation({
                 ✎ Edit page
               </Button>
             </div>
-            <p className="whitespace-pre-wrap text-sm leading-7 text-[#526783]">
+            <p className="whitespace-pre-wrap text-sm leading-7 text-body">
               {current.body}
             </p>
             <Notice>
@@ -80,7 +80,7 @@ export default function Documentation({
             {current.id === 'introduction' && (
               <>
                 <h3 className="text-sm font-semibold">Base URLs</h3>
-                <p className="text-xs text-[#526783]">
+                <p className="text-xs text-body">
                   Choose the appropriate environment.
                 </p>
                 <div className="grid gap-4 xl:grid-cols-2">
@@ -98,7 +98,7 @@ export default function Documentation({
                   ))}
                 </div>
                 <h3 className="text-sm font-semibold">Authentication</h3>
-                <p className="text-xs text-[#526783]">
+                <p className="text-xs text-body">
                   Configured method: {api.authentication}. Follow the documented token exchange.
                 </p>
                 <Copy

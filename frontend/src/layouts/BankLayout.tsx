@@ -29,8 +29,8 @@ export default function BankLayout() {
   }
 
   return (
-    <div className="min-h-dvh bg-[#f3f5f9] font-[Arial,Helvetica,sans-serif] text-[#151c2d]">
-      <header className="bg-[#0b2858] text-white">
+    <div className="min-h-dvh bg-canvas font-[Arial,Helvetica,sans-serif] text-ink">
+      <header className="bg-bank text-white">
         <div className="mx-auto flex h-16 max-w-5xl items-center justify-between gap-4 px-4 sm:px-6">
           <Link to={customer ? '/bank/connected-apps' : '/bank/login'} className="flex items-center gap-3">
             <img src="/images/LogoWhite.png" alt="Stanbic IBTC" className="h-8 w-auto object-contain" />
@@ -43,7 +43,7 @@ export default function BankLayout() {
               <button
                 type="button"
                 onClick={signOut}
-                className="min-h-9 cursor-pointer rounded-md border border-white/30 px-3 text-xs font-medium hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                className="min-h-9 cursor-pointer rounded-lg border border-white/30 px-3 text-xs font-medium hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
               >
                 Log out
               </button>
@@ -56,7 +56,7 @@ export default function BankLayout() {
         <Outlet />
       </main>
 
-      <footer className="mx-auto max-w-5xl px-4 pb-8 text-center text-xs text-[#58708f] sm:px-6">
+      <footer className="mx-auto max-w-5xl px-4 pb-8 text-center text-xs text-muted sm:px-6">
         You are on the bank&apos;s own site. Third-party apps never see your login details.
       </footer>
     </div>

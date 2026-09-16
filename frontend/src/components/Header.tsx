@@ -37,7 +37,7 @@ export default function Header({
   }
 
   return (
-    <header className="sticky top-0 z-50 flex h-16 items-center gap-4 border-b border-[#e6ebf3] bg-white px-4">
+    <header className="sticky top-0 z-50 flex h-16 items-center gap-4 border-b border-line bg-white px-4">
       <a
         href="#app-main"
         className="sr-only rounded bg-white p-3 text-blue-700 focus:not-sr-only focus:absolute focus:left-3 focus:top-3"
@@ -53,7 +53,7 @@ export default function Header({
           aria-expanded={menuOpen}
           aria-controls="app-navigation"
           onClick={onMenuClick}
-          className="grid size-10 cursor-pointer place-items-center rounded-md text-[#58708f] hover:bg-blue-50 focus-visible:outline-2 focus-visible:outline-blue-600 lg:hidden"
+          className="grid size-10 cursor-pointer place-items-center rounded-lg text-muted hover:bg-blue-50 focus-visible:outline-2 focus-visible:outline-blue-600 lg:hidden"
         >
           <svg
             aria-hidden="true"
@@ -85,7 +85,7 @@ export default function Header({
         role="search"
         aria-label="Marketplace search"
         onSubmit={handleSearch}
-        className="hidden h-10 max-w-2xl flex-1 items-center overflow-hidden rounded-lg border border-[#e1e8f1] bg-[#f8fafc] focus-within:border-blue-500 sm:flex"
+        className="hidden h-10 max-w-2xl flex-1 items-center overflow-hidden rounded-lg border border-line bg-canvas focus-within:border-blue-500 sm:flex"
       >
         <label htmlFor="header-search" className="sr-only">
           Search APIs
@@ -97,13 +97,13 @@ export default function Header({
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           placeholder="Search APIs..."
-          className="h-full min-w-0 flex-1 bg-transparent px-4 text-sm outline-none placeholder:text-[#8b9db8]"
+          className="h-full min-w-0 flex-1 bg-transparent px-4 text-sm outline-none placeholder:text-faint"
         />
 
         <button
           type="submit"
           aria-label="Search APIs"
-          className="grid h-full w-11 cursor-pointer place-items-center text-[#8195b0] hover:text-blue-600 focus-visible:outline-2 focus-visible:outline-blue-600"
+          className="grid h-full w-11 cursor-pointer place-items-center text-muted hover:text-blue-600 focus-visible:outline-2 focus-visible:outline-blue-600"
         >
           <svg
             aria-hidden="true"
@@ -124,7 +124,7 @@ export default function Header({
         <details className="relative">
           <summary
             aria-label="Notifications"
-            className="grid size-10 cursor-pointer list-none place-items-center rounded-md text-[#58708f] hover:bg-blue-50 focus-visible:outline-2 focus-visible:outline-blue-600 [&::-webkit-details-marker]:hidden"
+            className="grid size-10 cursor-pointer list-none place-items-center rounded-lg text-muted hover:bg-blue-50 focus-visible:outline-2 focus-visible:outline-blue-600 [&::-webkit-details-marker]:hidden"
           >
             <svg
               aria-hidden="true"
@@ -141,33 +141,33 @@ export default function Header({
             </svg>
           </summary>
 
-          <div className="absolute right-0 top-12 w-56 rounded-lg border border-[#e6ebf3] bg-white p-4 shadow-lg">
+          <div className="absolute right-0 top-12 w-56 rounded-lg border border-line bg-white p-4 shadow-lg">
             <p className="text-sm font-semibold">Notifications</p>
-            <p className="mt-2 text-xs text-[#58708f]">
+            <p className="mt-2 text-xs text-muted">
               No notifications yet.
             </p>
           </div>
         </details>
 
-        <details className="relative border-l border-[#e6ebf3] pl-3">
+        <details className="relative border-l border-line pl-3">
           <summary
             aria-label="Account menu"
-            className="flex cursor-pointer list-none items-center gap-3 rounded-md focus-visible:outline-2 focus-visible:outline-blue-600 [&::-webkit-details-marker]:hidden"
+            className="flex cursor-pointer list-none items-center gap-3 rounded-lg focus-visible:outline-2 focus-visible:outline-blue-600 [&::-webkit-details-marker]:hidden"
           >
-            <span className="grid size-9 shrink-0 place-items-center rounded-full bg-[#0b2858] text-sm text-white">
+            <span className="grid size-9 shrink-0 place-items-center rounded-full bg-bank text-sm text-white">
               {initial}
             </span>
 
             <span className="hidden text-left text-xs leading-5 md:block">
               <span className="block max-w-40 truncate font-semibold">{developer?.name ?? 'Developer'}</span>
-              <span className="block max-w-40 truncate text-[#58708f]">
+              <span className="block max-w-40 truncate text-muted">
                 {developer?.company ?? developer?.email ?? 'My Workspace'}
               </span>
             </span>
           </summary>
 
-          <div className="absolute right-0 top-12 w-56 rounded-lg border border-[#e6ebf3] bg-white p-2 shadow-lg">
-            <p className="truncate px-2 py-1 text-xs text-[#58708f]">{developer?.email}</p>
+          <div className="absolute right-0 top-12 w-56 rounded-lg border border-line bg-white p-2 shadow-lg">
+            <p className="truncate px-2 py-1 text-xs text-muted">{developer?.email}</p>
             <Link
               to="/app/settings"
               className="block rounded px-2 py-2 text-sm hover:bg-blue-50"

@@ -246,10 +246,10 @@ export default function AdminDevelopersPage() {
           <>
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
-                <h1 className="text-3xl font-bold tracking-tight text-[#10243a]">
+                <h1 className="text-3xl font-bold tracking-tight text-ink">
                   Partners
                 </h1>
-                <p className="mt-2 text-sm text-[#465b78]">
+                <p className="mt-2 text-sm text-body">
                   Review and approve fintech applications before they can
                   integrate
                 </p>
@@ -265,7 +265,7 @@ export default function AdminDevelopersPage() {
             </div>
             <section
               aria-label="Partner applications"
-              className="overflow-hidden rounded-xl border border-[#e1e7f0] bg-white"
+              className="overflow-hidden rounded-xl border border-line bg-white"
             >
               <div className="flex flex-wrap items-center justify-between gap-4 p-4">
                 <div
@@ -282,7 +282,7 @@ export default function AdminDevelopersPage() {
                         setFilter(status)
                         setPage(1)
                       }}
-                      className={`min-h-10 rounded px-3 text-sm ${filter === status ? 'bg-blue-50 font-medium text-[#1010ff]' : 'text-[#465b78] hover:bg-slate-50'}`}
+                      className={`min-h-10 rounded px-3 text-sm ${filter === status ? 'bg-blue-50 font-medium text-primary' : 'text-body hover:bg-slate-50'}`}
                     >
                       {status} (
                       {status === 'All' ? partners.length : counts[status]})
@@ -301,7 +301,7 @@ export default function AdminDevelopersPage() {
                     setPage(1)
                   }}
                   placeholder="Search..."
-                  className="h-10 w-full rounded-lg border border-[#e5e9f0] bg-[#f8f9fb] px-3 text-sm placeholder:text-slate-400 sm:w-44"
+                  className="h-10 w-full rounded-lg border border-line bg-canvas px-3 text-sm placeholder:text-slate-400 sm:w-44"
                 />
               </div>
               <p role="status" className="sr-only">
@@ -309,7 +309,7 @@ export default function AdminDevelopersPage() {
               </p>
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[690px] text-left text-xs">
-                  <thead className="border-y border-[#e5e9f0] bg-[#f8f9fb] text-[10px] uppercase tracking-wider text-[#52627d]">
+                  <thead className="border-y border-line bg-canvas text-[11px] uppercase tracking-wider text-body">
                     <tr>
                       {[
                         'Partner & registration',
@@ -328,32 +328,32 @@ export default function AdminDevelopersPage() {
                     {visible.map((item) => (
                       <tr
                         key={item.id}
-                        className="border-b border-slate-100 last:border-0 hover:bg-[#fafcff]"
+                        className="border-b border-slate-100 last:border-0 hover:bg-tint"
                       >
                         <th scope="row" className="px-4 py-3 font-normal">
                           <button
                             onClick={() => select(item.id)}
-                            className="text-left text-sm font-semibold text-[#151515] hover:text-blue-600 hover:underline"
+                            className="text-left text-sm font-semibold text-ink hover:text-blue-600 hover:underline"
                           >
                             {item.name}
                           </button>
-                          <p className="mt-1 text-[11px] text-[#465b78]">
+                          <p className="mt-1 text-[11px] text-body">
                             {item.registration}
                           </p>
-                          <p className="mt-1 text-[11px] text-[#465b78]">
+                          <p className="mt-1 text-[11px] text-body">
                             {new URL(item.website).hostname}
                           </p>
                         </th>
-                        <td className="px-4 py-3 text-[#52627d]">
+                        <td className="px-4 py-3 text-body">
                           {item.tier}
                         </td>
                         <td className="px-4 py-3">
-                          <span className="rounded border border-[#e9ecf1] bg-[#f7f8fa] px-3 py-2 font-mono text-[#52627d]">
+                          <span className="rounded border border-line bg-canvas px-3 py-2 font-mono text-body">
                             {enabledCount(item)}{' '}
                             {enabledCount(item) === 1 ? 'API' : 'APIs'}
                           </span>
                         </td>
-                        <td className="px-4 py-3 font-mono text-[#52627d]">
+                        <td className="px-4 py-3 font-mono text-body">
                           {formattedDate(item.registered)}
                         </td>
                         <td className="px-4 py-3">
@@ -384,7 +384,7 @@ export default function AdminDevelopersPage() {
                   </tbody>
                 </table>
               </div>
-              <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#e5e9f0] p-4 text-xs text-[#465b78]">
+              <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line p-4 text-xs text-body">
                 <span>
                   Showing{' '}
                   <strong>
@@ -402,7 +402,7 @@ export default function AdminDevelopersPage() {
                   >
                     ‹
                   </button>
-                  <span className="grid size-9 place-items-center rounded bg-[#1010ff] text-white">
+                  <span className="grid size-9 place-items-center rounded bg-primary text-white">
                     {current}
                   </span>
                   <button
@@ -468,7 +468,7 @@ export default function AdminDevelopersPage() {
               }}
               className="space-y-5"
             >
-              <p className="text-sm leading-6 text-[#52627d]">
+              <p className="text-sm leading-6 text-body">
                 {descriptions[modal]}
               </p>
               {(modal === 'suspend' || modal === 'info') && (

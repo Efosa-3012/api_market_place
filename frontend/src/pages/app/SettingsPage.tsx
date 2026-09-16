@@ -21,19 +21,19 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="min-h-[calc(100dvh-64px)] bg-[#f7f9fc] px-4 py-6 text-[#142033] sm:px-6 lg:px-8">
+    <div className="min-h-[calc(100dvh-64px)] bg-canvas px-4 py-6 text-ink sm:px-6 lg:px-8">
       <div className="mx-auto flex max-w-3xl flex-col gap-6">
         <header>
-          <p className="text-xs font-semibold uppercase tracking-wide text-[#8ea3c0]">Account</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-faint">Account</p>
           <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">Settings</h1>
-          <p className="mt-2 text-sm leading-6 text-[#465b78]">
+          <p className="mt-2 text-sm leading-6 text-body">
             Your developer account and this environment.
           </p>
         </header>
 
         <Panel title="Your account" subtitle="The identity your apps are registered under.">
           {developer ? (
-            <dl className="flex flex-col divide-y divide-[#eef2f8]">
+            <dl className="flex flex-col divide-y divide-canvas">
               {[
                 ['Name', developer.name],
                 ['Email', developer.email],
@@ -42,13 +42,13 @@ export default function SettingsPage() {
                 ['Member since', new Date(developer.created_at).toLocaleDateString([], { day: 'numeric', month: 'long', year: 'numeric' })],
               ].map(([label, value]) => (
                 <div key={label} className="flex flex-wrap items-baseline justify-between gap-3 py-3 first:pt-0">
-                  <dt className="text-xs text-[#65758e]">{label}</dt>
-                  <dd className="text-sm font-medium text-[#142033]">{value}</dd>
+                  <dt className="text-xs text-muted">{label}</dt>
+                  <dd className="text-sm font-medium text-ink">{value}</dd>
                 </div>
               ))}
             </dl>
           ) : (
-            <p className="text-xs text-[#65758e]">No account details available. Sign in again.</p>
+            <p className="text-xs text-muted">No account details available. Sign in again.</p>
           )}
           <Notice>
             Account details are set at signup. To change them, contact your Stanbic IBTC partner manager — in this
@@ -57,7 +57,7 @@ export default function SettingsPage() {
         </Panel>
 
         <Panel title="Environment" subtitle="What this account is connected to.">
-          <dl className="flex flex-col divide-y divide-[#eef2f8]">
+          <dl className="flex flex-col divide-y divide-canvas">
             {[
               ['API base URL', <code key="url" className="break-all font-mono text-xs">{API_URL}</code>],
               ['Environment', <Chip key="env" tone="accent">Sandbox</Chip>],
@@ -65,29 +65,29 @@ export default function SettingsPage() {
               ['Production access', 'Not available in this preview'],
             ].map(([label, value]) => (
               <div key={String(label)} className="flex flex-wrap items-center justify-between gap-3 py-3 first:pt-0">
-                <dt className="text-xs text-[#65758e]">{label}</dt>
-                <dd className="text-sm font-medium text-[#142033]">{value}</dd>
+                <dt className="text-xs text-muted">{label}</dt>
+                <dd className="text-sm font-medium text-ink">{value}</dd>
               </div>
             ))}
           </dl>
         </Panel>
 
         <Panel title="Credentials" subtitle="Client IDs and secrets live with the app they belong to.">
-          <p className="text-xs leading-6 text-[#465b78]">
+          <p className="text-xs leading-6 text-body">
             Each registered app has its own client ID and secret. Secrets are stored only as a hash and shown once —
             rotate from the app's menu if one is lost or you suspect it leaked. The previous secret stops working
             immediately.
           </p>
           <Link
             to="/app/my-apis"
-            className="mt-4 inline-flex min-h-9 items-center rounded-lg border border-[#dfe6f0] bg-white px-4 text-xs font-semibold text-[#405371] hover:bg-blue-50"
+            className="mt-4 inline-flex min-h-9 items-center rounded-lg border border-line bg-white px-4 text-xs font-semibold text-body hover:bg-blue-50"
           >
             Manage apps and secrets →
           </Link>
         </Panel>
 
         <Panel title="Session">
-          <p className="text-xs leading-6 text-[#465b78]">
+          <p className="text-xs leading-6 text-body">
             Signing out clears your portal session on this device. Access tokens your apps already hold are
             unaffected — they are tied to customer consent, not to your login.
           </p>

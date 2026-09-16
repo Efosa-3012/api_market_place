@@ -26,23 +26,23 @@ export default function AdminLayout() {
   }
   if (!portalSession.isAdmin()) {
     return (
-      <main className="grid min-h-dvh place-items-center bg-[#f8f9fc] px-4 font-[Arial,Helvetica,sans-serif]">
-        <section className="w-full max-w-md rounded-2xl border border-[#e4e9f2] bg-white p-8 text-center">
-          <h1 className="text-xl font-semibold text-[#142033]">Staff access only</h1>
-          <p className="mt-3 text-sm leading-6 text-[#465b78]">
+      <main className="grid min-h-dvh place-items-center bg-canvas px-4 font-[Arial,Helvetica,sans-serif]">
+        <section className="w-full max-w-md rounded-2xl border border-line bg-white p-8 text-center">
+          <h1 className="text-xl font-semibold text-ink">Staff access only</h1>
+          <p className="mt-3 text-sm leading-6 text-body">
             The analytics dashboard is limited to bank administrators. You are signed in as a developer account,
             which does not have access.
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
             <Link
               to="/app/dashboard"
-              className="inline-flex min-h-10 items-center rounded-lg border border-[#0450ff] bg-[#0450ff] px-4 text-sm font-medium text-white hover:bg-[#003bd0]"
+              className="inline-flex min-h-10 items-center rounded-lg border border-primary bg-primary px-4 text-sm font-medium text-white hover:bg-primary-hover"
             >
               Back to your workspace
             </Link>
             <Link
               to="/login"
-              className="inline-flex min-h-10 items-center rounded-lg border border-[#dfe6f0] bg-white px-4 text-sm font-medium text-[#405371] hover:bg-blue-50"
+              className="inline-flex min-h-10 items-center rounded-lg border border-line bg-white px-4 text-sm font-medium text-body hover:bg-blue-50"
             >
               Sign in as staff
             </Link>
@@ -71,8 +71,8 @@ export default function AdminLayout() {
     navigate('/login', { replace: true })
   }
   return (
-    <div className="min-h-dvh bg-[#f8f9fc] font-[Arial,Helvetica,sans-serif] text-[#142033] [&_button:focus-visible]:outline-2 [&_button:focus-visible]:outline-offset-2 [&_button:focus-visible]:outline-blue-600 [&_a:focus-visible]:outline-2 [&_a:focus-visible]:outline-blue-600">
-      <header className="sticky top-0 z-50 flex h-16 items-center gap-4 border-b border-[#e4e9f2] bg-white px-4">
+    <div className="min-h-dvh bg-canvas font-[Arial,Helvetica,sans-serif] text-ink [&_button:focus-visible]:outline-2 [&_button:focus-visible]:outline-offset-2 [&_button:focus-visible]:outline-blue-600 [&_a:focus-visible]:outline-2 [&_a:focus-visible]:outline-blue-600">
+      <header className="sticky top-0 z-50 flex h-16 items-center gap-4 border-b border-line bg-white px-4">
         <a
           href="#admin-main"
           className="sr-only rounded bg-white p-3 focus:not-sr-only focus:absolute"
@@ -109,14 +109,14 @@ export default function AdminLayout() {
           <label className="sr-only" htmlFor="admin-search">
             Search dashboard APIs and partners
           </label>
-          <div className="flex h-10 overflow-hidden rounded-lg border border-[#e1e8f1] bg-[#f8fafc]">
+          <div className="flex h-10 overflow-hidden rounded-lg border border-line bg-canvas">
             <input
               id="admin-search"
               type="search"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder="Search APIs or partners..."
-              className="min-w-0 flex-1 bg-transparent px-4 text-sm outline-none placeholder:text-[#8b9db8] focus:ring-2 focus:ring-inset focus:ring-blue-500"
+              className="min-w-0 flex-1 bg-transparent px-4 text-sm outline-none placeholder:text-faint focus:ring-2 focus:ring-inset focus:ring-blue-500"
             />
             <button aria-label="Search" className="px-3 text-xs text-blue-600">
               Search
@@ -149,7 +149,7 @@ export default function AdminLayout() {
             to="/admin/dashboard"
             className="flex items-center gap-3 border-l border-slate-200 pl-3"
           >
-            <span className="grid size-9 place-items-center rounded-full bg-[#0b2858] text-xs text-white">
+            <span className="grid size-9 place-items-center rounded-full bg-bank text-xs text-white">
               {initials}
             </span>
             <span className="hidden text-xs leading-5 md:block">
@@ -160,7 +160,7 @@ export default function AdminLayout() {
           <button
             type="button"
             onClick={signOut}
-            className="cursor-pointer rounded-lg border border-slate-200 px-3 py-2 text-xs font-medium text-[#405371] hover:bg-blue-50"
+            className="cursor-pointer rounded-lg border border-slate-200 px-3 py-2 text-xs font-medium text-body hover:bg-blue-50"
           >
             Sign out
           </button>
@@ -196,7 +196,7 @@ export default function AdminLayout() {
                   to={item.path}
                   onClick={() => setOpen(false)}
                   className={({ isActive }) =>
-                    `flex min-h-11 items-center gap-4 rounded-lg px-3 text-sm ${isActive ? 'bg-[#eef5ff] text-[#1010ff]' : 'text-[#465b78] hover:bg-slate-50'}`
+                    `flex min-h-11 items-center gap-4 rounded-lg px-3 text-sm ${isActive ? 'bg-tint text-primary' : 'text-body hover:bg-slate-50'}`
                   }
                 >
                   <svg
@@ -221,7 +221,7 @@ export default function AdminLayout() {
             to="/admin/dashboard"
             className="mt-auto flex items-center gap-3 border-t border-slate-100 pt-5"
           >
-            <span className="grid size-9 place-items-center rounded-full bg-[#0b2858] text-xs text-white">
+            <span className="grid size-9 place-items-center rounded-full bg-bank text-xs text-white">
               {initials}
             </span>
             <span className="min-w-0 text-xs leading-5">

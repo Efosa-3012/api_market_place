@@ -25,7 +25,7 @@ export default function Overview({
         ].map(([label, value]) => (
           <Panel key={label} title={label}>
             <p className="text-2xl font-bold">{value}</p>
-            <p className="mt-3 border-t border-slate-100 pt-2 text-[11px] text-[#657790]">
+            <p className="mt-3 border-t border-slate-100 pt-2 text-[11px] text-muted">
               API activity
             </p>
           </Panel>

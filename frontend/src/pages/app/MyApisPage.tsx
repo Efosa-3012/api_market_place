@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 
 import { ApiError } from '../../lib/api'
 import { portal, type App, type AppWithSecret } from '../../lib/portal'
+import { Button, Notice, Skeleton, inputClass as kitInput } from '../../components/ui'
 
 type StatusFilter = 'All' | 'active' | 'deactivated'
 
@@ -40,10 +41,7 @@ function CopyIcon() {
 
 const focusClass =
   'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600'
-const primaryButton = `min-h-10 cursor-pointer rounded-lg bg-[#0450ff] px-4 text-sm font-medium text-white hover:bg-[#003bd0] disabled:cursor-not-allowed disabled:opacity-60 ${focusClass}`
-const secondaryButton = `min-h-10 cursor-pointer rounded-lg border border-[#e1e6ee] px-4 text-sm ${focusClass}`
-const inputClass =
-  'h-10 w-full rounded-md border border-[#e1e6ee] bg-[#f8f9fb] px-3 text-sm outline-none placeholder:text-[#8190a7] focus:border-blue-500'
+const inputClass = kitInput
 
 /** Modal that opens itself whenever `open` flips to true. */
 function useDialog(open: boolean) {
@@ -233,7 +231,7 @@ export default function MyApisPage() {
   return (
     <div className="mx-auto max-w-[1500px] p-4 sm:p-6 lg:p-8">
       {/* Heading */}
-      <nav aria-label="Breadcrumb" className="text-xs text-[#58708f]">
+      <nav aria-label="Breadcrumb" className="text-xs text-muted">
         <ol className="flex items-center gap-2">
           <li>
             <Link to="/app/dashboard" className="hover:text-blue-600 hover:underline">
@@ -241,7 +239,7 @@ export default function MyApisPage() {
             </Link>
           </li>
           <li aria-hidden="true">/</li>
-          <li aria-current="page" className="text-[#151c2d]">
+          <li aria-current="page" className="text-ink">
             My Apps
           </li>
         </ol>
@@ -249,50 +247,46 @@ export default function MyApisPage() {
 
       <div className="mt-3 flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-[#10243a]">My Apps</h1>
-          <p className="mt-2 text-sm text-[#465b78]">
+          <h1 className="text-2xl font-bold tracking-tight text-ink">My Apps</h1>
+          <p className="mt-2 text-sm text-body">
             Each app gets a client ID and secret. Customers grant consent to an app, never to you directly.
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={() => setRegistering(true)}
-          className={`inline-flex min-h-10 shrink-0 items-center justify-center rounded-md bg-[#0450ff] px-4 text-sm font-medium text-white hover:bg-[#003bd0] ${focusClass}`}
-        >
+        <Button onClick={() => setRegistering(true)} className="shrink-0">
           Register app
-        </button>
+        </Button>
       </div>
 
       {/* Summary */}
       <section aria-label="App overview" className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <article className="rounded-xl border border-[#e6ebf3] bg-white p-4">
-          <h2 className="text-[10px] font-medium uppercase text-[#58708f]">Active apps</h2>
+        <article className="rounded-xl border border-line bg-white p-4">
+          <h2 className="text-xs font-medium uppercase text-muted">Active apps</h2>
           <p className="mt-3 text-2xl font-bold">{counts.active}</p>
-          <p className="mt-3 text-xs text-[#465b78]">Can request customer consent</p>
+          <p className="mt-3 text-xs text-body">Can request customer consent</p>
         </article>
 
-        <article className="rounded-xl border border-[#e6ebf3] bg-white p-4">
-          <h2 className="text-[10px] font-medium uppercase text-[#58708f]">Deactivated</h2>
+        <article className="rounded-xl border border-line bg-white p-4">
+          <h2 className="text-xs font-medium uppercase text-muted">Deactivated</h2>
           <p className="mt-3 text-2xl font-bold">{counts.deactivated}</p>
-          <p className="mt-3 text-xs text-[#465b78]">All their consents were revoked</p>
+          <p className="mt-3 text-xs text-body">All their consents were revoked</p>
         </article>
 
-        <article className="rounded-xl border border-[#e6ebf3] bg-white p-4">
-          <h2 className="text-[10px] font-medium uppercase text-[#58708f]">Environment</h2>
+        <article className="rounded-xl border border-line bg-white p-4">
+          <h2 className="text-xs font-medium uppercase text-muted">Environment</h2>
           <p className="mt-3 text-2xl font-bold">Sandbox</p>
-          <p className="mt-3 text-xs text-[#465b78]">Mock core banking data</p>
+          <p className="mt-3 text-xs text-body">Mock core banking data</p>
         </article>
 
-        <article className="rounded-xl border border-[#e6ebf3] bg-white p-4">
-          <h2 className="text-[10px] font-medium uppercase text-[#58708f]">Production access</h2>
+        <article className="rounded-xl border border-line bg-white p-4">
+          <h2 className="text-xs font-medium uppercase text-muted">Production access</h2>
           <p className="mt-3 text-2xl font-bold">Not requested</p>
-          <p className="mt-3 text-xs text-[#465b78]">Requires business verification</p>
+          <p className="mt-3 text-xs text-body">Requires business verification</p>
         </article>
       </section>
 
       {/* Security tip */}
-      <div className="mt-5 flex items-start gap-3 rounded-r-lg border border-l-[3px] border-[#4040ff] px-4 py-3">
+      <div className="mt-5 flex items-start gap-3 rounded-r-lg border border-l-[3px] border-primary px-4 py-3">
         <svg
           aria-hidden="true"
           width="19"
@@ -301,7 +295,7 @@ export default function MyApisPage() {
           fill="none"
           stroke="currentColor"
           strokeWidth="1.6"
-          className="shrink-0 text-[#1010ff]"
+          className="shrink-0 text-primary"
         >
           <path d="m12 3 7 3v6c0 5-7 9-7 9s-7-4-7-9V6l7-3Z" />
         </svg>
@@ -312,12 +306,10 @@ export default function MyApisPage() {
         </p>
       </div>
 
-      <p role="status" className={notice ? 'mt-4 rounded-lg bg-blue-50 px-4 py-3 text-sm text-blue-800' : 'sr-only'}>
-        {notice}
-      </p>
+      {notice ? <Notice className="mt-4">{notice}</Notice> : <p role="status" className="sr-only" />}
 
       {/* Apps table */}
-      <section aria-label="Registered apps" className="mt-5 rounded-xl border border-[#e6ebf3] bg-white">
+      <section aria-label="Registered apps" className="mt-5 rounded-xl border border-line bg-white">
         <div className="flex flex-col gap-4 p-4 2xl:flex-row 2xl:items-center 2xl:justify-between">
           <div role="group" aria-label="Filter apps" className="flex flex-wrap gap-1">
             {filters.map((item) => (
@@ -326,8 +318,8 @@ export default function MyApisPage() {
                 type="button"
                 aria-pressed={filter === item.key}
                 onClick={() => setFilter(item.key)}
-                className={`min-h-9 cursor-pointer rounded-md px-3 text-xs font-medium ${focusClass} ${
-                  filter === item.key ? 'bg-[#eef5ff] text-[#1010ff]' : 'text-[#465b78] hover:bg-[#f7f9fc]'
+                className={`min-h-9 cursor-pointer rounded-lg px-3 text-xs font-medium ${focusClass} ${
+                  filter === item.key ? 'bg-tint text-primary' : 'text-body hover:bg-canvas'
                 }`}
               >
                 {item.label} ({counts[item.key]})
@@ -345,7 +337,7 @@ export default function MyApisPage() {
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Search by name or client ID..."
-              className="h-10 min-w-0 flex-1 rounded-lg border border-[#e6ebf3] bg-[#f8f9fb] px-3 text-xs outline-none placeholder:text-[#8190a7] focus:border-blue-500 sm:w-60"
+              className="h-10 min-w-0 flex-1 rounded-lg border border-line bg-canvas px-3 text-xs outline-none placeholder:text-muted focus:border-blue-500 sm:w-60"
             />
           </div>
         </div>
@@ -354,8 +346,8 @@ export default function MyApisPage() {
           <table className="w-full min-w-[850px] border-collapse text-left">
             <caption className="sr-only">Your registered apps, credentials and actions.</caption>
 
-            <thead className="border-y border-[#edf0f5] bg-[#f8f9fb]">
-              <tr className="text-[10px] uppercase tracking-wider text-[#58708f]">
+            <thead className="border-y border-canvas bg-canvas">
+              <tr className="text-xs uppercase tracking-wider text-muted">
                 <th scope="col" className="px-4 py-3 font-semibold">App</th>
                 <th scope="col" className="px-3 py-3 font-semibold">Client ID</th>
                 <th scope="col" className="px-3 py-3 font-semibold">Redirect URIs</th>
@@ -366,11 +358,11 @@ export default function MyApisPage() {
               </tr>
             </thead>
 
-            <tbody className="divide-y divide-[#edf0f5]">
+            <tbody className="divide-y divide-canvas">
               {loading && (
                 <tr>
-                  <td colSpan={7} className="px-6 py-14 text-center text-sm text-[#58708f]">
-                    Loading your apps…
+                  <td colSpan={7} className="px-6 py-6">
+                    <Skeleton rows={2} height="h-12" />
                   </td>
                 </tr>
               )}
@@ -389,14 +381,14 @@ export default function MyApisPage() {
               {!loading &&
                 !loadError &&
                 visibleApps.map((app) => (
-                  <tr key={app.id} className="align-top hover:bg-[#fafcff]">
+                  <tr key={app.id} className="align-top hover:bg-tint">
                     <th scope="row" className="px-4 py-5 font-normal">
                       <span className="block text-xs font-semibold">{app.name}</span>
                       {app.description && (
-                        <span className="mt-1 block max-w-64 text-[11px] text-[#58708f]">{app.description}</span>
+                        <span className="mt-1 block max-w-64 text-xs text-muted">{app.description}</span>
                       )}
                       {app.website_url && (
-                        <a href={app.website_url} target="_blank" rel="noreferrer" className="mt-1 block max-w-64 truncate text-[11px] text-blue-600 hover:underline">
+                        <a href={app.website_url} target="_blank" rel="noreferrer" className="mt-1 block max-w-64 truncate text-xs text-blue-600 hover:underline">
                           {app.website_url.replace(/^https?:\/\//, '')}
                         </a>
                       )}
@@ -407,14 +399,14 @@ export default function MyApisPage() {
                         type="button"
                         onClick={() => void copy('Client ID', app.client_id)}
                         aria-label={`Copy client ID for ${app.name}`}
-                        className={`flex min-h-8 cursor-pointer items-center gap-2 rounded border border-[#e8ebf0] bg-[#f7f8fa] px-2 text-[#58708f] hover:bg-blue-50 ${focusClass}`}
+                        className={`flex min-h-8 cursor-pointer items-center gap-2 rounded border border-line bg-canvas px-2 text-muted hover:bg-blue-50 ${focusClass}`}
                       >
-                        <code className="whitespace-nowrap text-[10px]">{maskClientId(app.client_id)}</code>
+                        <code className="whitespace-nowrap text-xs">{maskClientId(app.client_id)}</code>
                         <CopyIcon />
                       </button>
                     </td>
 
-                    <td className="px-3 py-5 text-[11px] text-[#58708f]">
+                    <td className="px-3 py-5 text-xs text-muted">
                       {app.redirect_uris.map((uri) => (
                         <code key={uri} className="block whitespace-nowrap">{uri}</code>
                       ))}
@@ -423,7 +415,7 @@ export default function MyApisPage() {
                     <td className="px-3 py-5">
                       <div className="flex max-w-44 flex-wrap gap-1">
                         {app.allowed_scopes.map((scope) => (
-                          <span key={scope} className="rounded bg-indigo-50 px-1.5 py-0.5 text-[10px] text-indigo-600">
+                          <span key={scope} className="rounded bg-indigo-50 px-1.5 py-0.5 text-xs text-indigo-600">
                             {scope}
                           </span>
                         ))}
@@ -432,7 +424,7 @@ export default function MyApisPage() {
 
                     <td className="px-3 py-5">
                       <span
-                        className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-medium ${
+                        className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${
                           app.status === 'active' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
                         }`}
                       >
@@ -441,7 +433,7 @@ export default function MyApisPage() {
                       </span>
                     </td>
 
-                    <td className="px-3 py-5 text-xs text-[#58708f]">
+                    <td className="px-3 py-5 text-xs text-muted">
                       <time dateTime={app.created_at}>{dateFormatter.format(new Date(app.created_at))}</time>
                     </td>
 
@@ -452,7 +444,7 @@ export default function MyApisPage() {
                           target="_blank"
                           rel="noreferrer"
                           aria-label="API documentation"
-                          className={`inline-flex min-h-9 items-center rounded text-xs text-[#465b78] hover:text-blue-600 ${focusClass}`}
+                          className={`inline-flex min-h-9 items-center rounded text-xs text-body hover:text-blue-600 ${focusClass}`}
                         >
                           Docs
                         </a>
@@ -466,7 +458,7 @@ export default function MyApisPage() {
                               <span aria-hidden="true">⋮</span>
                             </summary>
 
-                            <div className="mt-1 flex min-w-36 flex-col gap-1 rounded-lg border border-[#e6ebf3] bg-white p-1">
+                            <div className="mt-1 flex min-w-36 flex-col gap-1 rounded-lg border border-line bg-white p-1">
                               <button
                                 type="button"
                                 onClick={(event) => {
@@ -528,7 +520,7 @@ export default function MyApisPage() {
         className="fixed inset-0 m-auto max-h-[calc(100dvh-48px)] w-[calc(100%_-_48px)] max-w-lg overflow-y-auto rounded-2xl border-0 bg-white p-6 shadow-xl backdrop:bg-black/40"
       >
         <h2 id="register-title" className="text-lg font-semibold">Register an app</h2>
-        <p className="mt-2 text-sm leading-6 text-[#58708f]">
+        <p className="mt-2 text-sm leading-6 text-muted">
           You'll get a client ID and a secret. The secret is shown once — copy it straight away.
         </p>
 
@@ -539,20 +531,20 @@ export default function MyApisPage() {
           </div>
           <div>
             <label htmlFor="app-description" className="mb-1.5 block text-sm font-medium">
-              Description <span className="font-normal text-[#58708f]">(customers see this on the consent screen)</span>
+              Description <span className="font-normal text-muted">(customers see this on the consent screen)</span>
             </label>
             <input id="app-description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="A budgeting app that shows you where your money goes." className={inputClass} />
           </div>
           <div>
             <label htmlFor="app-redirects" className="mb-1.5 block text-sm font-medium">
-              Redirect URIs <span className="font-normal text-[#58708f]">(one per line)</span>
+              Redirect URIs <span className="font-normal text-muted">(one per line)</span>
             </label>
             <textarea id="app-redirects" required rows={3} value={form.redirectUris} onChange={(e) => setForm({ ...form, redirectUris: e.target.value })} className={`${inputClass} h-auto py-2 font-mono text-xs`} />
-            <p className="mt-1 text-xs text-[#58708f]">Where we send the customer back after they approve. Must match exactly at runtime.</p>
+            <p className="mt-1 text-xs text-muted">Where we send the customer back after they approve. Must match exactly at runtime.</p>
           </div>
 
-          <fieldset className="rounded-lg border border-[#e6ebf3] p-4">
-            <legend className="px-1 text-xs font-semibold uppercase tracking-wide text-[#58708f]">Shown to customers on the consent screen</legend>
+          <fieldset className="rounded-lg border border-line p-4">
+            <legend className="px-1 text-xs font-semibold uppercase tracking-wide text-muted">Shown to customers on the consent screen</legend>
             <div className="grid gap-3 sm:grid-cols-2">
               <div>
                 <label htmlFor="app-website" className="mb-1.5 block text-sm font-medium">Website</label>
@@ -563,18 +555,18 @@ export default function MyApisPage() {
                 <input id="app-privacy" type="url" value={form.privacyPolicyUrl} onChange={(e) => setForm({ ...form, privacyPolicyUrl: e.target.value })} placeholder="https://budgetbuddy.example/privacy" className={inputClass} />
               </div>
               <div className="sm:col-span-2">
-                <label htmlFor="app-logo" className="mb-1.5 block text-sm font-medium">Logo URL <span className="font-normal text-[#58708f]">(square, https)</span></label>
+                <label htmlFor="app-logo" className="mb-1.5 block text-sm font-medium">Logo URL <span className="font-normal text-muted">(square, https)</span></label>
                 <input id="app-logo" type="url" value={form.logoUrl} onChange={(e) => setForm({ ...form, logoUrl: e.target.value })} placeholder="https://…/logo.png" className={inputClass} />
               </div>
             </div>
-            <p className="mt-2 text-xs text-[#58708f]">Optional in the sandbox. Production access will require a website and privacy policy.</p>
+            <p className="mt-2 text-xs text-muted">Optional in the sandbox. Production access will require a website and privacy policy.</p>
           </fieldset>
 
-          {formError && <p role="alert" className="rounded-md bg-red-50 p-3 text-sm text-red-700">{formError}</p>}
+          {formError && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{formError}</p>}
 
           <div className="flex justify-end gap-3 pt-2">
-            <button type="button" onClick={() => setRegistering(false)} className={secondaryButton}>Cancel</button>
-            <button type="submit" disabled={busy} className={primaryButton}>{busy ? 'Registering…' : 'Register'}</button>
+            <Button secondary onClick={() => setRegistering(false)}>Cancel</Button>
+            <Button type="submit" disabled={busy}>{busy ? 'Registering…' : 'Register'}</Button>
           </div>
         </form>
       </dialog>
@@ -590,27 +582,27 @@ export default function MyApisPage() {
         {revealed && (
           <>
             <h2 id="secret-title" className="text-lg font-semibold">Credentials for {revealed.name}</h2>
-            <p className="mt-2 rounded-md bg-amber-50 p-3 text-sm leading-6 text-amber-800">{revealed.warning}</p>
+            <p className="mt-2 rounded-lg bg-amber-50 p-3 text-sm leading-6 text-amber-800">{revealed.warning}</p>
 
             <dl className="mt-5 space-y-4">
               <div>
-                <dt className="text-xs font-medium uppercase text-[#58708f]">Client ID</dt>
+                <dt className="text-xs font-medium uppercase text-muted">Client ID</dt>
                 <dd className="mt-1 flex items-center gap-2">
-                  <code className="flex-1 overflow-x-auto rounded bg-[#f7f8fa] px-3 py-2 text-xs">{revealed.client_id}</code>
-                  <button type="button" onClick={() => void copy('Client ID', revealed.client_id)} aria-label="Copy client ID" className={`grid size-9 cursor-pointer place-items-center rounded border border-[#e8ebf0] text-[#58708f] hover:bg-blue-50 ${focusClass}`}><CopyIcon /></button>
+                  <code className="flex-1 overflow-x-auto rounded bg-canvas px-3 py-2 text-xs">{revealed.client_id}</code>
+                  <button type="button" onClick={() => void copy('Client ID', revealed.client_id)} aria-label="Copy client ID" className={`grid size-9 cursor-pointer place-items-center rounded border border-line text-muted hover:bg-blue-50 ${focusClass}`}><CopyIcon /></button>
                 </dd>
               </div>
               <div>
-                <dt className="text-xs font-medium uppercase text-[#58708f]">Client secret</dt>
+                <dt className="text-xs font-medium uppercase text-muted">Client secret</dt>
                 <dd className="mt-1 flex items-center gap-2">
-                  <code className="flex-1 overflow-x-auto rounded bg-[#f7f8fa] px-3 py-2 text-xs">{revealed.client_secret}</code>
-                  <button type="button" onClick={() => void copy('Client secret', revealed.client_secret)} aria-label="Copy client secret" className={`grid size-9 cursor-pointer place-items-center rounded border border-[#e8ebf0] text-[#58708f] hover:bg-blue-50 ${focusClass}`}><CopyIcon /></button>
+                  <code className="flex-1 overflow-x-auto rounded bg-canvas px-3 py-2 text-xs">{revealed.client_secret}</code>
+                  <button type="button" onClick={() => void copy('Client secret', revealed.client_secret)} aria-label="Copy client secret" className={`grid size-9 cursor-pointer place-items-center rounded border border-line text-muted hover:bg-blue-50 ${focusClass}`}><CopyIcon /></button>
                 </dd>
               </div>
             </dl>
 
             <div className="mt-6 flex justify-end">
-              <button type="button" autoFocus onClick={() => setRevealed(null)} className={primaryButton}>I've saved it</button>
+              <Button onClick={() => setRevealed(null)}>I've saved it</Button>
             </div>
           </>
         )}
@@ -625,13 +617,13 @@ export default function MyApisPage() {
         className="fixed inset-0 m-auto max-h-[calc(100dvh-48px)] w-[calc(100%_-_48px)] max-w-md overflow-y-auto rounded-2xl border-0 bg-white p-6 shadow-xl backdrop:bg-black/40"
       >
         <h2 id="rotate-title" className="text-lg font-semibold">Rotate the secret for {rotateTarget?.name}?</h2>
-        <p className="mt-3 text-sm leading-6 text-[#58708f]">
+        <p className="mt-3 text-sm leading-6 text-muted">
           A new secret is generated and shown once. The current secret stops working immediately — any
           running integration using it will fail until it's updated. Customer consents are not affected.
         </p>
         <div className="mt-6 flex justify-end gap-3">
-          <button type="button" autoFocus onClick={() => setRotateTarget(null)} className={secondaryButton}>Cancel</button>
-          <button type="button" disabled={busy} onClick={() => void confirmRotate()} className={primaryButton}>{busy ? 'Rotating…' : 'Rotate'}</button>
+          <Button secondary onClick={() => setRotateTarget(null)}>Cancel</Button>
+          <Button disabled={busy} onClick={() => void confirmRotate()}>{busy ? 'Rotating…' : 'Rotate'}</Button>
         </div>
       </dialog>
 
@@ -644,15 +636,15 @@ export default function MyApisPage() {
         className="fixed inset-0 m-auto max-h-[calc(100dvh-48px)] w-[calc(100%_-_48px)] max-w-md overflow-y-auto rounded-2xl border-0 bg-white p-6 shadow-xl backdrop:bg-black/40"
       >
         <h2 id="deactivate-title" className="text-lg font-semibold">Deactivate {deactivateTarget?.name}?</h2>
-        <p className="mt-3 text-sm leading-6 text-[#58708f]">
+        <p className="mt-3 text-sm leading-6 text-muted">
           This is the kill switch. The app can no longer get tokens, <strong>every consent customers
           granted it is revoked</strong>, and every existing token fails on its next call. This cannot be undone.
         </p>
         <div className="mt-6 flex justify-end gap-3">
-          <button type="button" autoFocus onClick={() => setDeactivateTarget(null)} className={secondaryButton}>Cancel</button>
-          <button type="button" disabled={busy} onClick={() => void confirmDeactivate()} className={`min-h-10 cursor-pointer rounded-lg bg-red-600 px-4 text-sm font-medium text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60 ${focusClass}`}>
+          <Button secondary onClick={() => setDeactivateTarget(null)}>Cancel</Button>
+          <Button disabled={busy} onClick={() => void confirmDeactivate()} className="!border-red-600 !bg-red-600 hover:!bg-red-700">
             {busy ? 'Deactivating…' : 'Deactivate'}
-          </button>
+          </Button>
         </div>
       </dialog>
     </div>

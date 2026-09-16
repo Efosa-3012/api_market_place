@@ -116,7 +116,7 @@ export default function Endpoints({
         </div>
         <div className="-mx-5 overflow-x-auto">
           <table className="w-full min-w-[720px] text-left text-xs">
-            <thead className="bg-slate-50 text-[10px] uppercase text-[#526783]">
+            <thead className="bg-slate-50 text-[11px] uppercase text-body">
               <tr>
                 {[
                   'Endpoint',
@@ -140,18 +140,18 @@ export default function Endpoints({
                   </th>
                   <td className="px-4 py-4">
                     <span
-                      className={`rounded border px-2 py-1 text-[10px] ${ep.method === 'DELETE' ? 'border-red-100 bg-red-50 text-red-600' : 'border-blue-100 bg-blue-50 text-blue-600'}`}
+                      className={`rounded border px-2 py-1 text-[11px] ${ep.method === 'DELETE' ? 'border-red-100 bg-red-50 text-red-600' : 'border-blue-100 bg-blue-50 text-blue-600'}`}
                     >
                       {ep.method}
                     </span>
                   </td>
-                  <td className="max-w-56 px-4 py-4 text-[#526783]">
+                  <td className="max-w-56 px-4 py-4 text-body">
                     {ep.description}
                   </td>
                   <td className="px-4 py-4">
                     <Badge value={ep.status} />
                   </td>
-                  <td className="px-4 py-4 text-[#526783]">
+                  <td className="px-4 py-4 text-body">
                     {date(ep.updated)}
                   </td>
                   <td className="px-4 py-4">

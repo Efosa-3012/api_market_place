@@ -80,7 +80,7 @@ export default function AdminApisPage() {
           : b.updated.localeCompare(a.updated),
     )
   return (
-    <div className="min-h-[calc(100dvh-4rem)] min-w-0 bg-[#f7f8fb] p-4 text-[#132238] sm:p-6 xl:p-9">
+    <div className="min-h-[calc(100dvh-4rem)] min-w-0 bg-canvas p-4 text-ink sm:p-6 xl:p-9">
       {notice && (
         <div
           role="status"
@@ -126,7 +126,7 @@ export default function AdminApisPage() {
               <h1 className="text-[28px] font-bold tracking-tight">
                 API Catalog
               </h1>
-              <p className="mt-2 text-sm text-[#526783]">
+              <p className="mt-2 text-sm text-body">
                 Explore and manage APIs on the Marketplace
               </p>
             </div>
@@ -143,7 +143,7 @@ export default function AdminApisPage() {
                 className="h-10 w-full rounded-lg border border-slate-200 bg-white px-4 text-sm sm:w-64"
               />
             </label>
-            <label className="flex items-center gap-3 text-xs text-[#526783]">
+            <label className="flex items-center gap-3 text-xs text-body">
               Sort by
               <select
                 value={sort}
@@ -160,15 +160,15 @@ export default function AdminApisPage() {
             {list.map((api) => (
               <article
                 key={api.id}
-                className="flex min-h-72 flex-col rounded-lg border border-[#dfe6f2] bg-white p-6"
+                className="flex min-h-72 flex-col rounded-lg border border-line bg-white p-6"
               >
                 <div className="mb-4 flex items-center justify-between gap-2">
                   <div className="flex flex-wrap gap-2">
-                    <span className="rounded bg-slate-100 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-600">
+                    <span className="rounded bg-slate-100 px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-600">
                       {api.category}
                     </span>
                     <span
-                      className={`rounded px-2 py-1 text-[10px] font-semibold uppercase ${api.pricing.model === 'Free' ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'}`}
+                      className={`rounded px-2 py-1 text-[11px] font-semibold uppercase ${api.pricing.model === 'Free' ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'}`}
                     >
                       {api.pricing.model === 'Free' ? 'Free' : 'Paid'}
                     </span>
@@ -191,20 +191,20 @@ export default function AdminApisPage() {
                     : api.tagline || api.name}
                 </h2>
                 <div className="my-3 h-[3px] w-8 bg-red-500" />
-                <p className="mb-5 text-xs leading-5 text-[#526783]">
+                <p className="mb-5 text-xs leading-5 text-body">
                   {api.description}
                 </p>
                 <div className="mb-5 mt-auto flex items-center gap-2">
                   <Badge value={api.status} />
                   {!publicVisible(api) && (
-                    <span className="text-[10px] text-slate-500">
+                    <span className="text-[11px] text-slate-500">
                       Not listed
                     </span>
                   )}
                 </div>
                 <button
                   onClick={() => open(api.id)}
-                  className="min-h-10 bg-[#0450ff] px-4 py-2 text-xs font-semibold tracking-wide text-white hover:bg-blue-700"
+                  className="min-h-10 bg-primary px-4 py-2 text-xs font-semibold tracking-wide text-white hover:bg-blue-700"
                 >
                   VIEW DETAILS<span className="sr-only"> for {api.name}</span>
                 </button>
@@ -262,14 +262,14 @@ function Detail({
   }
   return (
     <>
-      <button onClick={onBack} className="mb-5 text-xs text-[#526783]">
+      <button onClick={onBack} className="mb-5 text-xs text-body">
         ‹ API Catalog <span className="px-2 text-slate-400">/</span>
-        <span className="text-[#132238]">{api.name}</span>
+        <span className="text-ink">{api.name}</span>
       </button>
       <header className="mb-5 flex flex-wrap items-center justify-between gap-5 bg-white p-6">
         <div>
           <h1 className="text-[28px] font-bold tracking-tight">{api.name}</h1>
-          <p className="mt-2 text-sm text-[#526783]">{api.tagline}</p>
+          <p className="mt-2 text-sm text-body">{api.tagline}</p>
           <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px]">
             <Badge value={api.status} />
             <span>· Last updated {dateTime(api.updated)}</span>
@@ -312,14 +312,14 @@ function Detail({
       </header>
       <nav
         aria-label="API detail sections"
-        className="mb-4 flex overflow-x-auto border-b border-[#dfe6f2]"
+        className="mb-4 flex overflow-x-auto border-b border-line"
       >
         {tabs.map((t) => (
           <button
             key={t.id}
             aria-current={tab === t.id ? 'page' : undefined}
             onClick={() => onTab(t.id)}
-            className={`shrink-0 border-b-2 px-4 py-4 text-sm ${tab === t.id ? 'border-[#0450ff] font-semibold text-[#142033]' : 'border-transparent text-[#526783]'}`}
+            className={`shrink-0 border-b-2 px-4 py-4 text-sm ${tab === t.id ? 'border-primary font-semibold text-ink' : 'border-transparent text-body'}`}
           >
             {t.label}
           </button>

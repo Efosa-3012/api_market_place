@@ -101,12 +101,12 @@ async function handleSubmit(event: FormEvent<HTMLFormElement>) {
 
           <h1
             id="login-title"
-            className="text-2xl font-semibold tracking-tight text-[#151c2d]"
+            className="text-2xl font-semibold tracking-tight text-ink"
           >
             Login to API Marketplace
           </h1>
 
-          <p className="mt-2 text-sm text-[#58708f]">
+          <p className="mt-2 text-sm text-muted">
             Provide the following credentials
           </p>
 
@@ -123,7 +123,7 @@ async function handleSubmit(event: FormEvent<HTMLFormElement>) {
             <div>
               <label
                 htmlFor="login-identifier"
-                className="mb-2 block text-sm font-medium text-[#151c2d]"
+                className="mb-2 block text-sm font-medium text-ink"
               >
                 Email
               </label>
@@ -139,14 +139,14 @@ async function handleSubmit(event: FormEvent<HTMLFormElement>) {
                 value={identifier}
                 onChange={(event) => setIdentifier(event.target.value)}
                 placeholder="Enter your email"
-                className="h-12 w-full rounded-md border border-transparent bg-[#f7f7f8] px-4 text-sm text-[#151c2d] outline-none placeholder:text-[#8195b0] focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+                className="h-12 w-full rounded-lg border border-transparent bg-canvas px-4 text-sm text-ink outline-none placeholder:text-muted focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
               />
             </div>
 
             <div className="mt-4">
               <label
                 htmlFor="login-password"
-                className="mb-2 block text-sm font-medium text-[#151c2d]"
+                className="mb-2 block text-sm font-medium text-ink"
               >
                 Password
               </label>
@@ -161,7 +161,7 @@ async function handleSubmit(event: FormEvent<HTMLFormElement>) {
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
                   placeholder="Enter your password"
-                  className="h-11 w-full rounded-md border border-transparent bg-[#f7f7f8] pl-4 pr-14 text-sm text-[#151c2d] outline-none placeholder:text-[#8195b0] focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+                  className="h-11 w-full rounded-lg border border-transparent bg-canvas pl-4 pr-14 text-sm text-ink outline-none placeholder:text-muted focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
                 />
 
                 <button
@@ -169,7 +169,7 @@ async function handleSubmit(event: FormEvent<HTMLFormElement>) {
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                   aria-controls="login-password"
                   onClick={() => setShowPassword((current) => !current)}
-                  className="absolute inset-y-0 right-1 flex w-11 cursor-pointer items-center justify-center rounded-md text-[#58708f] hover:text-blue-700 focus-visible:outline-2 focus-visible:outline-blue-600"
+                  className="absolute inset-y-0 right-1 flex w-11 cursor-pointer items-center justify-center rounded-lg text-muted hover:text-blue-700 focus-visible:outline-2 focus-visible:outline-blue-600"
                 >
                   <svg
                     aria-hidden="true"
@@ -193,7 +193,7 @@ async function handleSubmit(event: FormEvent<HTMLFormElement>) {
             <button
               type="submit"
               disabled={!canSubmit}
-              className="mt-5 flex h-11 w-full cursor-pointer items-center justify-center rounded-md bg-[#080da6] text-sm font-medium text-white transition-colors hover:bg-[#003894] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600 disabled:cursor-not-allowed disabled:bg-[#eff5ff] disabled:text-[#757575]"
+              className="mt-5 flex h-11 w-full cursor-pointer items-center justify-center rounded-lg bg-primary-hover text-sm font-medium text-white transition-colors hover:bg-bank-hover focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600 disabled:cursor-not-allowed disabled:bg-tint disabled:text-muted"
             >
               {submitting ? 'Logging in…' : 'Log in'}
             </button>
@@ -204,7 +204,7 @@ async function handleSubmit(event: FormEvent<HTMLFormElement>) {
                 onClick={() =>
                   setMessage('Password recovery is not available yet.')
                 }
-                className="min-h-10 cursor-pointer rounded-sm text-sm text-[#1010ff] hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600"
+                className="min-h-10 cursor-pointer rounded-sm text-sm text-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600"
               >
                 Forgot password?
               </button>
@@ -214,7 +214,7 @@ async function handleSubmit(event: FormEvent<HTMLFormElement>) {
               <p
                 role="status"
                 aria-live="polite"
-                className="mt-2 text-sm leading-5 text-[#58708f]"
+                className="mt-2 text-sm leading-5 text-muted"
               >
                 {message}
               </p>

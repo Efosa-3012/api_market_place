@@ -4,6 +4,7 @@ import { Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 
 import { ApiError, bankSession } from '../../lib/api'
 import { bank } from '../../lib/bank'
+import { Button, Field, Notice, inputClass } from '../../components/ui'
 
 /**
  * Mock internet-banking login. The customer types their password HERE, on the
@@ -50,30 +51,22 @@ export default function BankLoginPage() {
 
   return (
     <div className="mx-auto max-w-md">
-      {expired && (
-        <p role="status" className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-          Your session expired. Log in again to continue.
-        </p>
-      )}
+      {expired && <Notice tone="warn" className="mb-4">Your session expired. Log in again to continue.</Notice>}
 
       {isConsentFlow && (
-        <p className="mb-4 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900">
-          An app is asking to connect to your Stanbic account. Log in to review exactly what it wants
-          before you decide.
-        </p>
+        <Notice className="mb-4">
+          An app is asking to connect to your Stanbic account. Log in to review exactly what it wants before you decide.
+        </Notice>
       )}
 
-      <section aria-labelledby="bank-login-title" className="rounded-2xl border border-[#e3e9f2] bg-white p-6 shadow-sm sm:p-8">
+      <section aria-labelledby="bank-login-title" className="rounded-2xl border border-line bg-white p-6 shadow-sm sm:p-8">
         <h1 id="bank-login-title" className="text-2xl font-semibold tracking-tight">
           Log in to Internet Banking
         </h1>
-        <p className="mt-2 text-sm text-[#58708f]">Use your internet banking username and password.</p>
+        <p className="mt-2 text-base text-muted">Use your internet banking username and password.</p>
 
         <form onSubmit={handleSubmit} onChange={() => setError('')} className="mt-6 space-y-5">
-          <div>
-            <label htmlFor="bank-username" className="mb-2 block text-sm font-medium">
-              Username
-            </label>
+          <Field id="bank-username" label="Username">
             <input
               id="bank-username"
               name="username"
@@ -84,14 +77,11 @@ export default function BankLoginPage() {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               placeholder="e.g. ada"
-              className="h-12 w-full rounded-md border border-[#e1e6ee] bg-[#f7f7f8] px-4 text-sm outline-none placeholder:text-[#8195b0] focus:border-[#0b2858] focus:ring-2 focus:ring-blue-100"
+              className={`${inputClass} h-12 text-base`}
             />
-          </div>
+          </Field>
 
-          <div>
-            <label htmlFor="bank-password" className="mb-2 block text-sm font-medium">
-              Password
-            </label>
+          <Field id="bank-password" label="Password">
             <div className="relative">
               <input
                 id="bank-password"
@@ -101,36 +91,28 @@ export default function BankLoginPage() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="h-12 w-full rounded-md border border-[#e1e6ee] bg-[#f7f7f8] pl-4 pr-14 text-sm outline-none focus:border-[#0b2858] focus:ring-2 focus:ring-blue-100"
+                className={`${inputClass} h-12 pr-14 text-base`}
               />
               <button
                 type="button"
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
                 onClick={() => setShowPassword((v) => !v)}
-                className="absolute inset-y-0 right-1 flex w-11 cursor-pointer items-center justify-center rounded-md text-xs text-[#58708f] hover:text-[#0b2858]"
+                className="absolute inset-y-0 right-1 flex w-11 cursor-pointer items-center justify-center rounded-lg text-sm text-muted hover:text-bank"
               >
                 {showPassword ? 'Hide' : 'Show'}
               </button>
             </div>
-          </div>
+          </Field>
 
-          {error && (
-            <p role="alert" className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
-              {error}
-            </p>
-          )}
+          {error && <Notice tone="bad">{error}</Notice>}
 
-          <button
-            type="submit"
-            disabled={submitting || !username || !password}
-            className="flex h-12 w-full cursor-pointer items-center justify-center rounded-md bg-[#0b2858] text-sm font-medium text-white hover:bg-[#0f3a7d] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0b2858] disabled:cursor-not-allowed disabled:opacity-50"
-          >
+          <Button type="submit" tone="bank" size="lg" full disabled={submitting || !username || !password}>
             {submitting ? 'Logging in…' : 'Log in'}
-          </button>
+          </Button>
         </form>
       </section>
 
-      <p className="mt-4 text-center text-xs text-[#58708f]">
+      <p className="mt-4 text-center text-sm text-muted">
         Demo customers: <code>ada</code> / <code>adaeze-ada-okonkwo</code>, <code>emeka</code> / <code>emeka-emeka-okafor</code> — pattern <em>firstname-shortname-lastname</em>
       </p>
     </div>

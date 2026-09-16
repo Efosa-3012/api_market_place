@@ -116,7 +116,7 @@ export default function Pricing({
                 })}
               </tbody>
             </table>
-            <p className="mt-3 text-[10px] leading-5 text-slate-500">
+            <p className="mt-3 text-[11px] leading-5 text-slate-500">
               Production usage examples. Sandbox allowance is separate.
               Subscription examples use a flat base fee; included tax is not
               added a second time.

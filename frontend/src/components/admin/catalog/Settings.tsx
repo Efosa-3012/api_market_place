@@ -215,7 +215,7 @@ export default function Settings({
           <button
             key={s}
             onClick={() => onSection(s)}
-            className={`shrink-0 rounded-lg px-3 py-3 text-left text-xs ${active === s ? 'bg-blue-50 font-semibold text-blue-600' : 'text-[#526783]'}`}
+            className={`shrink-0 rounded-lg px-3 py-3 text-left text-xs ${active === s ? 'bg-blue-50 font-semibold text-blue-600' : 'text-body'}`}
           >
             {s}
           </button>

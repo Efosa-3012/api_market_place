@@ -32,7 +32,7 @@ export function PartnerTraffic({ clients }: { clients: ClientTraffic[] }) {
         <div className="overflow-x-auto">
           <table className="w-full min-w-[640px] border-collapse text-left">
             <thead>
-              <tr className="border-b border-[#eef2f8] text-[10px] uppercase tracking-wide text-[#8ea3c0]">
+              <tr className="border-b border-canvas text-[11px] uppercase tracking-wide text-faint">
                 <th scope="col" className="px-5 py-2 font-medium">Partner</th>
                 <th scope="col" className="py-2 pr-3 font-medium">Share of traffic</th>
                 <th scope="col" className="py-2 pr-3 text-right font-medium">Calls</th>
@@ -42,13 +42,13 @@ export function PartnerTraffic({ clients }: { clients: ClientTraffic[] }) {
             </thead>
             <tbody>
               {clients.map((client) => (
-                <tr key={client.client_id} className="border-b border-[#f4f7fb] last:border-0">
+                <tr key={client.client_id} className="border-b border-canvas last:border-0">
                   <td className="px-5 py-3">
                     <span className="flex flex-wrap items-center gap-2">
-                      <span className="text-xs font-medium text-[#142033]">{client.name}</span>
+                      <span className="text-xs font-medium text-ink">{client.name}</span>
                       {client.status === 'deactivated' && <Chip tone="bad">Deactivated</Chip>}
                     </span>
-                    <span className="mt-0.5 block text-[10px] text-[#8ea3c0]">
+                    <span className="mt-0.5 block text-[11px] text-faint">
                       {client.developer_company ?? client.developer_name} ·{' '}
                       <span className="font-mono">{client.client_id}</span>
                     </span>
@@ -59,18 +59,18 @@ export function PartnerTraffic({ clients }: { clients: ClientTraffic[] }) {
                       tone={client.status === 'deactivated' ? 'neutral' : client.errors > 0 ? 'warn' : 'accent'}
                     />
                     {client.errors > 0 && (
-                      <span className="mt-1 block text-[10px] text-amber-700">
+                      <span className="mt-1 block text-[11px] text-amber-700">
                         {percent(client.errors / client.calls, 0)} rejected
                       </span>
                     )}
                   </td>
-                  <td className="py-3 pr-3 text-right text-xs tabular-nums text-[#142033]">
+                  <td className="py-3 pr-3 text-right text-xs tabular-nums text-ink">
                     {client.calls.toLocaleString()}
                   </td>
-                  <td className="py-3 pr-3 text-right text-xs tabular-nums text-[#65758e]">
+                  <td className="py-3 pr-3 text-right text-xs tabular-nums text-muted">
                     {client.active_consents}
                   </td>
-                  <td className="py-3 pr-5 text-right text-[11px] tabular-nums text-[#8ea3c0]">
+                  <td className="py-3 pr-5 text-right text-[11px] tabular-nums text-faint">
                     {client.last_call_at ? relativeTime(client.last_call_at) : 'Never'}
                   </td>
                 </tr>
@@ -99,18 +99,18 @@ export function TopEndpoints({ endpoints, windowLabel }: { endpoints: EndpointTr
             <li key={`${endpoint.method} ${endpoint.path}`} className="min-w-0">
               <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
                 <span className="flex min-w-0 items-center gap-2">
-                  <span className="text-[10px] font-semibold tabular-nums text-[#b6c2d4]">#{index + 1}</span>
+                  <span className="text-[11px] font-semibold tabular-nums text-faint">#{index + 1}</span>
                   <MethodBadge method={endpoint.method} />
-                  <span className="truncate font-mono text-[11px] text-[#142033]">{endpoint.path}</span>
+                  <span className="truncate font-mono text-[11px] text-ink">{endpoint.path}</span>
                 </span>
-                <span className="shrink-0 text-xs tabular-nums text-[#65758e]">
+                <span className="shrink-0 text-xs tabular-nums text-muted">
                   {endpoint.calls.toLocaleString()}
                 </span>
               </div>
               <div className="mt-2">
                 <ShareBar fraction={endpoint.calls / busiest} tone={endpoint.errors > 0 ? 'warn' : 'accent'} />
               </div>
-              <p className="mt-1.5 text-[10px] text-[#8ea3c0]">
+              <p className="mt-1.5 text-[11px] text-faint">
                 p95 {duration(endpoint.p95_latency_ms)}
                 {endpoint.errors > 0 && <span className="text-amber-700"> · {endpoint.errors} rejected</span>}
               </p>

@@ -56,22 +56,22 @@ function Section({
   children: React.ReactNode
 }) {
   return (
-    <details open={open} className="group rounded-2xl border border-[#e1e8f2] bg-white">
+    <details open={open} className="group rounded-2xl border border-line bg-white">
       <summary className="cursor-pointer list-none px-5 py-4 [&::-webkit-details-marker]:hidden">
         <span className="flex items-start justify-between gap-4">
           <span className="min-w-0">
-            <span className="block text-sm font-semibold text-[#142033]">{title}</span>
-            <span className="mt-1 block text-xs leading-5 text-[#65758e]">{summary}</span>
+            <span className="block text-sm font-semibold text-ink">{title}</span>
+            <span className="mt-1 block text-xs leading-5 text-muted">{summary}</span>
           </span>
           <span
             aria-hidden="true"
-            className="mt-1 shrink-0 text-[#8ea3c0] transition-transform group-open:rotate-90"
+            className="mt-1 shrink-0 text-faint transition-transform group-open:rotate-90"
           >
             ›
           </span>
         </span>
       </summary>
-      <div className="border-t border-[#eef2f8] px-5 py-5">{children}</div>
+      <div className="border-t border-canvas px-5 py-5">{children}</div>
     </details>
   )
 }
@@ -85,7 +85,7 @@ export default function Documentation() {
           title="Authentication"
           summary="Where an access token comes from, and how to present it."
         >
-          <p className="text-xs leading-6 text-[#465b78]">
+          <p className="text-xs leading-6 text-body">
             Every call to <code className="font-mono">/api/v1/*</code> carries an access token that represents{' '}
             <strong>one customer's consent to one app</strong>. There are no API keys: a token is only ever issued
             after a customer approves your request on the bank's own pages, and it stops working the moment they
@@ -96,12 +96,12 @@ export default function Documentation() {
             <CodeBlock title="Every request" text={`Authorization: Bearer <access_token>`} />
           </div>
 
-          <h4 className="mt-6 text-xs font-semibold uppercase tracking-wide text-[#8ea3c0]">
+          <h4 className="mt-6 text-xs font-semibold uppercase tracking-wide text-faint">
             Getting a token — the authorization code flow
           </h4>
-          <ol className="mt-3 flex flex-col gap-3 text-xs leading-6 text-[#465b78]">
+          <ol className="mt-3 flex flex-col gap-3 text-xs leading-6 text-body">
             <li>
-              <strong className="text-[#142033]">1. Send the customer to the bank.</strong> Redirect their browser to{' '}
+              <strong className="text-ink">1. Send the customer to the bank.</strong> Redirect their browser to{' '}
               <code className="font-mono">GET /oauth/authorize</code> with{' '}
               <code className="font-mono">response_type=code</code>, your{' '}
               <code className="font-mono">client_id</code>, a registered{' '}
@@ -110,17 +110,17 @@ export default function Documentation() {
               generate.
             </li>
             <li>
-              <strong className="text-[#142033]">2. They approve on the bank's pages.</strong> They log in and choose
+              <strong className="text-ink">2. They approve on the bank's pages.</strong> They log in and choose
               which accounts to share. You never see their credentials, and you only get the accounts they tick.
             </li>
             <li>
-              <strong className="text-[#142033]">3. You receive a code.</strong> The bank redirects back to your{' '}
+              <strong className="text-ink">3. You receive a code.</strong> The bank redirects back to your{' '}
               <code className="font-mono">redirect_uri</code> with <code className="font-mono">?code=…&amp;state=…</code>.
               Check the state matches what you sent. If they declined, you get{' '}
               <code className="font-mono">?error=access_denied</code> instead.
             </li>
             <li>
-              <strong className="text-[#142033]">4. Exchange it for a token.</strong> Single use, five-minute expiry,
+              <strong className="text-ink">4. Exchange it for a token.</strong> Single use, five-minute expiry,
               and it must be exchanged <em>from your server</em> — the call needs your client secret.
             </li>
           </ol>
@@ -153,20 +153,20 @@ export default function Documentation() {
         </Section>
 
         <Section title="Scopes" summary="What each scope grants, and which endpoints it unlocks.">
-          <p className="mb-4 text-xs leading-6 text-[#465b78]">
+          <p className="mb-4 text-xs leading-6 text-body">
             Request only the scopes you need — the customer sees each one written out on the consent screen, and a
             shorter list is approved more often. A call outside your granted scopes returns{' '}
             <strong>403 insufficient_scope</strong>.
           </p>
           <ul className="flex flex-col gap-4">
             {SCOPES.map((item) => (
-              <li key={item.scope} className="rounded-xl border border-[#eef2f8] bg-[#fafbfd] p-4">
-                <code className="font-mono text-xs font-semibold text-[#0450ff]">{item.scope}</code>
-                <p className="mt-2 text-xs leading-5 text-[#465b78]">{item.grants}</p>
+              <li key={item.scope} className="rounded-xl border border-canvas bg-canvas p-4">
+                <code className="font-mono text-xs font-semibold text-primary">{item.scope}</code>
+                <p className="mt-2 text-xs leading-5 text-body">{item.grants}</p>
                 <ul className="mt-3 flex flex-wrap gap-2">
                   {item.endpoints.map((endpoint) => (
                     <li key={endpoint}>
-                      <code className="rounded border border-[#e1e8f2] bg-white px-2 py-1 font-mono text-[10px] text-[#465b78]">
+                      <code className="rounded border border-line bg-white px-2 py-1 font-mono text-xs text-body">
                         {endpoint}
                       </code>
                     </li>
@@ -178,7 +178,7 @@ export default function Documentation() {
         </Section>
 
         <Section title="Errors" summary="The exact codes the gateway returns, and what to do about each.">
-          <p className="mb-4 text-xs leading-6 text-[#465b78]">
+          <p className="mb-4 text-xs leading-6 text-body">
             Every error uses the same envelope, with a stable machine-readable{' '}
             <code className="font-mono">code</code> — branch on that, never on the message text.
           </p>
@@ -195,7 +195,7 @@ export default function Documentation() {
           <div className="mt-5 overflow-x-auto">
             <table className="w-full min-w-[520px] border-collapse text-left text-xs">
               <thead>
-                <tr className="border-b border-[#eef2f8] text-[10px] uppercase tracking-wide text-[#8ea3c0]">
+                <tr className="border-b border-canvas text-xs uppercase tracking-wide text-faint">
                   <th scope="col" className="py-2 pr-3 font-medium">Status</th>
                   <th scope="col" className="py-2 pr-3 font-medium">Code</th>
                   <th scope="col" className="py-2 font-medium">What it means</th>
@@ -203,7 +203,7 @@ export default function Documentation() {
               </thead>
               <tbody>
                 {ERRORS.map((row) => (
-                  <tr key={row.code} className="border-b border-[#f4f7fb] last:border-0 align-top">
+                  <tr key={row.code} className="border-b border-canvas last:border-0 align-top">
                     <td className="py-3 pr-3">
                       <span
                         className={`font-mono font-semibold tabular-nums ${
@@ -214,9 +214,9 @@ export default function Documentation() {
                       </span>
                     </td>
                     <td className="py-3 pr-3">
-                      <code className="font-mono text-[11px] text-[#142033]">{row.code}</code>
+                      <code className="font-mono text-xs text-ink">{row.code}</code>
                     </td>
-                    <td className="py-3 leading-5 text-[#465b78]">{row.meaning}</td>
+                    <td className="py-3 leading-5 text-body">{row.meaning}</td>
                   </tr>
                 ))}
               </tbody>
@@ -230,7 +230,7 @@ export default function Documentation() {
         </Section>
 
         <Section title="Rate limits" summary="Per-client quotas, and the headers that tell you where you stand.">
-          <p className="text-xs leading-6 text-[#465b78]">
+          <p className="text-xs leading-6 text-body">
             Quotas are counted per <code className="font-mono">client_id</code>, never per IP address — so spreading
             calls across servers does not raise your limit, and sharing an IP with another partner does not lower it.
             Every response carries your current position.
@@ -242,7 +242,7 @@ export default function Documentation() {
 RateLimit: limit=60, remaining=53, reset=60`}
             />
           </div>
-          <p className="mt-4 text-xs leading-6 text-[#465b78]">
+          <p className="mt-4 text-xs leading-6 text-body">
             Exceeding the quota returns <strong>429</strong> with the code{' '}
             <code className="font-mono">rate_limited</code>. Back off until the window resets rather than retrying
             immediately — retries inside the window still count against you.
@@ -250,7 +250,7 @@ RateLimit: limit=60, remaining=53, reset=60`}
         </Section>
 
         <Section title="Pagination" summary="How to page through transaction history.">
-          <p className="text-xs leading-6 text-[#465b78]">
+          <p className="text-xs leading-6 text-body">
             Transactions use an opaque cursor. Read{' '}
             <code className="font-mono">meta.pagination.next_cursor</code> from a response and pass it back as{' '}
             <code className="font-mono">cursor</code> to get the next page. Stop when{' '}
@@ -271,7 +271,7 @@ curl "${API_URL}/api/v1/accounts/$ACCOUNT_ID/transactions?limit=50&cursor=eyJhIj
   -H "Authorization: Bearer $ACCESS_TOKEN"`}
             />
           </div>
-          <p className="mt-4 text-xs leading-6 text-[#465b78]">
+          <p className="mt-4 text-xs leading-6 text-body">
             Filters: <code className="font-mono">from</code> and <code className="font-mono">to</code> (ISO 8601),{' '}
             <code className="font-mono">type</code> (<code className="font-mono">credit</code> or{' '}
             <code className="font-mono">debit</code>), and <code className="font-mono">sort</code> (
@@ -280,42 +280,42 @@ curl "${API_URL}/api/v1/accounts/$ACCOUNT_ID/transactions?limit=50&cursor=eyJhIj
         </Section>
 
         <Section title="Money and dates" summary="Conventions that will bite you if you assume otherwise.">
-          <ul className="flex flex-col gap-3 text-xs leading-6 text-[#465b78]">
+          <ul className="flex flex-col gap-3 text-xs leading-6 text-body">
             <li>
-              <strong className="text-[#142033]">Amounts are decimal strings</strong>, never numbers —{' '}
+              <strong className="text-ink">Amounts are decimal strings</strong>, never numbers —{' '}
               <code className="font-mono">"1250500.50"</code>. Parsing them as a float loses precision. Use a decimal
               type in your language.
             </li>
             <li>
-              <strong className="text-[#142033]">Every amount carries its currency.</strong> Accounts may be NGN, USD
+              <strong className="text-ink">Every amount carries its currency.</strong> Accounts may be NGN, USD
               or GBP. Never assume a customer's accounts share one currency.
             </li>
             <li>
-              <strong className="text-[#142033]">Timestamps are ISO 8601 in UTC.</strong> Convert for display; compare
+              <strong className="text-ink">Timestamps are ISO 8601 in UTC.</strong> Convert for display; compare
               in UTC.
             </li>
             <li>
-              <strong className="text-[#142033]">Account numbers are masked</strong> to the last four digits, and
+              <strong className="text-ink">Account numbers are masked</strong> to the last four digits, and
               internal bank fields — branch, relationship manager, ledger internals — are never returned.
             </li>
           </ul>
         </Section>
 
         <Section title="Support" summary="What to send us when something goes wrong.">
-          <p className="text-xs leading-6 text-[#465b78]">
+          <p className="text-xs leading-6 text-body">
             Every response carries an <code className="font-mono">X-Correlation-Id</code> header, and every error
             repeats it in the body as <code className="font-mono">correlation_id</code>. It identifies that one
             request in the gateway's audit trail.
           </p>
-          <p className="mt-3 text-xs leading-6 text-[#465b78]">
+          <p className="mt-3 text-xs leading-6 text-body">
             Log it on your side. When you raise a support request, send the correlation ID and we can find the exact
             call — far faster than a description of what you think happened. Your own copy of the trail is in{' '}
-            <Link to="/app/developer-portal?tab=logs" className="font-medium text-[#0450ff] hover:underline">
+            <Link to="/app/developer-portal?tab=logs" className="font-medium text-primary hover:underline">
               Logs
             </Link>
             .
           </p>
-          <p className="mt-3 text-xs leading-6 text-[#465b78]">
+          <p className="mt-3 text-xs leading-6 text-body">
             You can also set the header yourself on the way in — send your own{' '}
             <code className="font-mono">X-Correlation-Id</code> and the gateway will use it, tying our trail to yours.
           </p>
@@ -324,18 +324,18 @@ curl "${API_URL}/api/v1/accounts/$ACCOUNT_ID/transactions?limit=50&cursor=eyJhIj
 
       <aside className="flex min-w-0 flex-col gap-5">
         <Panel title="API reference" subtitle="Generated from the spec the gateway serves.">
-          <p className="text-xs leading-6 text-[#465b78]">
+          <p className="text-xs leading-6 text-body">
             Every endpoint, parameter and response shape, browsable and always in step with the running service.
           </p>
           <a
             href={`${API_URL}/docs`}
             target="_blank"
             rel="noreferrer"
-            className="mt-4 inline-flex min-h-9 items-center rounded-lg border border-[#0450ff] bg-[#0450ff] px-4 text-xs font-semibold text-white hover:bg-[#003bd0]"
+            className="mt-4 inline-flex min-h-9 items-center rounded-lg border border-primary bg-primary px-4 text-xs font-semibold text-white hover:bg-primary-hover"
           >
             Open API reference ↗
           </a>
-          <p className="mt-3 text-[11px] text-[#8ea3c0]">
+          <p className="mt-3 text-xs text-faint">
             Raw document:{' '}
             <a href={`${API_URL}/openapi.yaml`} target="_blank" rel="noreferrer" className="underline">
               openapi.yaml
@@ -344,13 +344,13 @@ curl "${API_URL}/api/v1/accounts/$ACCOUNT_ID/transactions?limit=50&cursor=eyJhIj
         </Panel>
 
         <Panel title="Try it without a customer" subtitle="A real token bound to a demo consent.">
-          <p className="text-xs leading-6 text-[#465b78]">
+          <p className="text-xs leading-6 text-body">
             The Sandbox mints a genuine access token for your app against a pre-approved consent, so you can call
             every endpoint — and revoke the consent to see what your error path looks like.
           </p>
           <Link
             to="/app/sandbox"
-            className="mt-4 inline-flex min-h-9 items-center rounded-lg border border-[#dfe6f0] bg-white px-4 text-xs font-semibold text-[#405371] hover:bg-blue-50"
+            className="mt-4 inline-flex min-h-9 items-center rounded-lg border border-line bg-white px-4 text-xs font-semibold text-body hover:bg-blue-50"
           >
             Open the Sandbox →
           </Link>
@@ -359,7 +359,7 @@ curl "${API_URL}/api/v1/accounts/$ACCOUNT_ID/transactions?limit=50&cursor=eyJhIj
         <Panel title="At a glance">
           <dl className="flex flex-col gap-3 text-xs">
             {[
-              ['Base URL', <code key="u" className="break-all font-mono text-[11px]">{API_URL}</code>],
+              ['Base URL', <code key="u" className="break-all font-mono text-xs">{API_URL}</code>],
               ['Auth', 'OAuth 2.0 authorization code'],
               ['Token lifetime', '24 hours'],
               ['Consent lifetime', '90 days'],
@@ -367,8 +367,8 @@ curl "${API_URL}/api/v1/accounts/$ACCOUNT_ID/transactions?limit=50&cursor=eyJhIj
               ['Format', 'JSON'],
             ].map(([label, value]) => (
               <div key={String(label)} className="flex items-baseline justify-between gap-3">
-                <dt className="shrink-0 text-[#8ea3c0]">{label}</dt>
-                <dd className="min-w-0 text-right font-medium text-[#142033]">{value}</dd>
+                <dt className="shrink-0 text-faint">{label}</dt>
+                <dd className="min-w-0 text-right font-medium text-ink">{value}</dd>
               </div>
             ))}
           </dl>

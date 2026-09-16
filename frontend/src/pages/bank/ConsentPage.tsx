@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 
 import { ApiError } from '../../lib/api'
 import { bank, SCOPE_LABELS, type Consent, type ConsentAccount } from '../../lib/bank'
+import { Button, Notice, Skeleton } from '../../components/ui'
 
 /**
  * The consent screen — the visual centrepiece of the whole platform.
@@ -32,10 +33,10 @@ const ACCOUNT_TYPE_LABEL: Record<string, string> = {
 function AppLogo({ name, url }: { name: string; url: string | null }) {
   const [failed, setFailed] = useState(false)
   if (url && !failed) {
-    return <img src={url} alt="" onError={() => setFailed(true)} className="size-14 shrink-0 rounded-xl border border-[#e3e9f2] bg-white object-contain p-1" />
+    return <img src={url} alt="" onError={() => setFailed(true)} className="size-14 shrink-0 rounded-xl border border-line bg-white object-contain p-1" />
   }
   return (
-    <span aria-hidden="true" className="grid size-14 shrink-0 place-items-center rounded-xl bg-[#0b2858] text-xl font-semibold text-white">
+    <span aria-hidden="true" className="grid size-14 shrink-0 place-items-center rounded-xl bg-bank text-xl font-semibold text-white">
       {name.trim().charAt(0).toUpperCase()}
     </span>
   )
@@ -127,15 +128,21 @@ export default function ConsentPage() {
   // ---------------------------------------------------------------------------
 
   if (state.kind === 'loading') {
-    return <p className="py-20 text-center text-sm text-[#58708f]">Loading the request…</p>
+    return (
+      <div className="mx-auto max-w-2xl rounded-2xl border border-line bg-white p-6 sm:p-8" aria-busy="true" aria-label="Loading the request">
+        <Skeleton rows={1} height="h-8" />
+        <div className="mt-6"><Skeleton rows={3} height="h-12" /></div>
+        <div className="mt-6"><Skeleton rows={2} height="h-16" /></div>
+      </div>
+    )
   }
 
   if (state.kind === 'error') {
     return (
-      <section className="mx-auto max-w-lg rounded-2xl border border-[#e3e9f2] bg-white p-8 text-center shadow-sm">
+      <section className="mx-auto max-w-lg rounded-2xl border border-line bg-white p-8 text-center shadow-sm">
         <h1 className="text-xl font-semibold">{state.title}</h1>
-        <p className="mt-3 text-sm leading-6 text-[#58708f]">{state.message}</p>
-        <Link to="/bank/connected-apps" className="mt-6 inline-block text-sm text-[#0b2858] underline">
+        <p className="mt-3 text-base leading-6 text-muted">{state.message}</p>
+        <Link to="/bank/connected-apps" className="mt-6 inline-block text-base text-bank underline">
           Go to Connected Apps
         </Link>
       </section>
@@ -144,13 +151,13 @@ export default function ConsentPage() {
 
   if (state.kind === 'redirecting') {
     return (
-      <section className="mx-auto max-w-lg rounded-2xl border border-[#e3e9f2] bg-white p-8 text-center shadow-sm">
+      <section className="mx-auto max-w-lg rounded-2xl border border-line bg-white p-8 text-center shadow-sm">
         <div aria-hidden="true" className={`mx-auto mb-4 grid size-14 place-items-center rounded-full text-2xl ${state.decision === 'approved' ? 'bg-green-50 text-green-600' : 'bg-slate-100 text-slate-500'}`}>
           {state.decision === 'approved' ? '✓' : '✕'}
         </div>
         <h1 className="text-xl font-semibold">{state.decision === 'approved' ? 'Access approved' : 'Request declined'}</h1>
-        <p className="mt-3 text-sm text-[#58708f]">Taking you back to the app…</p>
-        <a href={state.to} className="mt-4 inline-block text-xs text-[#0b2858] underline">
+        <p className="mt-3 text-base text-muted">Taking you back to the app…</p>
+        <a href={state.to} className="mt-4 inline-block text-sm text-bank underline">
           Not redirected? Continue
         </a>
       </section>
@@ -162,27 +169,27 @@ export default function ConsentPage() {
 
   return (
     <div className="mx-auto max-w-2xl">
-      <section aria-labelledby="consent-title" className="rounded-2xl border border-[#e3e9f2] bg-white shadow-sm">
+      <section aria-labelledby="consent-title" className="rounded-2xl border border-line bg-white shadow-sm">
         {/* Who */}
-        <header className="border-b border-[#edf0f5] p-6 sm:p-8">
-          <p className="text-xs font-semibold uppercase tracking-wide text-[#58708f]">Connection request</p>
+        <header className="border-b border-canvas p-6 sm:p-8">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted">Connection request</p>
           <div className="mt-3 flex items-start gap-4">
             <AppLogo name={consent.client.name} url={consent.client.logo_url} />
             <div className="min-w-0">
               <h1 id="consent-title" className="text-2xl font-semibold tracking-tight">
-                <span className="text-[#0b2858]">{consent.client.name}</span> wants to access your account
+                <span className="text-bank">{consent.client.name}</span> wants to access your account
               </h1>
-              {consent.client.description && <p className="mt-2 text-sm leading-6 text-[#58708f]">{consent.client.description}</p>}
-              <ul className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[#58708f]">
+              {consent.client.description && <p className="mt-2 text-base leading-6 text-muted">{consent.client.description}</p>}
+              <ul className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted">
                 <li className="inline-flex items-center gap-1">
-                  <span aria-hidden="true" className="grid size-4 place-items-center rounded-full bg-green-50 text-[10px] text-green-700">✓</span>
+                  <span aria-hidden="true" className="grid size-4 place-items-center rounded-full bg-green-50 text-sm text-green-700">✓</span>
                   Registered partner since {new Date(consent.client.registered_at).toLocaleDateString('en-NG', { month: 'short', year: 'numeric' })}
                 </li>
                 {consent.client.website_url && (
-                  <li><a href={consent.client.website_url} target="_blank" rel="noreferrer" className="text-[#0b2858] underline">{consent.client.website_url.replace(/^https?:\/\//, '')}</a></li>
+                  <li><a href={consent.client.website_url} target="_blank" rel="noreferrer" className="text-bank underline">{consent.client.website_url.replace(/^https?:\/\//, '')}</a></li>
                 )}
                 {consent.client.privacy_policy_url && (
-                  <li><a href={consent.client.privacy_policy_url} target="_blank" rel="noreferrer" className="text-[#0b2858] underline">Privacy policy</a></li>
+                  <li><a href={consent.client.privacy_policy_url} target="_blank" rel="noreferrer" className="text-bank underline">Privacy policy</a></li>
                 )}
               </ul>
             </div>
@@ -190,31 +197,31 @@ export default function ConsentPage() {
         </header>
 
         {/* What */}
-        <div className="border-b border-[#edf0f5] p-6 sm:p-8">
-          <h2 className="text-sm font-semibold">It will be able to see</h2>
+        <div className="border-b border-canvas p-6 sm:p-8">
+          <h2 className="text-base font-semibold">It will be able to see</h2>
           <ul className="mt-3 space-y-3">
             {consent.scopes.map((scope) => {
               const label = SCOPE_LABELS[scope] ?? { title: scope, detail: '' }
               return (
                 <li key={scope} className="flex gap-3">
-                  <span aria-hidden="true" className="mt-0.5 grid size-5 shrink-0 place-items-center rounded-full bg-green-50 text-xs text-green-700">✓</span>
+                  <span aria-hidden="true" className="mt-0.5 grid size-5 shrink-0 place-items-center rounded-full bg-green-50 text-sm text-green-700">✓</span>
                   <div>
-                    <p className="text-sm font-medium">{label.title}</p>
-                    {label.detail && <p className="text-xs leading-5 text-[#58708f]">{label.detail}</p>}
+                    <p className="text-base font-medium">{label.title}</p>
+                    {label.detail && <p className="text-sm leading-5 text-muted">{label.detail}</p>}
                   </div>
                 </li>
               )
             })}
           </ul>
-          <p className="mt-4 rounded-md bg-[#f3f5f9] px-3 py-2 text-xs leading-5 text-[#465b78]">
+          <p className="mt-4 rounded-lg bg-canvas px-3 py-2 text-sm leading-5 text-body">
             <strong>Read-only.</strong> {consent.client.name} cannot move money, change your details, or see your password.
           </p>
         </div>
 
         {/* Which accounts */}
-        <div className="border-b border-[#edf0f5] p-6 sm:p-8">
-          <h2 className="text-sm font-semibold">Choose which accounts to share</h2>
-          <p className="mt-1 text-xs text-[#58708f]">Only the accounts you tick will be visible to the app.</p>
+        <div className="border-b border-canvas p-6 sm:p-8">
+          <h2 className="text-base font-semibold">Choose which accounts to share</h2>
+          <p className="mt-1 text-sm text-muted">Only the accounts you tick will be visible to the app.</p>
 
           <ul className="mt-4 space-y-2">
             {accounts.map((account) => {
@@ -224,60 +231,48 @@ export default function ConsentPage() {
                 <li key={account.account_id}>
                   <label
                     className={`flex cursor-pointer items-center gap-4 rounded-xl border p-4 transition-colors ${
-                      checked ? 'border-[#0b2858] bg-[#f3f6fc]' : 'border-[#e3e9f2] hover:bg-[#fafbfd]'
+                      checked ? 'border-bank bg-canvas' : 'border-line hover:bg-canvas'
                     }`}
                   >
                     <input
                       type="checkbox"
                       checked={checked}
                       onChange={() => toggle(account.account_id)}
-                      className="size-5 accent-[#0b2858]"
+                      className="size-5 accent-bank"
                     />
                     <span className="flex-1">
-                      <span className="block text-sm font-medium">
+                      <span className="block text-base font-medium">
                         {ACCOUNT_TYPE_LABEL[account.account_type] ?? account.account_type}
-                        <span className="ml-2 font-normal text-[#58708f]">····{account.account_number.slice(-4)}</span>
-                        {dormant && <span className="ml-2 rounded bg-amber-50 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-amber-700">{account.status}</span>}
+                        <span className="ml-2 font-normal text-muted">····{account.account_number.slice(-4)}</span>
+                        {dormant && <span className="ml-2 rounded bg-amber-50 px-1.5 py-0.5 text-sm font-semibold uppercase text-amber-700">{account.status}</span>}
                       </span>
-                      <span className="block text-xs text-[#58708f]">{account.currency}</span>
+                      <span className="block text-sm text-muted">{account.currency}</span>
                     </span>
-                    <span className="text-sm font-semibold tabular-nums">{currency(account.account_balance, account.currency)}</span>
+                    <span className="text-base font-semibold tabular-nums">{currency(account.account_balance, account.currency)}</span>
                   </label>
                 </li>
               )
             })}
           </ul>
-          {accounts.length === 0 && <p className="mt-4 text-sm text-[#58708f]">You have no accounts to share.</p>}
+          {accounts.length === 0 && <p className="mt-4 text-base text-muted">You have no accounts to share.</p>}
         </div>
 
         {/* How long + actions */}
         <div className="p-6 sm:p-8">
-          <p className="text-sm leading-6 text-[#465b78]">
+          <p className="text-base leading-6 text-body">
             Access lasts <strong>{expiryDays} days</strong>. You can withdraw it at any time from{' '}
-            <Link to="/bank/connected-apps" className="text-[#0b2858] underline">Connected Apps</Link> — the app loses access immediately and your password never changes.
+            <Link to="/bank/connected-apps" className="text-bank underline">Connected Apps</Link> — the app loses access immediately and your password never changes.
           </p>
 
-          {actionError && (
-            <p role="alert" className="mt-4 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{actionError}</p>
-          )}
+          {actionError && <Notice tone="bad" className="mt-4">{actionError}</Notice>}
 
           <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-            <button
-              type="button"
-              onClick={decline}
-              disabled={busy}
-              className="min-h-11 cursor-pointer rounded-md border border-[#e1e6ee] px-5 text-sm font-medium text-[#465b78] hover:bg-[#f7f9fc] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0b2858] disabled:opacity-50"
-            >
+            <Button secondary size="lg" onClick={decline} disabled={busy}>
               Decline
-            </button>
-            <button
-              type="button"
-              onClick={approve}
-              disabled={busy || selected.size === 0}
-              className="min-h-11 cursor-pointer rounded-md bg-[#0b2858] px-6 text-sm font-medium text-white hover:bg-[#0f3a7d] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0b2858] disabled:cursor-not-allowed disabled:opacity-50"
-            >
+            </Button>
+            <Button tone="bank" size="lg" onClick={approve} disabled={busy || selected.size === 0}>
               {busy ? 'Please wait…' : `Approve ${selected.size === 1 ? '1 account' : `${selected.size} accounts`}`}
-            </button>
+            </Button>
           </div>
         </div>
       </section>

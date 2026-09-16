@@ -85,19 +85,19 @@ export default function DeveloperPortalPage() {
   const showRange = tab === 'activity'
 
   return (
-    <div className="min-h-[calc(100dvh-64px)] bg-[#f7f9fc] px-4 py-6 text-[#142033] sm:px-6 lg:px-8">
+    <div className="min-h-[calc(100dvh-64px)] bg-canvas px-4 py-6 text-ink sm:px-6 lg:px-8">
       <div className="mx-auto flex max-w-[1400px] flex-col gap-6">
         <header className="flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-wide text-[#8ea3c0]">Developer portal</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-faint">Developer portal</p>
             <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">{current.label}</h1>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-[#465b78]">{current.blurb}</p>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-body">{current.blurb}</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <Chip tone="accent">Sandbox environment</Chip>
             <Link
               to="/app/sandbox"
-              className="inline-flex min-h-9 items-center rounded-lg border border-[#0450ff] bg-[#0450ff] px-4 text-xs font-semibold text-white hover:bg-[#003bd0]"
+              className="inline-flex min-h-9 items-center rounded-lg border border-primary bg-primary px-4 text-xs font-semibold text-white hover:bg-primary-hover"
             >
               Open the Sandbox
             </Link>
@@ -105,13 +105,13 @@ export default function DeveloperPortalPage() {
         </header>
 
         {developer && (
-          <p className="-mt-2 text-xs text-[#8ea3c0]">
+          <p className="-mt-2 text-xs text-faint">
             Signed in as {developer.name}
             {developer.company ? ` · ${developer.company}` : ''}
           </p>
         )}
 
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#e1e8f2]">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line">
           <nav aria-label="Developer portal sections" className="-mb-px flex max-w-full gap-1 overflow-x-auto">
             {TABS.map((item) => (
               <button
@@ -121,8 +121,8 @@ export default function DeveloperPortalPage() {
                 aria-current={tab === item.id ? 'page' : undefined}
                 className={`cursor-pointer whitespace-nowrap border-b-2 px-4 py-3 text-sm transition-colors ${
                   tab === item.id
-                    ? 'border-[#0450ff] font-semibold text-[#142033]'
-                    : 'border-transparent text-[#65758e] hover:text-[#142033]'
+                    ? 'border-primary font-semibold text-ink'
+                    : 'border-transparent text-muted hover:text-ink'
                 }`}
               >
                 {item.label}

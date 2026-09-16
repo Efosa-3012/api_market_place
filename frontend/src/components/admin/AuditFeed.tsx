@@ -74,7 +74,7 @@ export default function AuditFeed({
               className={`inline-flex min-h-9 cursor-pointer items-center gap-2 rounded-lg border px-3 text-xs font-semibold transition-colors ${
                 live
                   ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
-                  : 'border-[#dfe6f0] bg-white text-[#405371] hover:bg-blue-50'
+                  : 'border-line bg-white text-body hover:bg-blue-50'
               }`}
             >
               <span
@@ -110,7 +110,7 @@ export default function AuditFeed({
           <div className="max-h-[520px] overflow-auto">
             <table className="w-full min-w-[760px] border-collapse text-left">
               <thead className="sticky top-0 z-10 bg-white">
-                <tr className="border-b border-[#eef2f8] text-[10px] uppercase tracking-wide text-[#8ea3c0]">
+                <tr className="border-b border-canvas text-[11px] uppercase tracking-wide text-faint">
                   <th scope="col" className="px-5 py-2 font-medium">Time</th>
                   <th scope="col" className="py-2 pr-3 font-medium">Partner</th>
                   <th scope="col" className="py-2 pr-3 font-medium">Request</th>
@@ -135,27 +135,27 @@ export default function AuditFeed({
                           setSelected(call)
                         }
                       }}
-                      className={`cursor-pointer border-b border-[#f4f7fb] transition-colors duration-1000 last:border-0 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-blue-600 ${
+                      className={`cursor-pointer border-b border-canvas transition-colors duration-1000 last:border-0 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-blue-600 ${
                         isNew ? (revocation ? 'bg-red-100' : failed ? 'bg-amber-100' : 'bg-blue-50') :
-                        revocation ? 'bg-red-50/60 hover:bg-red-50' : failed ? 'hover:bg-amber-50/40' : 'hover:bg-[#f9fbfe]'
+                        revocation ? 'bg-red-50/60 hover:bg-red-50' : failed ? 'hover:bg-amber-50/40' : 'hover:bg-canvas'
                       }`}
                     >
-                      <td className="px-5 py-3 text-[11px] tabular-nums text-[#65758e]">
+                      <td className="px-5 py-3 text-[11px] tabular-nums text-muted">
                         {clockTime(call.created_at)}
                       </td>
                       <td className="py-3 pr-3">
                         {call.client_name ? (
-                          <span className="block max-w-[16ch] truncate text-xs font-medium text-[#142033]">
+                          <span className="block max-w-[16ch] truncate text-xs font-medium text-ink">
                             {call.client_name}
                           </span>
                         ) : (
-                          <span className="text-[11px] text-[#b6c2d4]">—</span>
+                          <span className="text-[11px] text-faint">—</span>
                         )}
                       </td>
                       <td className="py-3 pr-3">
                         <span className="flex items-center gap-2">
                           <MethodBadge method={call.method} />
-                          <span className="max-w-[30ch] truncate font-mono text-[11px] text-[#465b78]">
+                          <span className="max-w-[30ch] truncate font-mono text-[11px] text-body">
                             {call.path}
                           </span>
                         </span>
@@ -164,13 +164,13 @@ export default function AuditFeed({
                         <span className="flex items-center gap-2">
                           <StatusCode code={call.status_code} />
                           {call.error_code && (
-                            <span className={`text-[10px] ${revocation ? 'font-medium text-red-700' : 'text-[#8ea3c0]'}`}>
+                            <span className={`text-[11px] ${revocation ? 'font-medium text-red-700' : 'text-faint'}`}>
                               {describeError(call.error_code)}
                             </span>
                           )}
                         </span>
                       </td>
-                      <td className="py-3 pr-5 text-right text-[11px] tabular-nums text-[#8ea3c0]">
+                      <td className="py-3 pr-5 text-right text-[11px] tabular-nums text-faint">
                         {call.duration_ms}ms
                       </td>
                     </tr>
@@ -188,7 +188,7 @@ export default function AuditFeed({
             <div className="flex flex-wrap items-center gap-3">
               <StatusCode code={selected.status_code} />
               <MethodBadge method={selected.method} />
-              <span className="min-w-0 break-all font-mono text-xs text-[#142033]">{selected.path}</span>
+              <span className="min-w-0 break-all font-mono text-xs text-ink">{selected.path}</span>
             </div>
 
             {selected.error_code && (
@@ -199,8 +199,8 @@ export default function AuditFeed({
                     : 'border-amber-200 bg-amber-50'
                 }`}
               >
-                <p className="text-xs font-semibold text-[#142033]">{describeError(selected.error_code)}</p>
-                <p className="mt-1 font-mono text-[11px] text-[#465b78]">{selected.error_code}</p>
+                <p className="text-xs font-semibold text-ink">{describeError(selected.error_code)}</p>
+                <p className="mt-1 font-mono text-[11px] text-body">{selected.error_code}</p>
                 {selected.error_code === 'consent_revoked' && (
                   <p className="mt-2 text-[11px] leading-5 text-red-800">
                     The customer withdrew this consent. The call was still attributed to the partner that made it,
@@ -221,18 +221,18 @@ export default function AuditFeed({
                 ['When', new Date(selected.created_at).toLocaleString()],
               ].map(([label, value]) => (
                 <div key={label} className="contents">
-                  <dt className="whitespace-nowrap text-[#8ea3c0]">{label}</dt>
-                  <dd className="min-w-0 break-all font-mono text-[11px] text-[#142033]">{value}</dd>
+                  <dt className="whitespace-nowrap text-faint">{label}</dt>
+                  <dd className="min-w-0 break-all font-mono text-[11px] text-ink">{value}</dd>
                 </div>
               ))}
             </dl>
 
-            <div className="rounded-xl border border-[#e1e8f2] bg-[#f7f9fc] p-4">
+            <div className="rounded-xl border border-line bg-canvas p-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <p className="text-xs font-semibold text-[#142033]">Correlation ID</p>
+                <p className="text-xs font-semibold text-ink">Correlation ID</p>
                 <CopyButton value={selected.correlation_id} />
               </div>
-              <p className="mt-2 break-all font-mono text-[11px] text-[#465b78]">{selected.correlation_id}</p>
+              <p className="mt-2 break-all font-mono text-[11px] text-body">{selected.correlation_id}</p>
             </div>
 
             {selected.customer_id && (

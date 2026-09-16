@@ -28,7 +28,7 @@ function FilterGroup({
   return (
     <details
       open={defaultOpen}
-      className="group border-b border-[#e1e8f1] py-5"
+      className="group border-b border-line py-5"
     >
       <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-blue-600 [&::-webkit-details-marker]:hidden">
         {title}
@@ -41,7 +41,7 @@ function FilterGroup({
           fill="none"
           stroke="currentColor"
           strokeWidth="1.6"
-          className="text-[#58708f] group-open:rotate-180"
+          className="text-muted group-open:rotate-180"
         >
           <path d="m6 9 6 6 6-6" />
         </svg>
@@ -53,19 +53,19 @@ function FilterGroup({
         {options.map((option) => (
           <label
             key={option}
-            className="flex min-h-8 cursor-pointer items-center gap-2 text-xs text-[#33445d]"
+            className="flex min-h-8 cursor-pointer items-center gap-2 text-xs text-body"
           >
             <input
               type="checkbox"
               checked={selected.includes(option)}
               onChange={() => onToggle(option)}
-              className="size-4 shrink-0 cursor-pointer accent-[#0450ff]"
+              className="size-4 shrink-0 cursor-pointer accent-primary"
             />
 
             <span>
               {option}
               {counts && (
-                <span className="text-[#58708f]">
+                <span className="text-muted">
                   {' '}({counts[option] ?? 0})
                 </span>
               )}
@@ -79,17 +79,17 @@ function FilterGroup({
 
 function ApiCard({ api }: { api: MarketplaceApi }) {
   return (
-    <article className="flex h-full flex-col rounded-lg border border-[#e1e6ee] bg-white p-5">
+    <article className="flex h-full flex-col rounded-lg border border-line bg-white p-5">
       <div className="mb-4 flex items-center justify-between gap-3">
         <div className="flex flex-wrap gap-2">
-          <span className="rounded-sm bg-[#f2f3f6] px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-[#4c586b]">
+          <span className="rounded-sm bg-canvas px-2 py-1 text-xs font-bold uppercase tracking-wide text-body">
             {api.category === 'Identity' ? 'Identity & KYC' : api.category}
           </span>
 
           <span
-            className={`rounded-sm px-2 py-1 text-[10px] font-bold uppercase tracking-wide ${
+            className={`rounded-sm px-2 py-1 text-xs font-bold uppercase tracking-wide ${
               api.pricing === 'Paid'
-                ? 'bg-blue-50 text-[#1010ff]'
+                ? 'bg-blue-50 text-primary'
                 : 'bg-red-50 text-red-600'
             }`}
           >
@@ -97,11 +97,11 @@ function ApiCard({ api }: { api: MarketplaceApi }) {
           </span>
 
           {api.availability === 'live' ? (
-            <span className="rounded-sm bg-green-50 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-green-700">
+            <span className="rounded-sm bg-green-50 px-2 py-1 text-xs font-bold uppercase tracking-wide text-green-700">
               Live
             </span>
           ) : (
-            <span className="rounded-sm bg-[#f2f3f6] px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-[#8190a7]">
+            <span className="rounded-sm bg-canvas px-2 py-1 text-xs font-bold uppercase tracking-wide text-muted">
               Coming soon
             </span>
           )}
@@ -132,7 +132,7 @@ function ApiCard({ api }: { api: MarketplaceApi }) {
         className="mb-3 mt-2 h-[3px] w-7 bg-[#ff3545]"
       />
 
-      <p className="mb-8 text-xs leading-5 text-[#4c586b]">
+      <p className="mb-8 text-xs leading-5 text-body">
         {api.description}
       </p>
 
@@ -140,14 +140,14 @@ function ApiCard({ api }: { api: MarketplaceApi }) {
         <Link
           to={`/app/marketplace/${api.id}`}
           aria-label={`Explore ${api.title}`}
-          className="mt-auto flex min-h-10 items-center justify-center gap-1 bg-[#0450ff] px-4 py-2 text-xs font-bold text-white hover:bg-[#003bd0] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600"
+          className="mt-auto flex min-h-10 items-center justify-center gap-1 bg-primary px-4 py-2 text-xs font-bold text-white hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600"
         >
           EXPLORE API <span aria-hidden="true">→</span>
         </Link>
       ) : (
         <span
           aria-label={`${api.title} is coming soon`}
-          className="mt-auto flex min-h-10 cursor-not-allowed items-center justify-center gap-1 bg-[#eef0f4] px-4 py-2 text-xs font-bold text-[#8190a7]"
+          className="mt-auto flex min-h-10 cursor-not-allowed items-center justify-center gap-1 bg-canvas px-4 py-2 text-xs font-bold text-muted"
         >
           COMING SOON
         </span>
@@ -240,7 +240,7 @@ export default function MarketplacePage() {
     <div className="mx-auto max-w-[1500px] p-4 sm:p-6">
       <section
         aria-labelledby="marketplace-title"
-        className="relative isolate overflow-hidden rounded-xl bg-[#edf5ff] px-5 py-7 sm:px-6 sm:py-8"
+        className="relative isolate overflow-hidden rounded-xl bg-tint px-5 py-7 sm:px-6 sm:py-8"
       >
         <img
           src="/images/Marketplace.png"
@@ -248,9 +248,9 @@ export default function MarketplacePage() {
           className="absolute inset-0 -z-20 h-full w-full object-cover object-right"
         />
 
-        <div className="absolute inset-0 -z-10 bg-gradient-to-r from-[#f0f6ff] via-[#edf5ff]/95 to-transparent" />
+        <div className="absolute inset-0 -z-10 bg-gradient-to-r from-tint via-tint/95 to-transparent" />
 
-        <p className="text-[11px] font-bold uppercase tracking-wider text-[#8299b8]">
+        <p className="text-xs font-bold uppercase tracking-wider text-muted">
           Marketplace
         </p>
 
@@ -261,7 +261,7 @@ export default function MarketplacePage() {
           APIs for a more connected Africa
         </h1>
 
-        <p className="mt-3 max-w-lg text-sm leading-5 text-[#4c586b]">
+        <p className="mt-3 max-w-lg text-sm leading-5 text-body">
           Explore, integrate, and build powerful solutions with Stanbic
           IBTC APIs.
         </p>
@@ -284,7 +284,7 @@ export default function MarketplacePage() {
             fill="none"
             stroke="currentColor"
             strokeWidth="1.6"
-            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#8b9bb2]"
+            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-faint"
           >
             <circle cx="10.5" cy="10.5" r="7" />
             <path d="m16 16 5 5" />
@@ -296,7 +296,7 @@ export default function MarketplacePage() {
             value={query}
             onChange={(event) => updateSearch(event.target.value)}
             placeholder="Search"
-            className="h-10 w-full rounded-md border border-[#e1e6ee] bg-[#fafafa] pl-10 pr-4 text-sm outline-none placeholder:text-[#8b9bb2] focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            className="h-10 w-full rounded-lg border border-line bg-canvas pl-10 pr-4 text-sm outline-none placeholder:text-faint focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
           />
         </div>
       </div>
@@ -317,7 +317,7 @@ export default function MarketplacePage() {
               <button
                 type="button"
                 onClick={clearFilters}
-                className="min-h-9 cursor-pointer text-xs font-semibold text-[#1010ff] hover:underline focus-visible:outline-2 focus-visible:outline-blue-600"
+                className="min-h-9 cursor-pointer text-xs font-semibold text-primary hover:underline focus-visible:outline-2 focus-visible:outline-blue-600"
               >
                 Clear all
               </button>
@@ -327,7 +327,7 @@ export default function MarketplacePage() {
                 aria-expanded={mobileFiltersOpen}
                 aria-controls="marketplace-filters"
                 onClick={() => setMobileFiltersOpen((current) => !current)}
-                className="min-h-9 cursor-pointer rounded-md border border-[#e1e6ee] px-3 text-xs text-[#465b78] focus-visible:outline-2 focus-visible:outline-blue-600 xl:hidden"
+                className="min-h-9 cursor-pointer rounded-lg border border-line px-3 text-xs text-body focus-visible:outline-2 focus-visible:outline-blue-600 xl:hidden"
               >
                 {mobileFiltersOpen ? 'Hide filters' : 'Show filters'}
               </button>
@@ -387,17 +387,17 @@ export default function MarketplacePage() {
               ))}
             </div>
           ) : (
-            <div className="rounded-lg border border-dashed border-[#d7dfeb] px-6 py-16 text-center">
+            <div className="rounded-lg border border-dashed border-line px-6 py-16 text-center">
               <h2 className="text-lg font-semibold">No APIs found</h2>
 
-              <p className="mt-2 text-sm text-[#58708f]">
+              <p className="mt-2 text-sm text-muted">
                 Try a different search or adjust your filters.
               </p>
 
               <button
                 type="button"
                 onClick={resetResults}
-                className="mt-5 min-h-10 cursor-pointer rounded-md bg-[#0450ff] px-5 text-sm text-white hover:bg-[#003bd0]"
+                className="mt-5 min-h-10 cursor-pointer rounded-lg bg-primary px-5 text-sm text-white hover:bg-primary-hover"
               >
                 Reset search and filters
               </button>

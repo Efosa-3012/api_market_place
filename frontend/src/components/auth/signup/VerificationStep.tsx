@@ -35,7 +35,7 @@ export default function VerificationStep({
         className="block text-sm font-medium leading-6"
       >
         Enter the 6-digit code sent to
-        <span className="block break-all text-[#1010ff]">
+        <span className="block break-all text-primary">
           {maskedEmail}
         </span>
       </label>
@@ -60,7 +60,7 @@ export default function VerificationStep({
           }
           className="absolute inset-0 z-10 h-full w-full cursor-text opacity-0"
         />
-        <p className="mt-2 text-xs text-[#8195b0]">
+        <p className="mt-2 text-xs text-muted">
           Demo environment — no email is sent. Use code <code>123456</code>.
         </p>
 
@@ -71,10 +71,10 @@ export default function VerificationStep({
           {Array.from({ length: 6 }, (_, index) => (
             <span
               key={index}
-              className={`flex h-12 min-w-0 flex-1 items-center justify-center rounded-lg border bg-[#f7f7f8] text-base ${
+              className={`flex h-12 min-w-0 flex-1 items-center justify-center rounded-lg border bg-canvas text-base ${
                 data.verificationCode[index]
-                  ? 'border-blue-300 text-[#151c2d]'
-                  : 'border-[#dfe2e8] text-[#8a8a8a]'
+                  ? 'border-blue-300 text-ink'
+                  : 'border-line text-muted'
               } ${index === 3 ? 'ml-2' : ''}`}
             >
               {data.verificationCode[index] || '0'}
@@ -85,12 +85,12 @@ export default function VerificationStep({
 
       <p
         id="verification-help"
-        className="mt-4 text-xs leading-5 text-[#58708f]"
+        className="mt-4 text-xs leading-5 text-muted"
       >
         Enter the verification code to continue.
       </p>
 
-      <p className="mt-6 text-sm text-[#465b78]">
+      <p className="mt-6 text-sm text-body">
         Didn’t receive a code?
       </p>
 
@@ -99,19 +99,19 @@ export default function VerificationStep({
           type="button"
           disabled={secondsLeft > 0}
           onClick={handleResend}
-          className="min-h-11 cursor-pointer rounded-sm text-blue-600 hover:underline focus-visible:outline-2 focus-visible:outline-blue-600 disabled:cursor-not-allowed disabled:text-[#a0a0a0] disabled:no-underline"
+          className="min-h-11 cursor-pointer rounded-sm text-blue-600 hover:underline focus-visible:outline-2 focus-visible:outline-blue-600 disabled:cursor-not-allowed disabled:text-faint disabled:no-underline"
         >
           Resend code
         </button>
 
         {secondsLeft > 0 && (
-          <span className="text-[#465b78]">
+          <span className="text-body">
             (00:{String(secondsLeft).padStart(2, '0')})
           </span>
         )}
       </div>
 
-      <p role="status" className="text-xs text-[#58708f]">
+      <p role="status" className="text-xs text-muted">
         {resent ? 'Code entry reset. Enter your verification code.' : ''}
       </p>
     </div>

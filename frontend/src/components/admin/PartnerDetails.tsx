@@ -29,10 +29,10 @@ function ContactCard({ contact }: { contact: Contact }) {
         {initials(contact.name)}
       </span>
       <div className="min-w-0 text-xs leading-5">
-        <strong className="block text-[#151515]">{contact.name}</strong>
-        <p className="text-[#465b78]">{contact.role}</p>
-        <p className="mt-2 break-all text-[#465b78]">✉ {contact.email}</p>
-        {contact.phone && <p className="text-[#465b78]">{contact.phone}</p>}
+        <strong className="block text-ink">{contact.name}</strong>
+        <p className="text-body">{contact.role}</p>
+        <p className="mt-2 break-all text-body">✉ {contact.email}</p>
+        {contact.phone && <p className="text-body">{contact.phone}</p>}
       </div>
     </div>
   )
@@ -87,13 +87,13 @@ export default function PartnerDetails({
     <div className="space-y-5">
       <nav
         aria-label="Breadcrumb"
-        className="flex flex-wrap gap-2 text-xs text-[#465b78]"
+        className="flex flex-wrap gap-2 text-xs text-body"
       >
-        <button onClick={onBack} className="text-[#58708f] hover:text-blue-600">
+        <button onClick={onBack} className="text-muted hover:text-blue-600">
           ‹ Partners
         </button>
         <span aria-hidden="true">/</span>
-        <span aria-current="page" className="text-[#151515]">
+        <span aria-current="page" className="text-ink">
           {partner.name}
         </span>
       </nav>
@@ -101,12 +101,12 @@ export default function PartnerDetails({
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <div className="flex flex-wrap items-center gap-3">
-              <h1 className="text-3xl font-bold tracking-tight text-[#10243a]">
+              <h1 className="text-3xl font-bold tracking-tight text-ink">
                 {partner.name}
               </h1>
               <PartnerBadge status={partner.status} />
             </div>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-[#465b78]">
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-body">
               {partner.description}
             </p>
           </div>
@@ -114,7 +114,7 @@ export default function PartnerDetails({
             <details className="relative">
               <summary
                 aria-label="Partner actions"
-                className="grid size-10 cursor-pointer list-none place-items-center rounded-lg border border-[#dfe7f3] [&::-webkit-details-marker]:hidden"
+                className="grid size-10 cursor-pointer list-none place-items-center rounded-lg border border-tint [&::-webkit-details-marker]:hidden"
               >
                 ⋯
               </summary>
@@ -173,25 +173,25 @@ export default function PartnerDetails({
             { label: 'Registered', value: formattedDate(partner.registered) },
           ].map((item) => (
             <div key={item.label}>
-              <dt className="text-[11px] uppercase text-[#465b78]">
+              <dt className="text-[11px] uppercase text-body">
                 {item.label}
               </dt>
               <dd className="mt-3">
-                <span className="rounded bg-[#f3f4f7] px-2 py-1 text-xs">
+                <span className="rounded bg-canvas px-2 py-1 text-xs">
                   {item.value}
                 </span>
               </dd>
             </div>
           ))}
           <div>
-            <dt className="text-[11px] uppercase text-[#465b78]">Website</dt>
+            <dt className="text-[11px] uppercase text-body">Website</dt>
             <dd className="mt-3 break-all text-xs">
               {website ? (
                 <a
                   href={website}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="rounded bg-[#f3f4f7] px-2 py-1"
+                  className="rounded bg-canvas px-2 py-1"
                 >
                   {new URL(website).hostname} ↗
                 </a>
@@ -205,14 +205,14 @@ export default function PartnerDetails({
       <div
         role="group"
         aria-label="Partner detail view"
-        className="flex gap-3 border-b border-[#e1e8f2]"
+        className="flex gap-3 border-b border-line"
       >
         {(['overview', 'activity'] as const).map((tab) => (
           <button
             key={tab}
             aria-pressed={tab === view}
             onClick={() => onView(tab)}
-            className={`min-h-11 border-b-2 px-4 text-sm capitalize ${tab === view ? 'border-blue-600 font-medium' : 'border-transparent text-[#465b78]'}`}
+            className={`min-h-11 border-b-2 px-4 text-sm capitalize ${tab === view ? 'border-blue-600 font-medium' : 'border-transparent text-body'}`}
           >
             {tab}
           </button>
@@ -229,7 +229,7 @@ export default function PartnerDetails({
                 key={event.id}
                 className="flex flex-col justify-between gap-2 py-4 sm:flex-row"
               >
-                <p className="text-sm text-[#405371]">{event.text}</p>
+                <p className="text-sm text-body">{event.text}</p>
                 <time
                   dateTime={event.time}
                   className="shrink-0 text-xs text-slate-500"
@@ -263,11 +263,11 @@ export default function PartnerDetails({
                   { label: 'Company size', value: partner.size },
                 ].map((item) => (
                   <div key={item.label} className="contents">
-                    <dt className="text-[#465b78]">{item.label}</dt>
+                    <dt className="text-body">{item.label}</dt>
                     <dd>{item.value}</dd>
                   </div>
                 ))}
-                <dt className="text-[#465b78]">Website</dt>
+                <dt className="text-body">Website</dt>
                 <dd className="break-all">
                   {website ? (
                     <a
@@ -282,23 +282,23 @@ export default function PartnerDetails({
                     'Not provided'
                   )}
                 </dd>
-                <dt className="text-[#465b78]">Description</dt>
-                <dd className="leading-5 text-[#465b78]">
+                <dt className="text-body">Description</dt>
+                <dd className="leading-5 text-body">
                   {partner.description || 'No description provided.'}
                 </dd>
-                <dt className="text-[#465b78]">Date registered</dt>
+                <dt className="text-body">Date registered</dt>
                 <dd>{formattedDate(partner.registered)}</dd>
               </dl>
             </PartnerPanel>
             <PartnerPanel title="API access">
-              <p className="mb-5 text-xs leading-5 text-[#58708f]">
+              <p className="mb-5 text-xs leading-5 text-muted">
                 Enable or disable the APIs this partner can use.
                 {partner.status !== 'Active' &&
                   ' Production access requires an approved, active partner.'}
               </p>
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[470px] text-left text-xs">
-                  <thead className="border-b border-slate-100 text-[11px] uppercase text-[#465b78]">
+                  <thead className="border-b border-slate-100 text-[11px] uppercase text-body">
                     <tr>
                       <th className="pb-4 pr-3">API</th>
                       <th className="pb-4 pr-4">
@@ -331,7 +331,7 @@ export default function PartnerDetails({
                               </span>
                               <div>
                                 <strong className="block">{api.name}</strong>
-                                <p className="mt-1 text-[11px] text-[#465b78]">
+                                <p className="mt-1 text-[11px] text-body">
                                   {api.description}
                                 </p>
                               </div>
@@ -400,7 +400,7 @@ export default function PartnerDetails({
             </PartnerPanel>
             <PartnerPanel title="Partner status">
               <PartnerBadge status={partner.status} />
-              <p className="my-4 text-xs leading-5 text-[#58708f]">
+              <p className="my-4 text-xs leading-5 text-muted">
                 {statusText}
               </p>
               <div className="flex flex-col gap-3">
@@ -432,7 +432,7 @@ export default function PartnerDetails({
             </PartnerPanel>
             <div className="rounded-xl border border-blue-100 bg-blue-50 p-5">
               <h2 className="text-xs font-semibold">ⓘ Next step</h2>
-              <p className="mt-2 text-xs leading-5 text-[#465b78]">
+              <p className="mt-2 text-xs leading-5 text-body">
                 {partner.status === 'Suspended'
                   ? 'Review this partner before resuming access.'
                   : partner.status === 'Active'
@@ -459,7 +459,7 @@ export default function PartnerDetails({
                   value={notes}
                   onChange={(event) => setNotes(event.target.value)}
                   placeholder="Add internal notes about this partner..."
-                  className="w-full resize-y rounded-lg border border-[#dfe7f3] p-3 text-xs leading-5"
+                  className="w-full resize-y rounded-lg border border-tint p-3 text-xs leading-5"
                 />
                 <div className="mt-4 flex justify-end">
                   <PartnerButton

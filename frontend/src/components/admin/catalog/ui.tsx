@@ -12,12 +12,12 @@ export function Panel({
   children: ReactNode
 }) {
   return (
-    <section className="min-w-0 rounded-xl border border-[#dfe6f2] bg-white p-5 shadow-sm">
+    <section className="min-w-0 rounded-xl border border-line bg-white p-5 shadow-sm">
       <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="text-sm font-semibold">{title}</h2>
           {subtitle && (
-            <p className="mt-1 text-xs leading-5 text-[#657790]">{subtitle}</p>
+            <p className="mt-1 text-xs leading-5 text-muted">{subtitle}</p>
           )}
         </div>
         {action}
@@ -46,7 +46,7 @@ export function Button({
       type={type}
       onClick={onClick}
       disabled={disabled}
-      className={`inline-flex min-h-9 items-center justify-center rounded-lg border px-4 py-2 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-40 ${danger ? 'border-red-600 bg-red-600 text-white' : secondary ? 'border-[#dbe4f1] bg-white text-[#405371] hover:bg-blue-50' : 'border-[#0450ff] bg-[#0450ff] text-white hover:bg-blue-700'}`}
+      className={`inline-flex min-h-9 items-center justify-center rounded-lg border px-4 py-2 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-40 ${danger ? 'border-red-600 bg-red-600 text-white' : secondary ? 'border-line bg-white text-body hover:bg-blue-50' : 'border-primary bg-primary text-white hover:bg-blue-700'}`}
     >
       {children}
     </button>
@@ -60,9 +60,9 @@ export function Field({
   children: ReactNode
 }) {
   return (
-    <label className="block text-xs font-medium text-[#465b78]">
+    <label className="block text-xs font-medium text-body">
       {label}
-      <span className="mt-2 block [&_input]:min-h-10 [&_input]:w-full [&_input]:rounded-lg [&_input]:border [&_input]:border-[#dfe6f2] [&_input]:bg-white [&_input]:px-3 [&_select]:h-10 [&_select]:w-full [&_select]:rounded-lg [&_select]:border [&_select]:border-[#dfe6f2] [&_select]:bg-white [&_select]:px-3 [&_textarea]:w-full [&_textarea]:rounded-lg [&_textarea]:border [&_textarea]:border-[#dfe6f2] [&_textarea]:p-3">
+      <span className="mt-2 block [&_input]:min-h-10 [&_input]:w-full [&_input]:rounded-lg [&_input]:border [&_input]:border-line [&_input]:bg-white [&_input]:px-3 [&_select]:h-10 [&_select]:w-full [&_select]:rounded-lg [&_select]:border [&_select]:border-line [&_select]:bg-white [&_select]:px-3 [&_textarea]:w-full [&_textarea]:rounded-lg [&_textarea]:border [&_textarea]:border-line [&_textarea]:p-3">
         {children}
       </span>
     </label>
@@ -79,7 +79,7 @@ export function Badge({ value }: { value: string }) {
 }
 export function Notice({ children }: { children: ReactNode }) {
   return (
-    <div className="rounded-lg border border-blue-200 bg-blue-50/70 p-4 text-xs leading-5 text-[#405371]">
+    <div className="rounded-lg border border-blue-200 bg-blue-50/70 p-4 text-xs leading-5 text-body">
       ⓘ {children}
     </div>
   )
@@ -107,7 +107,7 @@ export function Modal({
         e.preventDefault()
         onClose()
       }}
-      className="fixed inset-0 m-auto max-h-[90dvh] w-[calc(100%_-_32px)] max-w-2xl overflow-auto rounded-2xl border-0 bg-white p-6 text-[#142033] shadow-xl backdrop:bg-black/40"
+      className="fixed inset-0 m-auto max-h-[90dvh] w-[calc(100%_-_32px)] max-w-2xl overflow-auto rounded-2xl border-0 bg-white p-6 text-ink shadow-xl backdrop:bg-black/40"
     >
       <div className="mb-5 flex justify-between gap-3">
         <h2 className="text-lg font-semibold">{title}</h2>
@@ -135,13 +135,13 @@ export function Copy({ text, dark = false }: { text: string; dark?: boolean }) {
   }
   return (
     <div
-      className={`overflow-hidden rounded-lg border ${dark ? 'border-slate-700 bg-[#172233] text-slate-200' : 'border-[#dfe6f2] bg-[#f8faff] text-blue-600'}`}
+      className={`overflow-hidden rounded-lg border ${dark ? 'border-slate-700 bg-ink text-slate-200' : 'border-line bg-tint text-blue-600'}`}
     >
       <div className="flex items-center justify-between gap-3 px-3 py-2">
-        <span className="text-[10px]">{dark ? 'HTTP' : 'Base URL'}</span>
+        <span className="text-[11px]">{dark ? 'HTTP' : 'Base URL'}</span>
         <button
           onClick={() => void copy()}
-          className="rounded px-2 py-1 text-[10px]"
+          className="rounded px-2 py-1 text-[11px]"
         >
           Copy
         </button>
@@ -153,7 +153,7 @@ export function Copy({ text, dark = false }: { text: string; dark?: boolean }) {
         <code>{text}</code>
       </pre>
       {notice && (
-        <p role="status" className="px-3 pb-2 text-[10px]">
+        <p role="status" className="px-3 pb-2 text-[11px]">
           {notice}
         </p>
       )}
@@ -195,7 +195,7 @@ export function Pairs({ items }: { items: [string, ReactNode][] }) {
           key={label}
           className="grid gap-2 py-3 text-xs sm:grid-cols-[140px_1fr]"
         >
-          <dt className="text-[#526783]">{label}</dt>
+          <dt className="text-body">{label}</dt>
           <dd className="min-w-0 break-words leading-5">{value}</dd>
         </div>
       ))}

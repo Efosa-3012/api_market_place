@@ -40,7 +40,7 @@ function PasswordInput({
           aria-label={`${visible ? 'Hide' : 'Show'} ${label.toLowerCase()}`}
           aria-controls={id}
           onClick={() => setVisible(!visible)}
-          className="absolute inset-y-0 right-1 flex w-11 cursor-pointer items-center justify-center rounded-md text-[#58708f] hover:text-blue-700 focus-visible:outline-2 focus-visible:outline-blue-600"
+          className="absolute inset-y-0 right-1 flex w-11 cursor-pointer items-center justify-center rounded-lg text-muted hover:text-blue-700 focus-visible:outline-2 focus-visible:outline-blue-600"
         >
           <svg
             aria-hidden="true"
@@ -90,7 +90,7 @@ export default function SecurityStep({
       </div>
 
       <div className="mt-5">
-        <p className="text-xs text-[#465b78]">
+        <p className="text-xs text-body">
           Your password should include:
         </p>
 
@@ -99,7 +99,7 @@ export default function SecurityStep({
             <li
               key={check.label}
               className={`flex items-center gap-2 text-xs ${
-                check.passed ? 'text-blue-700' : 'text-[#58708f]'
+                check.passed ? 'text-blue-700' : 'text-muted'
               }`}
             >
               <span aria-hidden="true">

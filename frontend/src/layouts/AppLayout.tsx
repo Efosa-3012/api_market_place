@@ -14,7 +14,7 @@ export default function AppLayout() {
   }
 
   return (
-    <div className="min-h-dvh bg-white font-[Arial,Helvetica,sans-serif] text-[#151c2d]">
+    <div className="min-h-dvh bg-white font-[Arial,Helvetica,sans-serif] text-ink">
       <Header
         menuOpen={menuOpen}
         onMenuClick={() => setMenuOpen((current) => !current)}
@@ -38,7 +38,7 @@ export default function AppLayout() {
             document.getElementById('app-menu-button')?.focus()
           }
         }}
-        className={`fixed bottom-0 left-0 top-16 z-40 w-60 overflow-y-auto border-r border-[#e6ebf3] bg-white ${
+        className={`fixed bottom-0 left-0 top-16 z-40 w-60 overflow-y-auto border-r border-line bg-white ${
           menuOpen ? 'block' : 'hidden lg:block'
         }`}
       >

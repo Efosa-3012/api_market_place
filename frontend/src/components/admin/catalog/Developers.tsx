@@ -125,10 +125,10 @@ export default function Developers({
           Export CSV
         </Button>
       </div>
-      <div className="overflow-hidden rounded-xl border border-[#dfe6f2] bg-white">
+      <div className="overflow-hidden rounded-xl border border-line bg-white">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[720px] text-left text-xs">
-            <thead className="bg-slate-50 text-[#526783]">
+            <thead className="bg-slate-50 text-body">
               <tr>
                 {[
                   'Company',
@@ -148,7 +148,7 @@ export default function Developers({
               {filtered.slice((current - 1) * 8, current * 8).map((d) => (
                 <tr key={d.id} className="border-t border-slate-100">
                   <td className="p-4 font-semibold">
-                    <span className="mr-3 inline-grid size-8 place-items-center rounded-full bg-blue-100 text-[10px] text-blue-600">
+                    <span className="mr-3 inline-grid size-8 place-items-center rounded-full bg-blue-100 text-[11px] text-blue-600">
                       {d.company
                         .split(' ')
                         .map((w) => w[0])
@@ -162,7 +162,7 @@ export default function Developers({
                   </td>
                   <td className="p-4">{d.apiCount}</td>
                   <td className="p-4">{number(d.calls)}</td>
-                  <td className="p-4 text-[#657790]">{date(d.joined)}</td>
+                  <td className="p-4 text-muted">{date(d.joined)}</td>
                   <td className="p-4">
                     <div className="flex gap-2">
                       {d.status === 'Pending' ? (

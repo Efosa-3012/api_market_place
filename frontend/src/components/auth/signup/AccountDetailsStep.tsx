@@ -56,7 +56,7 @@ export default function AccountDetailsStep({
           Phone number
         </label>
 
-        <div className="flex overflow-hidden rounded-md border border-transparent bg-[#f7f7f8] focus-within:border-blue-600 focus-within:ring-2 focus-within:ring-blue-100">
+        <div className="flex overflow-hidden rounded-lg border border-transparent bg-canvas focus-within:border-blue-600 focus-within:ring-2 focus-within:ring-blue-100">
           <select
             aria-label="Country calling code"
             autoComplete="tel-country-code"
@@ -80,7 +80,7 @@ export default function AccountDetailsStep({
             value={data.phone}
             onChange={(event) => update('phone', event.target.value)}
             placeholder="801 234 5678"
-            className="h-12 min-w-0 flex-1 bg-transparent px-3 text-sm outline-none placeholder:text-[#8195b0]"
+            className="h-12 min-w-0 flex-1 bg-transparent px-3 text-sm outline-none placeholder:text-muted"
           />
         </div>
       </div>
@@ -104,7 +104,7 @@ export default function AccountDetailsStep({
       </FormField>
 
       <div className="space-y-3 pt-1">
-        <label className="flex cursor-pointer items-start gap-3 text-xs leading-5 text-[#465b78]">
+        <label className="flex cursor-pointer items-start gap-3 text-xs leading-5 text-body">
           <input
             type="checkbox"
             required
@@ -119,7 +119,7 @@ export default function AccountDetailsStep({
           </span>
         </label>
 
-        <label className="flex cursor-pointer items-start gap-3 text-xs leading-5 text-[#465b78]">
+        <label className="flex cursor-pointer items-start gap-3 text-xs leading-5 text-body">
           <input
             type="checkbox"
             required

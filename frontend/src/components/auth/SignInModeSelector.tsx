@@ -8,14 +8,14 @@ export default function SignInModeSelector({
 }) {
   return (
     <fieldset className="mb-5">
-      <legend className="mb-2 text-xs font-medium text-[#465b78]">
+      <legend className="mb-2 text-xs font-medium text-body">
         Sign in as
       </legend>
-      <div className="grid grid-cols-2 gap-1 rounded-lg bg-[#f1f4f9] p-1">
+      <div className="grid grid-cols-2 gap-1 rounded-lg bg-canvas p-1">
         {(['developer', 'admin'] as const).map((mode) => (
           <label
             key={mode}
-            className={`relative cursor-pointer rounded-md px-4 py-2.5 text-center text-sm font-medium transition-colors has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-blue-600 ${value === mode ? 'bg-white text-[#0450ff] shadow-sm' : 'text-[#58708f]'}`}
+            className={`relative cursor-pointer rounded-lg px-4 py-2.5 text-center text-sm font-medium transition-colors has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-blue-600 ${value === mode ? 'bg-white text-primary shadow-sm' : 'text-muted'}`}
           >
             <input
               className="sr-only"

@@ -146,20 +146,20 @@ export default function AdminDashboardPage() {
   const successRate = summary && summary.calls > 0 ? 1 - summary.error_rate : null
 
   return (
-    <div className="min-h-[calc(100dvh-64px)] bg-[#f8f9fc] px-4 py-6 text-[#142033] sm:px-6 lg:px-8">
+    <div className="min-h-[calc(100dvh-64px)] bg-canvas px-4 py-6 text-ink sm:px-6 lg:px-8">
       <div className="mx-auto flex max-w-[1400px] flex-col gap-6">
         <header className="flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-wide text-[#8ea3c0]">Control room</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-faint">Control room</p>
             <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">API &amp; consent oversight</h1>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-[#465b78]">
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-body">
               Who is calling the bank's APIs, on whose behalf, and under which consent. Drawn live from the gateway's
               audit trail{staff ? `, for ${staff.name}` : ''}.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
             {syncedAt && (
-              <span className="text-[11px] tabular-nums text-[#8ea3c0]">
+              <span className="text-[11px] tabular-nums text-faint">
                 Synced {syncedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
               </span>
             )}
@@ -226,7 +226,7 @@ export default function AdminDashboardPage() {
               <div className="flex flex-col gap-6">
                 <Panel title="Outcomes" subtitle="How the gateway answered, by status class.">
                   {summary.calls === 0 ? (
-                    <p className="text-xs text-[#65758e]">No calls in this window.</p>
+                    <p className="text-xs text-muted">No calls in this window.</p>
                   ) : (
                     <ul className="flex flex-col gap-4">
                       {[
@@ -251,10 +251,10 @@ export default function AdminDashboardPage() {
                       ].map((row) => (
                         <li key={row.label}>
                           <div className="flex items-baseline justify-between gap-3">
-                            <span className="text-xs font-medium text-[#142033]">{row.label}</span>
-                            <span className="text-xs tabular-nums text-[#65758e]">
+                            <span className="text-xs font-medium text-ink">{row.label}</span>
+                            <span className="text-xs tabular-nums text-muted">
                               {row.value.toLocaleString()}{' '}
-                              <span className="text-[#b6c2d4]">
+                              <span className="text-faint">
                                 ({percent(summary.calls === 0 ? 0 : row.value / summary.calls, 0)})
                               </span>
                             </span>
@@ -262,7 +262,7 @@ export default function AdminDashboardPage() {
                           <div className="mt-2">
                             <ShareBar fraction={summary.calls === 0 ? 0 : row.value / summary.calls} tone={row.tone} />
                           </div>
-                          <p className="mt-1.5 text-[10px] text-[#8ea3c0]">{row.note}</p>
+                          <p className="mt-1.5 text-[11px] text-faint">{row.note}</p>
                         </li>
                       ))}
                     </ul>
@@ -278,9 +278,9 @@ export default function AdminDashboardPage() {
                       ['Total consents', summary.total_consents, 'all time'],
                     ].map(([label, value, note]) => (
                       <div key={String(label)}>
-                        <dt className="text-[11px] text-[#65758e]">{label}</dt>
-                        <dd className="mt-1 text-xl font-semibold tabular-nums text-[#142033]">{value}</dd>
-                        <p className="mt-0.5 text-[10px] text-[#8ea3c0]">{note}</p>
+                        <dt className="text-[11px] text-muted">{label}</dt>
+                        <dd className="mt-1 text-xl font-semibold tabular-nums text-ink">{value}</dd>
+                        <p className="mt-0.5 text-[11px] text-faint">{note}</p>
                       </div>
                     ))}
                   </dl>
@@ -305,9 +305,9 @@ export default function AdminDashboardPage() {
               <TopEndpoints endpoints={data.endpoints} windowLabel={WINDOW_LABELS[range]} />
             </div>
 
-            <footer className="flex flex-wrap items-center gap-3 rounded-2xl border border-[#e1e8f2] bg-white px-5 py-4">
+            <footer className="flex flex-wrap items-center gap-3 rounded-2xl border border-line bg-white px-5 py-4">
               <Chip tone="neutral">Audit source</Chip>
-              <p className="min-w-0 flex-1 text-[11px] leading-5 text-[#65758e]">
+              <p className="min-w-0 flex-1 text-[11px] leading-5 text-muted">
                 Every figure above is computed from the <code className="font-mono">api_calls</code> table, written by
                 the gateway on every request, and the <code className="font-mono">consents</code> table. A call
                 rejected because a customer revoked consent is still attributed to the partner that made it — which is
