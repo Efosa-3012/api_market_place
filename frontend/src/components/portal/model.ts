@@ -113,9 +113,9 @@ export const tabs: { id: PortalTab; title: string; description: string }[] = [
   },
   {
     id: 'keys',
-    title: 'API Keys',
+    title: 'Credentials',
     description:
-      'Manage your API keys for sandbox and production environments.',
+      'Your apps, client IDs and secrets live on the My Apps page.',
   },
   {
     id: 'documentation',

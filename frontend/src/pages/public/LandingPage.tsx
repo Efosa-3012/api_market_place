@@ -11,12 +11,10 @@ const features = [
   { label: 'DEDICATED SUPPORT', title: "We're here when you need us", description: 'Get guidance and support throughout your integration journey.' },
 ]
 const categories = [
-  { category: 'Payments', title: 'Move money securely', description: 'Enable payment and collection experiences through secure banking integrations.' },
-  { category: 'Loans', title: 'Create smarter lending experiences', description: 'Build lending products and services using connected banking capabilities.' },
-  { category: 'Accounts', title: 'Connect to account information', description: 'Access approved account details, balances, and transaction information.' },
-  { category: 'Identity & KYC', title: 'Verify with confidence', description: 'Build customer onboarding and verification experiences with identity services.' },
-  { category: 'Transfers', title: 'Enable account-to-account transfers', description: 'Create seamless transfer experiences through secure banking connections.' },
-  { category: 'Cards', title: 'Build card-powered experiences', description: 'Access card-related capabilities for innovative financial products and services.' },
+  { id: 'accounts-api', category: 'Accounts', title: 'Accounts API', description: 'List the accounts a customer has chosen to share — type, currency, status and a masked number.' },
+  { id: 'balances-api', category: 'Balances', title: 'Balances API', description: 'Available and ledger balances for a consented account, with an as-of timestamp.' },
+  { id: 'transactions-api', category: 'Transactions', title: 'Transactions API', description: 'Paginated, filterable transaction history for budgeting, reconciliation and lending.' },
+  { id: 'consent-api', category: 'Consent', title: 'Consent & Authorization', description: 'OAuth 2.0 flow that lets customers grant, scope and revoke access — without ever sharing a password.' },
 ]
 
 export default function LandingPage() {
@@ -54,9 +52,9 @@ export default function LandingPage() {
       <div className="api-grid" id="api-results" tabIndex={-1}>{filtered.map(item => <article className="api-card" key={item.category}>
         <div className="api-card-top"><span className="category-label">{item.category}</span><span className="category-icon" aria-hidden="true">◎</span></div>
         <h3>{item.title}</h3><span className="red-rule" aria-hidden="true" /><p>{item.description}</p>
-        <Link className="landing-button explore-button" to="/app/marketplace" aria-label={`Explore ${item.category} APIs`}>EXPLORE API <span aria-hidden="true">→</span></Link>
+        <Link className="landing-button explore-button" to={`/app/marketplace/${item.id}`} aria-label={`Explore ${item.title}`}>EXPLORE API <span aria-hidden="true">→</span></Link>
       </article>)}</div>
-      {!filtered.length && <div className="empty-results"><p>No API categories match “{query}”. Try payments, accounts, or identity.</p><button className="landing-button" onClick={() => setQuery('')}>Clear search</button></div>}
+      {!filtered.length && <div className="empty-results"><p>No API categories match “{query}”. Try accounts, balances, transactions or consent.</p><button className="landing-button" onClick={() => setQuery('')}>Clear search</button></div>}
     </section>
   </>
 }

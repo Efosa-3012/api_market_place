@@ -60,6 +60,9 @@ export default function VerificationStep({
           }
           className="absolute inset-0 z-10 h-full w-full cursor-text opacity-0"
         />
+        <p className="mt-2 text-xs text-[#8195b0]">
+          Demo environment — no email is sent. Use code <code>123456</code>.
+        </p>
 
         <div
           aria-hidden="true"

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import Explorer from '../../components/portal/Explorer'
 import Keys from '../../components/portal/Keys'
 import Documentation from '../../components/portal/Documentation'
@@ -26,6 +26,7 @@ import type {
 } from '../../components/portal/model'
 
 export default function DeveloperPortalPage() {
+  const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
   const tab: PortalTab = tabs.some((item) => item.id === params.get('tab'))
     ? (params.get('tab') as PortalTab)
@@ -222,7 +223,15 @@ export default function DeveloperPortalPage() {
             {tabs.map((item) => (
               <Link
                 key={item.id}
-                to={`?tab=${item.id}&env=${environment.toLowerCase()}`}
+                // Credentials, the try-it console and request history live on their
+                // real pages; the simulator tabs here are documentation-only.
+                to={
+                  item.id === 'keys'
+                    ? '/app/my-apis'
+                    : item.id === 'explorer' || item.id === 'logs'
+                      ? '/app/sandbox'
+                      : `?tab=${item.id}&env=${environment.toLowerCase()}`
+                }
                 aria-current={tab === item.id ? 'page' : undefined}
                 className={`whitespace-nowrap border-b-2 px-4 py-4 text-sm ${tab === item.id ? 'border-[#0450ff] font-medium text-[#142033]' : 'border-transparent text-[#465b78]'}`}
               >
@@ -242,8 +251,8 @@ export default function DeveloperPortalPage() {
                 >
                   ▷ Run Quick Test
                 </Button>
-                <Button onClick={() => openCreate(environment)}>
-                  ＋ Create API Key
+                <Button onClick={() => navigate('/app/my-apis')}>
+                  ＋ Register app
                 </Button>
               </>
             ) : (
@@ -366,7 +375,7 @@ export default function DeveloperPortalPage() {
                   {(
                     [
                       { label: 'Open the sandbox', tab: 'explorer' },
-                      { label: 'Manage API keys', tab: 'keys' },
+                      { label: 'Apps & credentials', tab: 'keys' },
                       { label: 'Read the documentation', tab: 'documentation' },
                       { label: 'Webhook endpoints', tab: 'webhooks' },
                     ] as { label: string; tab: PortalTab }[]

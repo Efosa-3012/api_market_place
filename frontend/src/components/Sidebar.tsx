@@ -30,11 +30,6 @@ const links = [
     to: '/app/developer-portal',
     icon: 'm7 7-5 5 5 5m10-10 5 5-5 5M14 4l-4 16',
   },
-  {
-    label: 'Billing',
-    to: '/app/billing',
-    icon: 'M3 5h18v14H3zM3 10h18M7 15h3',
-  },
 ]
 
 function NavIcon({ path }: { path: string }) {
