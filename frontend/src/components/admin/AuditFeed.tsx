@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { AuditCall } from '../../lib/admin'
 import { clockTime, describeError } from '../../lib/admin'
 import { Button, Chip, CopyButton, EmptyState, MethodBadge, Modal, Panel, Segmented, StatusCode } from '../dash/ui'
@@ -30,6 +30,23 @@ export default function AuditFeed({
   onLiveChange: (next: boolean) => void
   onRefresh: () => void
 }) {
+  // Rows that were not in the previous poll get a brief highlight so an
+  // audience watching the feed sees the new request land.
+  const seen = useRef<Set<string> | null>(null)
+  const [fresh, setFresh] = useState<Set<string>>(new Set())
+  useEffect(() => {
+    if (seen.current === null) {
+      seen.current = new Set(calls.map((c) => c.id))
+      return
+    }
+    const next = calls.filter((c) => !seen.current!.has(c.id)).map((c) => c.id)
+    if (next.length === 0) return
+    for (const id of next) seen.current.add(id)
+    setFresh(new Set(next))
+    const timer = setTimeout(() => setFresh(new Set()), 4000)
+    return () => clearTimeout(timer)
+  }, [calls])
+
   const [selected, setSelected] = useState<AuditCall | null>(null)
   const rejected = calls.filter((call) => call.status_code >= 400).length
 
@@ -105,9 +122,11 @@ export default function AuditFeed({
                 {calls.map((call) => {
                   const failed = call.status_code >= 400
                   const revocation = call.error_code === 'consent_revoked' || call.error_code === 'client_deactivated'
+                  const isNew = fresh.has(call.id)
                   return (
                     <tr
                       key={call.id}
+                      data-fresh={isNew || undefined}
                       onClick={() => setSelected(call)}
                       tabIndex={0}
                       onKeyDown={(event) => {
@@ -116,7 +135,8 @@ export default function AuditFeed({
                           setSelected(call)
                         }
                       }}
-                      className={`cursor-pointer border-b border-[#f4f7fb] last:border-0 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-blue-600 ${
+                      className={`cursor-pointer border-b border-[#f4f7fb] transition-colors duration-1000 last:border-0 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-blue-600 ${
+                        isNew ? (revocation ? 'bg-red-100' : failed ? 'bg-amber-100' : 'bg-blue-50') :
                         revocation ? 'bg-red-50/60 hover:bg-red-50' : failed ? 'hover:bg-amber-50/40' : 'hover:bg-[#f9fbfe]'
                       }`}
                     >

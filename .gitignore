@@ -34,3 +34,6 @@ CLAUDE.md
 
 # Local run artifacts
 .vite.log
+
+# Patch for the core-banking repo (hand to the Go dev)
+core-banking-*.patch

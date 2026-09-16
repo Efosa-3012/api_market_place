@@ -65,7 +65,7 @@ needs — consent id, session, code, token — in collection variables.
 | Bank staff (analytics dashboard) | `admin@stanbic.example` / `password123` |
 | Sample fintech app | client_id `budgetbuddy`, secret `budgetbuddy-secret-dev-only`, redirect `http://localhost:3000/callback` |
 | Analytics admin key (scripts) | `dev-admin-key-change-me` as `X-Admin-Key` |
-| Accounts | `acct-demo-001` … `acct-demo-010` (one per customer; 006 is dormant; 007 USD, 009 GBP) |
+| Accounts | `acct-demo-001` … `acct-demo-011` (one per customer, plus `ada` has a second savings account `acct-demo-011`; 006 is dormant; 007 USD, 009 GBP) |
 
 ## How the pieces fit
 

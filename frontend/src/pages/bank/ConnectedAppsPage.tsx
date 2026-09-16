@@ -26,6 +26,15 @@ export default function ConnectedAppsPage() {
   const [confirm, setConfirm] = useState<Consent | null>(null)
   const [busy, setBusy] = useState(false)
   const [notice, setNotice] = useState('')
+  // When access was removed, so the notice can count up: "cut off 12 s ago".
+  const [revokedAt, setRevokedAt] = useState<Date | null>(null)
+  const [now, setNow] = useState(Date.now())
+
+  useEffect(() => {
+    if (!revokedAt) return
+    const t = setInterval(() => setNow(Date.now()), 1000)
+    return () => clearInterval(t)
+  }, [revokedAt])
 
   useEffect(() => {
     let cancelled = false
@@ -46,7 +55,8 @@ export default function ConnectedAppsPage() {
       setConsents((current) =>
         current?.map((c) => (c.id === res.consent_id ? { ...c, status: 'revoked', revoked_at: res.revoked_at } : c)) ?? null,
       )
-      setNotice(`${confirm.client.name} no longer has access. Its next request to the bank will be refused.`)
+      setNotice(`${confirm.client.name} was cut off`)
+      setRevokedAt(new Date(res.revoked_at))
       setConfirm(null)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not revoke access.')
@@ -68,7 +78,18 @@ export default function ConnectedAppsPage() {
         </p>
       </header>
 
-      {notice && <p role="status" className="mb-4 rounded-lg bg-green-50 px-4 py-3 text-sm text-green-800">{notice}</p>}
+      {notice && (
+        <div role="status" className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+          <span>
+            <strong>{notice}</strong>
+            {revokedAt && <> {Math.max(0, Math.round((now - revokedAt.getTime()) / 1000))} seconds ago.</>}{' '}
+            Any request it makes from now on is refused — your password did not change and nothing else was affected.
+          </span>
+          <span aria-hidden="true" className="inline-flex items-center gap-1 text-xs text-green-700">
+            <span className="size-2 animate-pulse rounded-full bg-green-500" /> enforced on the next call
+          </span>
+        </div>
+      )}
       {error && <p role="alert" className="mb-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>}
 
       {consents === null && !error && <p className="text-sm text-[#58708f]">Loading…</p>}
