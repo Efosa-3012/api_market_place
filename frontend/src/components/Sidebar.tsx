@@ -1,4 +1,5 @@
 import { Link, NavLink } from 'react-router-dom'
+import { portalSession } from '../lib/api'
 
 interface SidebarProps {
   onNavigate?: () => void
@@ -52,6 +53,7 @@ function NavIcon({ path }: { path: string }) {
 }
 
 export default function Sidebar({ onNavigate }: SidebarProps) {
+  const developer = portalSession.developer()
   const linkClass =
     'flex min-h-10 items-center gap-3 rounded-lg px-3 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-blue-600'
 
@@ -117,7 +119,7 @@ export default function Sidebar({ onNavigate }: SidebarProps) {
         </p>
 
         <Link
-          to="/app/developer-portal"
+          to="/app/developer-portal?tab=documentation"
           onClick={onNavigate}
           className="mt-4 flex min-h-9 items-center justify-center gap-2 rounded-xl border border-blue-400 bg-white px-2 text-xs text-[#1010ff] hover:bg-blue-50"
         >
@@ -130,13 +132,13 @@ export default function Sidebar({ onNavigate }: SidebarProps) {
         onClick={onNavigate}
         className="mt-4 flex items-center gap-3 border-t border-[#edf0f5] px-2 py-4"
       >
-        <span className="grid size-8 place-items-center rounded-full border border-[#e1e8f1] bg-[#f8fafc] text-xs">
-          D
+        <span className="grid size-8 place-items-center rounded-full border border-[#e1e8f1] bg-[#f8fafc] text-xs font-medium uppercase">
+          {(developer?.name ?? 'D').charAt(0)}
         </span>
 
-        <span className="text-xs leading-4">
-          <span className="block font-medium">Developer</span>
-          <span className="text-[#8b9bb2]">My Workspace</span>
+        <span className="min-w-0 text-xs leading-4">
+          <span className="block truncate font-medium">{developer?.name ?? 'Developer'}</span>
+          <span className="block truncate text-[#8b9bb2]">{developer?.company ?? 'My Workspace'}</span>
         </span>
       </Link>
     </div>

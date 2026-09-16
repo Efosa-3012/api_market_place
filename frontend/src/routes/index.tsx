@@ -16,7 +16,6 @@ import MarketplacePage from '../pages/app/MarketplacePage'
 import ApiDetailsPage from '../pages/app/ApiDetailsPage'
 import MyApisPage from '../pages/app/MyApisPage'
 import DeveloperPortalPage from '../pages/app/DeveloperPortalPage'
-import BillingPage from '../pages/app/BillingPage'
 import SettingsPage from '../pages/app/SettingsPage'
 
 import BankLoginPage from '../pages/bank/BankLoginPage'
@@ -28,8 +27,6 @@ import AdminDashboardPage from '../pages/admin/AdminDashboardPage'
 import AdminAnalyticsPage from '../pages/admin/AdminAnalyticsPage'
 import AdminApisPage from '../pages/admin/AdminApisPage'
 import AdminDevelopersPage from '../pages/admin/AdminDevelopersPage'
-import AdminSubscriptionsPage from '../pages/admin/AdminSubscriptionsPage'
-import AdminBillingPage from '../pages/admin/AdminBillingPage'
 import AdminSettingsPage from '../pages/admin/AdminSettingsPage'
 
 const router = createBrowserRouter([
@@ -81,10 +78,6 @@ const router = createBrowserRouter([
         element: <DeveloperPortalPage />,
       },
       {
-        path: 'billing',
-        element: <BillingPage />,
-      },
-      {
         path: 'settings',
         element: <SettingsPage />,
       },
@@ -124,14 +117,6 @@ const router = createBrowserRouter([
       {
         path: 'developers',
         element: <AdminDevelopersPage />,
-      },
-      {
-        path: 'subscriptions',
-        element: <AdminSubscriptionsPage />,
-      },
-      {
-        path: 'billing',
-        element: <AdminBillingPage />,
       },
       {
         path: 'settings',

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
-import { Link, Navigate, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { adminSession } from '../lib/api'
+import { Link, NavLink, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { portalSession } from '../lib/api'
 const navigation = [
   {
     label: 'Dashboard',
@@ -30,20 +30,58 @@ export default function AdminLayout() {
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
 
-  // The control room is staff-only. No admin key, no entry.
-  if (!adminSession.isLoggedIn()) {
-    return <Navigate to="/login?mode=admin" replace state={{ from: location.pathname }} />
+  // The control room is bank staff only. Without a session there is nothing to
+  // check, so send them to sign in; with a developer session, say plainly that
+  // the account is the wrong one rather than bouncing them around a login they
+  // have already passed.
+  if (!portalSession.isLoggedIn()) {
+    return <Navigate to="/login" replace state={{ from: location.pathname, mode: 'admin' }} />
   }
+  if (!portalSession.isAdmin()) {
+    return (
+      <main className="grid min-h-dvh place-items-center bg-[#f8f9fc] px-4 font-[Arial,Helvetica,sans-serif]">
+        <section className="w-full max-w-md rounded-2xl border border-[#e4e9f2] bg-white p-8 text-center">
+          <h1 className="text-xl font-semibold text-[#142033]">Staff access only</h1>
+          <p className="mt-3 text-sm leading-6 text-[#465b78]">
+            The analytics dashboard is limited to bank administrators. You are signed in as a developer account,
+            which does not have access.
+          </p>
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
+            <Link
+              to="/app/dashboard"
+              className="inline-flex min-h-10 items-center rounded-lg border border-[#0450ff] bg-[#0450ff] px-4 text-sm font-medium text-white hover:bg-[#003bd0]"
+            >
+              Back to your workspace
+            </Link>
+            <Link
+              to="/login"
+              className="inline-flex min-h-10 items-center rounded-lg border border-[#dfe6f0] bg-white px-4 text-sm font-medium text-[#405371] hover:bg-blue-50"
+            >
+              Sign in as staff
+            </Link>
+          </div>
+        </section>
+      </main>
+    )
+  }
+  const staff = portalSession.developer()
+  const initials = (staff?.name ?? 'Administrator')
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part[0] ?? '')
+    .join('')
+    .toUpperCase()
 
-  function signOut() {
-    adminSession.clear()
-    navigate('/login?mode=admin', { replace: true })
-  }
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     navigate(
       `/admin/dashboard${search.trim() ? `?q=${encodeURIComponent(search.trim())}` : ''}`,
     )
+  }
+
+  function signOut() {
+    portalSession.clear()
+    navigate('/login', { replace: true })
   }
   return (
     <div className="min-h-dvh bg-[#f8f9fc] font-[Arial,Helvetica,sans-serif] text-[#142033] [&_button:focus-visible]:outline-2 [&_button:focus-visible]:outline-offset-2 [&_button:focus-visible]:outline-blue-600 [&_a:focus-visible]:outline-2 [&_a:focus-visible]:outline-blue-600">
@@ -120,22 +158,25 @@ export default function AdminLayout() {
               API health alerts are listed in the dashboard below.
             </div>
           </details>
-          <div className="flex items-center gap-3 border-l border-slate-200 pl-3">
+          <Link
+            to="/admin/settings"
+            className="flex items-center gap-3 border-l border-slate-200 pl-3"
+          >
             <span className="grid size-9 place-items-center rounded-full bg-[#0b2858] text-xs text-white">
-              AD
+              {initials}
             </span>
             <span className="hidden text-xs leading-5 md:block">
-              <strong className="block">Administrator</strong>
-              <span className="text-slate-500">Bank staff</span>
+              <strong className="block">{staff?.name ?? 'Administrator'}</strong>
+              <span className="text-slate-500">{staff?.company ?? 'Admin workspace'}</span>
             </span>
-            <button
-              type="button"
-              onClick={signOut}
-              className="min-h-9 cursor-pointer rounded-md border border-slate-200 px-3 text-xs hover:bg-slate-50"
-            >
-              Sign out
-            </button>
-          </div>
+          </Link>
+          <button
+            type="button"
+            onClick={signOut}
+            className="cursor-pointer rounded-lg border border-slate-200 px-3 py-2 text-xs font-medium text-[#405371] hover:bg-blue-50"
+          >
+            Sign out
+          </button>
         </div>
       </header>
       {open && (
@@ -194,11 +235,11 @@ export default function AdminLayout() {
             className="mt-auto flex items-center gap-3 border-t border-slate-100 pt-5"
           >
             <span className="grid size-9 place-items-center rounded-full bg-[#0b2858] text-xs text-white">
-              AD
+              {initials}
             </span>
-            <span className="text-xs leading-5">
-              <strong className="block">Administrator</strong>
-              <span className="text-slate-500">Admin</span>
+            <span className="min-w-0 text-xs leading-5">
+              <strong className="block truncate">{staff?.name ?? 'Administrator'}</strong>
+              <span className="text-slate-500">Bank staff</span>
             </span>
           </Link>
         </div>

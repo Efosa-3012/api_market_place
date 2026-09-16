@@ -1,8 +1,7 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
-import { ApiError, adminSession } from '../../lib/api'
-import { analytics } from '../../lib/analytics'
+import { ApiError } from '../../lib/api'
 import { portal } from '../../lib/portal'
 import SignInModeSelector from '../../components/auth/SignInModeSelector'
 import type { SignInMode } from '../../components/auth/SignInModeSelector'
@@ -11,8 +10,9 @@ export default function LoginPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const [params] = useSearchParams()
-  const [signInMode, setSignInMode] = useState<SignInMode>(params.get('mode') === 'admin' ? 'admin' : 'developer')
-  const [adminKey, setAdminKey] = useState('')
+  const [signInMode, setSignInMode] = useState<SignInMode>(
+    params.get('mode') === 'admin' || (location.state as { mode?: string } | null)?.mode === 'admin' ? 'admin' : 'developer',
+  )
   const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -21,21 +21,24 @@ export default function LoginPage() {
   )
   const [submitting, setSubmitting] = useState(false)
 
-  const canSubmit =
-    (signInMode === 'admin' ? adminKey.trim().length > 0 : identifier.trim().length > 0 && password.length > 0) && !submitting
+  const canSubmit = identifier.trim().length > 0 && password.length > 0 && !submitting
 
  const requestedPath =
   (location.state as { from?: string } | null)?.from ?? params.get('from') ?? undefined
 
-const defaultPath =
-  signInMode === 'admin' ? '/admin/dashboard' : '/app/marketplace'
-
 const allowedPrefix = signInMode === 'admin' ? '/admin/' : '/app/'
 
-const redirectTo =
-  requestedPath?.startsWith(allowedPrefix)
-    ? requestedPath
-    : defaultPath
+/**
+ * Where to land after signing in. The mode picker is a destination, not a
+ * credential — the account's own role decides whether the admin console opens,
+ * and that is enforced by the backend on every analytics call regardless of
+ * what this page does.
+ */
+function destinationFor(role: 'developer' | 'admin') {
+  const home = role === 'admin' ? '/admin/dashboard' : '/app/marketplace'
+  if (role !== 'admin' && requestedPath?.startsWith('/admin/')) return home
+  return requestedPath?.startsWith(allowedPrefix) ? requestedPath : home
+}
 
 async function handleSubmit(event: FormEvent<HTMLFormElement>) {
   event.preventDefault()
@@ -46,22 +49,26 @@ async function handleSubmit(event: FormEvent<HTMLFormElement>) {
   setMessage('')
 
   try {
-    if (signInMode === 'admin') {
-      // Staff access: a shared key checked against the analytics API. Production
-      // would be the bank's SSO; the key is the MVP stand-in.
-      await analytics.verifyKey(adminKey.trim())
-      adminSession.save(adminKey.trim())
-    } else {
-      await portal.login(identifier.trim(), password)
+    const developer = await portal.login(identifier.trim(), password)
+
+    if (signInMode === 'admin' && developer.role !== 'admin') {
+      // Signed in fine, but this is not a staff account. Say so instead of
+      // redirecting to a console that would only turn them away again.
+      setMessage(
+        'That account is a developer account, so the admin console is not available. Switch to Developer to continue.',
+      )
+      setSignInMode('developer')
+      return
     }
-    navigate(redirectTo, { replace: true })
+
+    navigate(destinationFor(developer.role), { replace: true })
   } catch (err) {
-    if (err instanceof ApiError && (err.code === 'invalid_admin_key' || err.code === 'admin_key_required')) {
-      setMessage('That access key is not valid.')
-    } else if (err instanceof ApiError && err.code === 'invalid_credentials') {
+    if (err instanceof ApiError && err.code === 'invalid_credentials') {
       setMessage('Incorrect email or password.')
     } else if (err instanceof ApiError && err.code === 'validation_error') {
       setMessage('Enter the email address you registered with.')
+    } else if (err instanceof ApiError && err.code === 'rate_limited') {
+      setMessage('Too many attempts. Wait a minute and try again.')
     } else {
       setMessage(
         err instanceof Error
@@ -113,26 +120,6 @@ async function handleSubmit(event: FormEvent<HTMLFormElement>) {
               onChange={setSignInMode}
             />
 
-            {signInMode === 'admin' ? (
-              <div>
-                <label htmlFor="admin-key" className="mb-2 block text-sm font-medium text-[#151c2d]">
-                  Admin access key
-                </label>
-                <input
-                  id="admin-key"
-                  name="admin-key"
-                  type="password"
-                  autoComplete="off"
-                  required
-                  value={adminKey}
-                  onChange={(event) => setAdminKey(event.target.value)}
-                  placeholder="Enter the staff access key"
-                  className="h-12 w-full rounded-md border border-transparent bg-[#f7f7f8] px-4 text-sm text-[#151c2d] outline-none placeholder:text-[#8195b0] focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
-                />
-                <p className="mt-2 text-xs text-[#58708f]">Bank staff only. Opens the analytics control room.</p>
-              </div>
-            ) : (
-            <>
             <div>
               <label
                 htmlFor="login-identifier"
@@ -202,9 +189,6 @@ async function handleSubmit(event: FormEvent<HTMLFormElement>) {
                 </button>
               </div>
             </div>
-
-            </>
-            )}
 
             <button
               type="submit"

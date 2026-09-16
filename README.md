@@ -61,9 +61,10 @@ needs — consent id, session, code, token — in collection variables.
 | What | Value |
 |---|---|
 | Bank customers (core banking seed) | `ada` / `adaeze-ada-okonkwo`, `emeka` / `emeka-emeka-okafor`, `fatima` / `fatima-fatima-abubakar` … pattern `firstname-shortname-lastname` |
-| Sample fintech app | client_id `budgetbuddy`, secret `budgetbuddy-secret-dev-only`, redirect `http://localhost:3000/callback` |
 | Developer portal | `dev@budgetbuddy.example` / `password123` |
-| Analytics admin key | `dev-admin-key-change-me` (header `X-Admin-Key`) |
+| Bank staff (analytics dashboard) | `admin@stanbic.example` / `password123` |
+| Sample fintech app | client_id `budgetbuddy`, secret `budgetbuddy-secret-dev-only`, redirect `http://localhost:3000/callback` |
+| Analytics admin key (scripts) | `dev-admin-key-change-me` as `X-Admin-Key` |
 | Accounts | `acct-demo-001` … `acct-demo-010` (one per customer; 006 is dormant; 007 USD, 009 GBP) |
 
 ## How the pieces fit
@@ -96,9 +97,21 @@ backend/src
     ├── consent/            consent state machine + authorization codes
     ├── bank/               /bank/* — login (delegated to core banking), consent screen, connected apps
     ├── resources/          /api/v1/accounts (partner-facing, consent enforced on every call)
-    ├── portal/             /portal/* — developer signup, app registration, sandbox tokens
-    └── analytics/          /analytics/* — dashboard data from api_calls  
+    ├── portal/             /portal/* — developer signup, app registration, sandbox,
+    │                       and the developer's own slice of the audit trail
+    └── analytics/          /analytics/* — dashboard data from api_calls
 ```
+
+Both dashboards read the same `api_calls` audit trail, scoped differently:
+
+| Surface | Sees | Credential |
+|---|---|---|
+| Developer portal — `/portal/summary`, `/portal/logs` | Only that developer's own apps | Portal token |
+| Bank dashboard — `/analytics/*` | Everything, attributed to partner and customer | Portal token whose account has the `admin` role, **or** `X-Admin-Key` |
+
+The admin key is there for `demo-flow.sh` and smoke tests. The browser never receives it —
+the dashboard signs in as bank staff instead, because a Vite env var ships to the client in
+clear text.
 
 Errors always look like `{ "error": { "code", "message", "correlation_id" } }` (except
 `/oauth/token`, which follows RFC 6749). Internal details never leak.

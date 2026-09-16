@@ -95,19 +95,12 @@ export async function api<T>(path: string, options: RequestOptions = {}): Promis
 const SESSION_LOSS_CODES = new Set([
   'portal_token_required', 'portal_token_expired', 'invalid_portal_token',
   'bank_session_required', 'bank_session_expired',
-  'admin_key_required', 'invalid_admin_key',
 ])
 
 function handleSessionLoss(kind: AuthKind, code: string) {
+  if (kind === 'none') return
   if (!SESSION_LOSS_CODES.has(code)) return
   const here = `${window.location.pathname}${window.location.search}`
-  if (code.includes('admin')) {
-    adminSession.clear()
-    if (!window.location.pathname.startsWith('/login')) {
-      window.location.assign(`/login?mode=admin&reason=expired&from=${encodeURIComponent(here)}`)
-    }
-    return
-  }
   if (kind === 'portal') {
     portalSession.clear()
     if (!window.location.pathname.startsWith('/login')) {
@@ -138,6 +131,8 @@ export interface Developer {
   email: string
   name: string
   company: string | null
+  /** 'admin' is bank staff — the only role the analytics dashboard admits. */
+  role: 'developer' | 'admin'
   created_at: string
 }
 
@@ -166,30 +161,8 @@ export const portalSession = {
   isLoggedIn() {
     return Boolean(readToken('portal'))
   },
-}
-
-// ---------------------------------------------------------------------------
-// Bank-staff admin session (analytics dashboard) — a shared key for the MVP
-// ---------------------------------------------------------------------------
-
-const ADMIN_KEY = 'marketplace.admin_key'
-
-export const adminSession = {
-  save(key: string) {
-    localStorage.setItem(ADMIN_KEY, key)
-  },
-  clear() {
-    localStorage.removeItem(ADMIN_KEY)
-  },
-  key() {
-    try {
-      return localStorage.getItem(ADMIN_KEY)
-    } catch {
-      return null
-    }
-  },
-  isLoggedIn() {
-    return Boolean(adminSession.key())
+  isAdmin() {
+    return this.developer()?.role === 'admin'
   },
 }
 

@@ -39,6 +39,15 @@ export const DEMO_CLIENT = {
 
 export const DEMO_DEVELOPER = { email: 'dev@budgetbuddy.example', password: 'password123', name: 'Demo Developer' };
 
+// Bank staff account for the analytics dashboard. Signs in through the same
+// portal login as a developer; the 'admin' role is what opens /admin.
+export const DEMO_ADMIN = {
+  email: 'admin@stanbic.example',
+  password: 'password123',
+  name: 'Bank Administrator',
+  company: 'Stanbic IBTC',
+};
+
 export async function seed() {
   await migrate();
 
@@ -47,6 +56,13 @@ export async function seed() {
      VALUES ($1, $2, $3, $4)
      ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name RETURNING id`,
     [DEMO_DEVELOPER.email, await bcrypt.hash(DEMO_DEVELOPER.password, 10), DEMO_DEVELOPER.name, 'BudgetBuddy Ltd'],
+  );
+
+  await pool.query(
+    `INSERT INTO developers (email, password_hash, name, company, role)
+     VALUES ($1, $2, $3, $4, 'admin')
+     ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name, password_hash = EXCLUDED.password_hash, role = 'admin'`,
+    [DEMO_ADMIN.email, await bcrypt.hash(DEMO_ADMIN.password, 10), DEMO_ADMIN.name, DEMO_ADMIN.company],
   );
 
   await pool.query(
@@ -72,6 +88,8 @@ export async function seed() {
   logger.info('seed complete');
   logger.info(`bank login:   ${DEMO_CUSTOMERS.slice(0, 3).map(([u, p]) => `${u} / ${p}`).join(', ')} … (core banking seed)`);
   logger.info(`demo client:  ${DEMO_CLIENT.client_id} / ${DEMO_CLIENT.client_secret}`);
+  logger.info(`developer:    ${DEMO_DEVELOPER.email} / ${DEMO_DEVELOPER.password}`);
+  logger.info(`bank admin:   ${DEMO_ADMIN.email} / ${DEMO_ADMIN.password}`);
 }
 
 if (isMain(import.meta.url)) {
