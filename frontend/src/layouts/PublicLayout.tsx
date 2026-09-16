@@ -19,7 +19,8 @@ export default function PublicLayout() {
         <Outlet />
       </main>
 
-      {!isSignupPage && <Footer />}
+    
+      {!isAuthPage && <Footer />}
     </div>
   )
 }

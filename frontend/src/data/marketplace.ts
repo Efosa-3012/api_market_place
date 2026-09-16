@@ -82,7 +82,7 @@ export const marketplaceApis: MarketplaceApi[] = [
         category: 'Forex',
         title: 'Explore foreign exchange rates',
         description:
-            'Use sample exchange-rate data to prototype international payment experiences.',
+            'Access exchange-rate data for international payment experiences.',
         pricing: 'Paid',
         authentication: 'API Key',
         availability: 'coming-soon',
@@ -93,7 +93,7 @@ export const marketplaceApis: MarketplaceApi[] = [
         category: 'Others',
         title: 'Discover bank information',
         description:
-            'Explore a sample bank directory to support your payment forms and integrations.',
+            'Explore bank information for your payment forms and integrations.',
         pricing: 'Free',
         authentication: 'API Key',
         availability: 'coming-soon',

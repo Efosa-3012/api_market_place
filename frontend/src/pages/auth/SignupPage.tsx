@@ -115,7 +115,7 @@ export default function SignupPage() {
     }
 
     if (step === 2 && data.verificationCode !== '123456') {
-      return 'Incorrect demo code. Enter 123456 to continue.'
+      return 'Incorrect verification code. Please try again.'
     }
 
     if (step === 3) {

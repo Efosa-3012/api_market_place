@@ -1,13 +1,15 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-
 import { ApiError } from '../../lib/api'
 import { portal } from '../../lib/portal'
+import SignInModeSelector from '../../components/auth/SignInModeSelector'
+import type { SignInMode } from '../../components/auth/SignInModeSelector'
 
 export default function LoginPage() {
   const navigate = useNavigate()
   const location = useLocation()
+  const [signInMode, setSignInMode] = useState<SignInMode>('developer')
   const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -16,48 +18,63 @@ export default function LoginPage() {
 
   const canSubmit = identifier.trim().length > 0 && password.length > 0 && !submitting
 
-  // Where RequireAuth sent us from, so login returns the user to the page they wanted.
-  const redirectTo = (location.state as { from?: string } | null)?.from ?? '/app/dashboard'
+ const requestedPath =
+  (location.state as { from?: string } | null)?.from
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    if (!canSubmit) return
+const defaultPath =
+  signInMode === 'admin' ? '/admin/dashboard' : '/app/marketplace'
 
-    setSubmitting(true)
-    setMessage('')
-    try {
-      await portal.login(identifier.trim(), password)
-      navigate(redirectTo, { replace: true })
-    } catch (err) {
-      if (err instanceof ApiError && err.code === 'invalid_credentials') {
-        setMessage('Incorrect email or password.')
-      } else if (err instanceof ApiError && err.code === 'validation_error') {
-        setMessage('Enter the email address you registered with.')
-      } else {
-        setMessage(err instanceof Error ? err.message : 'Something went wrong. Try again.')
-      }
-    } finally {
-      setSubmitting(false)
+const allowedPrefix = signInMode === 'admin' ? '/admin/' : '/app/'
+
+const redirectTo =
+  requestedPath?.startsWith(allowedPrefix)
+    ? requestedPath
+    : defaultPath
+
+async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  event.preventDefault()
+
+  if (!canSubmit || submitting) return
+
+  setSubmitting(true)
+  setMessage('')
+
+  try {
+    await portal.login(identifier.trim(), password)
+    navigate(redirectTo, { replace: true })
+  } catch (err) {
+    if (err instanceof ApiError && err.code === 'invalid_credentials') {
+      setMessage('Incorrect email or password.')
+    } else if (err instanceof ApiError && err.code === 'validation_error') {
+      setMessage('Enter the email address you registered with.')
+    } else {
+      setMessage(
+        err instanceof Error
+          ? err.message
+          : 'Something went wrong. Try again.',
+      )
     }
+  } finally {
+    setSubmitting(false)
   }
-
+}
   return (
     <section
-  aria-labelledby="login-title"
-  className="grid min-h-[calc(100dvh-80px)] bg-white lg:h-[calc(100dvh-80px)] lg:min-h-0 lg:grid-cols-[52%_48%]"
->
-      <div className="flex justify-center px-6 py-10 sm:px-12 lg:justify-start lg:pl-[15%] lg:pr-12 lg:pt-24">
-        <div className="w-full max-w-[360px]">
+      aria-labelledby="login-title"
+      className="grid min-h-dvh bg-white lg:h-dvh lg:grid-cols-[52%_48%] lg:grid-rows-[minmax(0,1fr)]"
+    >
+      <div className="flex min-h-0 justify-center px-6 py-6 sm:px-12 lg:overflow-y-auto lg:py-4 lg:pl-[15%] lg:pr-12">
+        <div className="my-auto w-full max-w-[360px] shrink-0">
           <Link
             to="/"
             aria-label="Stanbic IBTC home"
-            className="mb-8 inline-flex items-center gap-2 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600"
+            className="mb-5 inline-flex rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600"
           >
             <img
-                        src="/images/LogoBlue_.png"
-                        alt="Stanbic IBTC"
-                        className="h-10 w-70 object-contain"
-                    />
+              src="/images/LogoBlue_.png"
+              alt="Stanbic IBTC"
+              className="h-10 w-70 max-w-full object-contain"
+            />
           </Link>
 
           <h1
@@ -67,15 +84,20 @@ export default function LoginPage() {
             Login to API Marketplace
           </h1>
 
-          <p className="mt-3 text-sm text-[#58708f]">
+          <p className="mt-2 text-sm text-[#58708f]">
             Provide the following credentials
           </p>
 
           <form
             onSubmit={handleSubmit}
             onChange={() => setMessage('')}
-            className="mt-9"
+            className="mt-5"
           >
+            <SignInModeSelector
+              value={signInMode}
+              onChange={setSignInMode}
+            />
+
             <div>
               <label
                 htmlFor="login-identifier"
@@ -99,7 +121,7 @@ export default function LoginPage() {
               />
             </div>
 
-            <div className="mt-6">
+            <div className="mt-4">
               <label
                 htmlFor="login-password"
                 className="mb-2 block text-sm font-medium text-[#151c2d]"
@@ -117,14 +139,14 @@ export default function LoginPage() {
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
                   placeholder="Enter your password"
-                  className="h-12 w-full rounded-md border border-transparent bg-[#f7f7f8] py-3 pl-4 pr-14 text-sm text-[#151c2d] outline-none placeholder:text-[#8195b0] focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+                  className="h-11 w-full rounded-md border border-transparent bg-[#f7f7f8] pl-4 pr-14 text-sm text-[#151c2d] outline-none placeholder:text-[#8195b0] focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
                 />
 
                 <button
                   type="button"
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                   aria-controls="login-password"
-                  onClick={() => setShowPassword(!showPassword)}
+                  onClick={() => setShowPassword((current) => !current)}
                   className="absolute inset-y-0 right-1 flex w-11 cursor-pointer items-center justify-center rounded-md text-[#58708f] hover:text-blue-700 focus-visible:outline-2 focus-visible:outline-blue-600"
                 >
                   <svg
@@ -149,43 +171,45 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={!canSubmit}
-              className="mt-7 flex h-11 w-full cursor-pointer items-center justify-center rounded-md bg-[#080da6] text-sm font-medium text-white transition-colors hover:bg-[#003894] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600 disabled:cursor-not-allowed disabled:bg-[#eff5ff] disabled:text-[#757575]"
+              className="mt-5 flex h-11 w-full cursor-pointer items-center justify-center rounded-md bg-[#080da6] text-sm font-medium text-white transition-colors hover:bg-[#003894] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600 disabled:cursor-not-allowed disabled:bg-[#eff5ff] disabled:text-[#757575]"
             >
               {submitting ? 'Logging in…' : 'Log in'}
             </button>
 
-            <div className="mt-5 text-right">
+            <div className="mt-2 text-right">
               <button
                 type="button"
                 onClick={() =>
                   setMessage('Password recovery is not available yet.')
                 }
-                className="min-h-11 cursor-pointer rounded-sm text-sm text-[#1010ff] hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600"
+                className="min-h-10 cursor-pointer rounded-sm text-sm text-[#1010ff] hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600"
               >
                 Forgot password?
               </button>
             </div>
 
-            <p
-              role="status"
-              aria-live="polite"
-              className="mt-3 min-h-10 text-sm leading-6 text-[#58708f]"
-            >
-              {message}
-            </p>
+            {message && (
+              <p
+                role="status"
+                aria-live="polite"
+                className="mt-2 text-sm leading-5 text-[#58708f]"
+              >
+                {message}
+              </p>
+            )}
           </form>
         </div>
       </div>
 
-      <aside className="hidden min-h-0 pb-0 pr-4 pt-4 lg:block">
-  <div className="relative h-full overflow-hidden rounded-t-2xl">
-    <img
-      src="/images/Sign in.png"
-      alt=""
-      className="absolute inset-0 h-full w-full object-cover"
-    />
-  </div>
-</aside>
+      <aside className="hidden min-h-0 p-4 lg:block">
+        <div className="relative h-full overflow-hidden rounded-2xl">
+          <img
+            src="/images/Sign in.png"
+            alt=""
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+        </div>
+      </aside>
     </section>
   )
 }

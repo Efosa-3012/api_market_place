@@ -125,7 +125,7 @@ const resources = [
   },
   {
     title: 'Sandbox Environment',
-    description: 'Test endpoints with mock financial data.',
+    description: 'Test endpoints in the sandbox environment.',
     to: '/app/developer-portal',
     icon: 'code',
     color: 'bg-indigo-50 text-indigo-500',

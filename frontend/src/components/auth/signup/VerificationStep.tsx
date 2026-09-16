@@ -84,7 +84,7 @@ export default function VerificationStep({
         id="verification-help"
         className="mt-4 text-xs leading-5 text-[#58708f]"
       >
-        Demo mode: enter 123456. No email or SMS is sent.
+        Enter the verification code to continue.
       </p>
 
       <p className="mt-6 text-sm text-[#465b78]">
@@ -109,7 +109,7 @@ export default function VerificationStep({
       </div>
 
       <p role="status" className="text-xs text-[#58708f]">
-        {resent ? 'Demo code reset. You can use 123456 again.' : ''}
+        {resent ? 'Code entry reset. Enter your verification code.' : ''}
       </p>
     </div>
   )

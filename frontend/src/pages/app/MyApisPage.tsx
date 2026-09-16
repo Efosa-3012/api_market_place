@@ -89,9 +89,37 @@ export default function MyApisPage() {
     }
   }, [])
 
-  useEffect(() => {
-    void load()
-  }, [load])
+ useEffect(() => {
+  let cancelled = false
+
+  async function fetchInitialApps() {
+    try {
+      const result = await portal.listApps()
+
+      if (!cancelled) {
+        setApps(result)
+      }
+    } catch (err) {
+      if (!cancelled) {
+        setLoadError(
+          err instanceof Error
+            ? err.message
+            : 'Could not load your apps.',
+        )
+      }
+    } finally {
+      if (!cancelled) {
+        setLoading(false)
+      }
+    }
+  }
+
+  void fetchInitialApps()
+
+  return () => {
+    cancelled = true
+  }
+}, [])
 
   const counts = {
     All: apps.length,
