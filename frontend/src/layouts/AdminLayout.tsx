@@ -2,26 +2,13 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, NavLink, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { portalSession } from '../lib/api'
+// Only the live control room is navigable. Partners / catalogue / settings
+// screens exist as mock-ups but are not wired, so they are not offered.
 const navigation = [
   {
     label: 'Dashboard',
     path: '/admin/dashboard',
     icon: 'M4 20V9h5v11M9 20V4h5v16M14 20V12h5v8',
-  },
-  {
-    label: 'Partners',
-    path: '/admin/developers',
-    icon: 'M8 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8M2 21v-3a6 6 0 0 1 12 0v3M16 4a4 4 0 0 1 0 8M18 15a5 5 0 0 1 4 5',
-  },
-  {
-    label: 'API Catalog',
-    path: '/admin/apis',
-    icon: 'M3 8h18v12H3zM6 8V4h12v4M3 12h18',
-  },
-  {
-    label: 'Settings',
-    path: '/admin/settings',
-    icon: 'M3 6h18M3 12h18M3 18h18M8 3v6M16 9v6M10 15v6',
   },
 ]
 export default function AdminLayout() {
@@ -159,7 +146,7 @@ export default function AdminLayout() {
             </div>
           </details>
           <Link
-            to="/admin/settings"
+            to="/admin/dashboard"
             className="flex items-center gap-3 border-l border-slate-200 pl-3"
           >
             <span className="grid size-9 place-items-center rounded-full bg-[#0b2858] text-xs text-white">
@@ -202,7 +189,7 @@ export default function AdminLayout() {
               <div
                 key={item.path}
                 className={
-                  index === 3 ? 'mt-4 border-t border-slate-100 pt-4' : ''
+                  index === 3 ? 'mt-4 border-t border-slate-100 pt-4' : ''  // (single item today)
                 }
               >
                 <NavLink
@@ -231,7 +218,7 @@ export default function AdminLayout() {
             ))}
           </nav>
           <Link
-            to="/admin/settings"
+            to="/admin/dashboard"
             className="mt-auto flex items-center gap-3 border-t border-slate-100 pt-5"
           >
             <span className="grid size-9 place-items-center rounded-full bg-[#0b2858] text-xs text-white">

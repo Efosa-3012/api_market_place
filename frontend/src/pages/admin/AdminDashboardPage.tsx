@@ -34,7 +34,10 @@ import { PartnerTraffic, TopEndpoints } from '../../components/admin/PartnerTraf
 
 const WINDOW_OPTIONS = (['1h', '6h', '24h', '7d', '30d'] as const).map((value) => ({ value, label: value }))
 
-const LIVE_POLL_MS = 5000
+const LIVE_POLL_MS = 3000
+// Aggregates move slowly; refresh them every few feed ticks so the consent
+// tiles still react during a demo without hammering the database.
+const LIVE_SUMMARY_EVERY = 5
 
 interface Data {
   summary: AnalyticsSummary
@@ -61,7 +64,7 @@ export default function AdminDashboardPage() {
   const [data, setData] = useState<Data | null>(null)
   const [calls, setCalls] = useState<AuditCall[]>([])
   const [feedFilter, setFeedFilter] = useState<'all' | 'errors'>('all')
-  const [live, setLive] = useState(false)
+  const [live, setLive] = useState(true)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [syncedAt, setSyncedAt] = useState<Date | null>(null)
@@ -114,11 +117,25 @@ export default function AdminDashboardPage() {
   feedRef.current = loadFeed
   useEffect(() => {
     if (!live) return
+    let tick = 0
     const timer = setInterval(() => {
-      void feedRef.current().then(() => setSyncedAt(new Date()))
+      tick += 1
+      const refreshTiles = tick % LIVE_SUMMARY_EVERY === 0
+      void Promise.all([
+        feedRef.current(),
+        refreshTiles
+          ? Promise.all([admin.summary(range), admin.consents(), admin.callsPerClient()]).then(([summary, consents, clients]) =>
+              setData((current) => (current ? { ...current, summary, consents, clients: clients.data } : current)),
+            )
+          : Promise.resolve(),
+      ])
+        .then(() => setSyncedAt(new Date()))
+        .catch(() => {
+          /* transient poll failure — the next tick retries */
+        })
     }, LIVE_POLL_MS)
     return () => clearInterval(timer)
-  }, [live])
+  }, [live, range])
 
   useEffect(() => {
     if (!loading) void loadFeed()
