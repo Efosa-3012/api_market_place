@@ -46,7 +46,7 @@ export default function ConnectedAppsPage() {
       setConsents((current) =>
         current?.map((c) => (c.id === res.consent_id ? { ...c, status: 'revoked', revoked_at: res.revoked_at } : c)) ?? null,
       )
-      setNotice(`${confirm.client.name} no longer has access. Its next request to the bank will be refused.`)
+      setNotice(`${confirm.client.name} no longer has access.`)
       setConfirm(null)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not revoke access.')
@@ -64,7 +64,7 @@ export default function ConnectedAppsPage() {
         <h1 className="text-2xl font-semibold tracking-tight">Connected Apps</h1>
         <p className="mt-2 text-sm leading-6 text-[#58708f]">
           Apps and services you&apos;ve allowed to read your Stanbic account data{customer ? `, ${customer.full_name.split(' ')[0]}` : ''}.
-          You can withdraw access at any time — the app is cut off immediately and your password never changes.
+          You can withdraw access at any time.
         </p>
       </header>
 

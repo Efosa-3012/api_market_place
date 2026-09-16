@@ -63,8 +63,7 @@ export default function ConsentPanel({ consents }: { consents: ConsentBreakdown 
             ))}
           </dl>
           <p className="mt-4 text-[11px] leading-5 text-[#8ea3c0]">
-            {consents.total} consents on record. {revoked > 0 ? `${revoked} were withdrawn — ` : ''}
-            a revoked consent stops the partner on its very next call, with no token to invalidate.
+            {consents.total} consents on record{revoked > 0 ? `, ${revoked} withdrawn` : ''}.
           </p>
         </div>
 

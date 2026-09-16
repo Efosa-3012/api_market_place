@@ -75,3 +75,19 @@
 @media (max-width: 1020px) { .desktop-links { display: none; } .menu-toggle { display: block; } .mobile-links { display: grid; grid-template-columns: repeat(3, 1fr); padding: 0 24px 20px; gap: 12px; } .mobile-links a { padding: 12px; } .feature-card { padding-inline: 20px; } .api-card { padding: 22px; } .feature-grid, .api-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .hero-copy h1 { font-size: 48px; } }
 @media (max-width: 680px) { .public-nav { min-height: 74px; padding: 14px 16px; gap: 12px; flex-wrap: wrap; } .brand { font-size: 17px; } .brand small { font-size: 8px; } .logo-placeholder { width: 26px; height: 32px; } .nav-actions { gap: 10px; } .nav-start, .nav-search { display: none; } .sign-in { padding: 12px 0; } .mobile-links { grid-template-columns: repeat(2, 1fr); padding-inline: 16px; } .landing-hero { display: flex; flex-direction: column; align-items: stretch; min-height: auto; } .hero-copy { width: auto; margin: 52px 24px 38px; } .hero-copy h1 { font-size: clamp(38px, 9vw, 56px); letter-spacing: -1.3px; line-height: 1.06; } .hero-copy > p { font-size: 17px; } .hero-break { display: none; } .hero-placeholder { position: relative; inset: auto; min-height: 280px; clip-path: ellipse(95% 100% at 70% 100%); } .hero-placeholder span { margin: 0; } .trust-list { font-size: 13px; gap: 7px 14px; } .landing-features, .landing-apis { padding: 45px 20px; } .section-intro h2, .api-intro h2 { font-size: 32px; } .section-intro > p, .api-intro > p:last-child { font-size: 17px; } .feature-grid { grid-template-columns: 1fr; gap: 48px; margin-top: 65px; } .feature-card { min-height: 245px; padding-top: 58px; } .feature-card .feature-label { margin-bottom: 23px; } .api-intro .eyebrow { font-size: 18px; } .api-search { margin-bottom: 30px; } .api-search input { padding-inline: 12px; font-size: 14px; } .api-search button { min-width: 54px; } .api-grid { grid-template-columns: 1fr; gap: 20px; } .api-card { min-height: 300px; padding: 25px; } .public-footer { padding: 28px 24px; gap: 22px 28px; font-size: 13px; } }
 @media (prefers-reduced-motion: reduce) { .public-site * { transition: none; } }
+
+/* Entry point to the sample fintech app — the customer's side of the platform. */
+.hero-sample {
+  margin-top: 1.25rem;
+  font-size: 0.8125rem;
+  color: #58708f;
+}
+.hero-sample a {
+  color: #0d7a5f;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.hero-sample a:hover {
+  color: #0a6250;
+}

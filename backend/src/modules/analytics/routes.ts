@@ -266,7 +266,8 @@ analyticsRouter.get('/recent-calls', async (req, res, next) => {
         WHERE ($2::boolean IS NOT TRUE OR ac.status_code >= 400)
           AND ($3::boolean IS TRUE OR (ac.method <> 'OPTIONS'
                                        AND ac.path NOT LIKE '/analytics%'
-                                       AND ac.path NOT LIKE '/portal%'))
+                                       AND ac.path NOT LIKE '/portal%'
+                                       AND ac.path NOT LIKE '/demo%'))
         ORDER BY ac.id DESC
         LIMIT $1`,
       [limit, errors_only, include_internal],

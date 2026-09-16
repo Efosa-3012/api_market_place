@@ -16,7 +16,7 @@ import type {
   EndpointTraffic,
   TimeseriesPoint,
 } from '../../lib/admin'
-import { AreaChart, Button, Chip, ErrorNote, Panel, Segmented, ShareBar, Skeleton, StatTile } from '../../components/dash/ui'
+import { AreaChart, Button, ErrorNote, Panel, Segmented, ShareBar, Skeleton, StatTile } from '../../components/dash/ui'
 import AuditFeed from '../../components/admin/AuditFeed'
 import ConsentPanel from '../../components/admin/ConsentPanel'
 import { PartnerTraffic, TopEndpoints } from '../../components/admin/PartnerTraffic'
@@ -165,7 +165,7 @@ export default function AdminDashboardPage() {
                 value={compactNumber(summary.calls)}
                 detail={WINDOW_LABELS[range].toLowerCase()}
                 tone="accent"
-                hint="Every request through the gateway in this window, including rejections."
+                hint="All requests through the gateway, including rejected ones."
               />
               <StatTile
                 label="Success rate"
@@ -176,14 +176,14 @@ export default function AdminDashboardPage() {
                     : `${summary.client_errors} rejected · ${summary.server_errors} server errors`
                 }
                 tone={successRate === null ? 'neutral' : successRate >= 0.95 ? 'ok' : successRate >= 0.9 ? 'warn' : 'bad'}
-                hint="Rejections include deliberate refusals such as revoked consent — not all of them are faults."
+                hint="Share of calls answered with status 400 or above."
               />
               <StatTile
                 label="p95 latency"
                 value={summary.calls === 0 ? '—' : duration(summary.p95_latency_ms)}
                 detail={summary.calls === 0 ? '—' : `average ${duration(summary.avg_latency_ms)}`}
                 tone="neutral"
-                hint="95% of calls completed faster than this. Averages hide the slow tail."
+                hint="95% of calls completed faster than this."
               />
               <StatTile
                 label="Live consents"
@@ -288,15 +288,6 @@ export default function AdminDashboardPage() {
               <TopEndpoints endpoints={data.endpoints} windowLabel={WINDOW_LABELS[range]} />
             </div>
 
-            <footer className="flex flex-wrap items-center gap-3 rounded-2xl border border-[#e1e8f2] bg-white px-5 py-4">
-              <Chip tone="neutral">Audit source</Chip>
-              <p className="min-w-0 flex-1 text-[11px] leading-5 text-[#65758e]">
-                Every figure above is computed from the <code className="font-mono">api_calls</code> table, written by
-                the gateway on every request, and the <code className="font-mono">consents</code> table. A call
-                rejected because a customer revoked consent is still attributed to the partner that made it — which is
-                why a partner losing access shows up here immediately.
-              </p>
-            </footer>
           </>
         )}
       </div>

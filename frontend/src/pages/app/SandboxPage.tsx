@@ -120,7 +120,7 @@ export default function SandboxPage() {
       const t = await sandbox.mintToken(appId)
       setToken(t)
       setState((s) => (s ? { ...s, consent: t } : s))
-      setNotice(t.status === 'authorised' ? 'Sandbox token issued. It is a real token — every check the gateway does in production applies to it.' : '')
+      setNotice(t.status === 'authorised' ? 'Sandbox token issued.' : '')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not issue a sandbox token.')
     } finally {
@@ -192,7 +192,7 @@ export default function SandboxPage() {
           <p className="mt-2 max-w-2xl text-sm text-[#465b78]">
             Get a sandbox token for one of your apps and call the live gateway from here. The token is bound to a
             pre-approved consent for demo customer <code className="text-xs">{state?.customer_id ?? 'customer-demo-001'}</code>, so there is no
-            login or consent screen to go through — but every other check is the real thing.
+            login or consent screen to go through.
           </p>
         </div>
         <a href={`${import.meta.env.VITE_API_URL ?? 'http://localhost:4000'}/docs`} target="_blank" rel="noreferrer" className={secondaryBtn + ' inline-flex items-center'}>
@@ -404,7 +404,7 @@ export default function SandboxPage() {
             </>
           ) : (
             <p className="mt-4 rounded-md border border-dashed border-[#d5dce8] p-6 text-center text-xs text-[#58708f]">
-              Responses appear here — status, latency, rate-limit headers and the JSON body exactly as your app would receive it.
+              Responses appear here, with status, latency, rate-limit headers and the JSON body.
             </p>
           )}
 
