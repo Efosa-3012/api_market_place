@@ -20,6 +20,11 @@ const links = [
     to: '/app/my-apis',
     icon: 'M4 8h16v12H4zM7 8V4h10v4M4 12h16',
   },
+{
+    label: 'Sandbox',
+    to: '/app/sandbox',
+    icon: 'M4 8h16v12H4zM7 8V4h10v4M4 12h16',
+  },
   {
     label: 'Developer Portal',
     to: '/app/developer-portal',
