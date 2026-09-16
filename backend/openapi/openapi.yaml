@@ -322,7 +322,7 @@ paths:
     get:
       tags: [Analytics]
       summary: Headline tiles — traffic, error rate, p95 latency, consent counts
-      security: [{ adminKey: [] }]
+      security: [{ adminKey: [] }, { portalToken: [] }]
       parameters: [{ $ref: '#/components/parameters/window' }]
       responses:
         '200':
@@ -335,19 +335,28 @@ paths:
                   window: { type: string, example: 24h }
                   calls: { type: integer }
                   errors: { type: integer }
+                  client_errors: { type: integer, description: Status 400–499 }
+                  server_errors: { type: integer, description: Status 500 and above }
                   error_rate: { type: number, example: 0.1667, description: Ratio of calls with status >= 400 }
                   p95_latency_ms: { type: integer }
+                  avg_latency_ms: { type: integer }
                   active_consents: { type: integer }
+                  new_consents: { type: integer, description: Consents authorised within the window }
                   revocations: { type: integer, description: Consents revoked within the window }
                   total_consents: { type: integer }
+                  developers: { type: integer, description: Registered developer accounts, excluding bank staff }
+                  clients_total: { type: integer }
+                  clients_active: { type: integer }
+                  clients_calling: { type: integer, description: Distinct clients that called within the window }
         '401': { $ref: '#/components/responses/AdminUnauthorized' }
+        '403': { description: Signed in, but the account is not an administrator }
 
   /analytics/calls-per-client:
     get:
       tags: [Analytics]
       summary: Traffic broken down by registered client
       description: Every registered client is listed, including those with no traffic yet.
-      security: [{ adminKey: [] }]
+      security: [{ adminKey: [] }, { portalToken: [] }]
       responses:
         '200':
           description: OK
@@ -368,12 +377,43 @@ paths:
                         errors: { type: integer }
         '401': { $ref: '#/components/responses/AdminUnauthorized' }
 
+  /analytics/top-endpoints:
+    get:
+      tags: [Analytics]
+      summary: Busiest partner endpoints
+      description: |
+        Only the partner surface (`/api/v1/*`) is counted — the bank's own consent pages and
+        the developer portal are not products anyone consumes. Account ids are collapsed back
+        to `{accountId}`, and CORS preflights are excluded.
+      security: [{ adminKey: [] }, { portalToken: [] }]
+      parameters: [{ $ref: '#/components/parameters/window' }]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  window: { type: string, example: 24h }
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        path: { type: string, example: '/api/v1/accounts/{accountId}/balances' }
+                        method: { type: string, example: GET }
+                        calls: { type: integer }
+                        errors: { type: integer }
+                        p95_latency_ms: { type: integer }
+        '401': { $ref: '#/components/responses/AdminUnauthorized' }
+
   /analytics/timeseries:
     get:
       tags: [Analytics]
       summary: Calls per 5-minute bucket
       description: Empty buckets are included so the chart has a continuous x-axis.
-      security: [{ adminKey: [] }]
+      security: [{ adminKey: [] }, { portalToken: [] }]
       parameters: [{ $ref: '#/components/parameters/window' }]
       responses:
         '200':
@@ -399,11 +439,23 @@ paths:
     get:
       tags: [Analytics]
       summary: Live audit feed, newest first
-      security: [{ adminKey: [] }]
+      security: [{ adminKey: [] }, { portalToken: [] }]
       parameters:
         - name: limit
           in: query
           schema: { type: integer, minimum: 1, maximum: 200, default: 50 }
+        - name: errors_only
+          in: query
+          description: Show only calls the gateway rejected (status 400 and above).
+          schema: { type: string, enum: ['true', 'false'], default: 'false' }
+        - name: include_internal
+          in: query
+          description: |
+            By default the feed shows the traffic this dashboard oversees — partner API calls and
+            the consent journey (`/api/v1`, `/oauth`, `/bank`). The management plane (`/analytics`,
+            `/portal`) and CORS preflights are excluded so an open portal does not bury partner
+            traffic. Set true to see everything.
+          schema: { type: string, enum: ['true', 'false'], default: 'false' }
       responses:
         '200':
           description: OK
@@ -420,7 +472,7 @@ paths:
       tags: [Analytics]
       summary: Consent counts by status
       description: All five statuses are always present, with zero counts where applicable.
-      security: [{ adminKey: [] }]
+      security: [{ adminKey: [] }, { portalToken: [] }]
       responses:
         '200':
           description: OK
@@ -439,6 +491,24 @@ paths:
                           enum: [awaiting_authorisation, authorised, rejected, revoked, expired]
                         count: { type: integer }
                   total: { type: integer }
+                  recent:
+                    type: array
+                    description: The twelve most recently touched consents — who granted or withdrew access, and to whom.
+                    items:
+                      type: object
+                      properties:
+                        id: { type: string, format: uuid }
+                        status: { type: string }
+                        customer_id: { type: string }
+                        scopes: { type: array, items: { type: string } }
+                        account_count: { type: integer, nullable: true }
+                        sandbox: { type: boolean }
+                        authorised_at: { type: string, format: date-time, nullable: true }
+                        revoked_at: { type: string, format: date-time, nullable: true }
+                        revoked_by: { type: string, nullable: true, example: customer }
+                        created_at: { type: string, format: date-time }
+                        client_id: { type: string }
+                        client_name: { type: string }
         '401': { $ref: '#/components/responses/AdminUnauthorized' }
 
   /portal/signup:
@@ -595,6 +665,176 @@ paths:
         '401': { $ref: '#/components/responses/PortalUnauthorized' }
         '404': { description: No such app under your account }
 
+  /portal/summary:
+    get:
+      tags: [Portal]
+      summary: Your integration activity at a glance
+      description: |
+        The same `api_calls` audit trail the bank's dashboard reads, scoped to your own apps.
+        You see what your integration did and nothing else — no other developer's traffic.
+      security: [{ portalToken: [] }]
+      parameters: [{ $ref: '#/components/parameters/portalWindow' }]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  window: { type: string, example: 24h }
+                  calls: { type: integer }
+                  errors: { type: integer }
+                  client_errors: { type: integer }
+                  server_errors: { type: integer }
+                  error_rate: { type: number }
+                  p95_latency_ms: { type: integer }
+                  apps_total: { type: integer }
+                  apps_active: { type: integer }
+                  active_consents: { type: integer, description: Live customer consents across your apps }
+                  sandbox_consents: { type: integer }
+                  revoked_consents: { type: integer }
+                  by_app:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        app_id: { type: string, format: uuid }
+                        client_id: { type: string }
+                        name: { type: string }
+                        status: { type: string, enum: [active, deactivated] }
+                        calls: { type: integer }
+                        errors: { type: integer }
+        '401': { $ref: '#/components/responses/PortalUnauthorized' }
+
+  /portal/logs:
+    get:
+      tags: [Portal]
+      summary: Your request log, newest first
+      description: |
+        Every call your apps made through the gateway, with the `correlation_id` to quote
+        when raising a support request. Paginated with a keyset cursor on the append-only
+        audit trail, so a cursor never goes stale.
+      security: [{ portalToken: [] }]
+      parameters:
+        - { name: app_id, in: query, description: Limit to one of your apps, schema: { type: string, format: uuid } }
+        - name: status
+          in: query
+          description: '`errors` covers everything from 400 up.'
+          schema: { type: string, enum: ['2xx', '4xx', '5xx', errors] }
+        - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 25 } }
+        - { name: cursor, in: query, description: From a previous response's `meta.pagination.next_cursor`, schema: { type: string } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id: { type: string }
+                        correlation_id: { type: string }
+                        app_id: { type: string, format: uuid }
+                        client_id: { type: string }
+                        app_name: { type: string }
+                        consent_id: { type: string, format: uuid, nullable: true }
+                        method: { type: string }
+                        path: { type: string }
+                        status_code: { type: integer }
+                        error_code: { type: string, nullable: true }
+                        duration_ms: { type: integer }
+                        created_at: { type: string, format: date-time }
+                  meta:
+                    type: object
+                    properties:
+                      pagination: { $ref: '#/components/schemas/Pagination' }
+        '401': { $ref: '#/components/responses/PortalUnauthorized' }
+
+  /portal/apps/{id}/sandbox:
+    get:
+      tags: [Portal]
+      summary: Sandbox state for an app
+      description: The demo customer backing sandbox tokens, their accounts, and the current sandbox consent if one exists.
+      security: [{ portalToken: [] }]
+      parameters: [{ $ref: '#/components/parameters/appId' }]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  customer_id: { type: string, example: customer-demo-001 }
+                  accounts:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        account_id: { type: string }
+                        account_type: { type: string }
+                        currency: { type: string }
+                        status: { type: string }
+                  consent: { $ref: '#/components/schemas/SandboxConsent' }
+        '401': { $ref: '#/components/responses/PortalUnauthorized' }
+        '404': { description: No such app under your account }
+
+  /portal/apps/{id}/sandbox-token:
+    post:
+      tags: [Portal]
+      summary: Mint a sandbox access token
+      description: |
+        A real access token for your app, bound to a pre-authorised consent for a demo customer.
+        It goes through exactly the same checks as a token from the OAuth flow, so what you see
+        in the sandbox is what your production integration will see. Creates the sandbox consent
+        on first use.
+      security: [{ portalToken: [] }]
+      parameters: [{ $ref: '#/components/parameters/appId' }]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SandboxConsent'
+                  - type: object
+                    properties:
+                      access_token: { type: string }
+                      token_type: { type: string, example: Bearer }
+                      expires_in: { type: integer, example: 86400 }
+                      scope: { type: string, example: 'accounts:read balances:read transactions:read' }
+        '401': { $ref: '#/components/responses/PortalUnauthorized' }
+        '404': { description: No such app under your account }
+        '409': { description: The app is deactivated and cannot be issued tokens }
+
+  /portal/apps/{id}/sandbox/revoke:
+    post:
+      tags: [Portal]
+      summary: Simulate the customer withdrawing consent
+      description: |
+        Revokes the app's sandbox consents so you can see exactly what your integration gets
+        when a customer takes access back: the next call with the same token returns
+        403 `consent_revoked`. Mint a new sandbox token to carry on.
+      security: [{ portalToken: [] }]
+      parameters: [{ $ref: '#/components/parameters/appId' }]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  consents_revoked: { type: integer }
+        '401': { $ref: '#/components/responses/PortalUnauthorized' }
+        '404': { description: No such app under your account }
+
 components:
   securitySchemes:
     bearerToken:
@@ -619,7 +859,10 @@ components:
       type: apiKey
       in: header
       name: X-Admin-Key
-      description: Shared admin key for the analytics dashboard
+      description: |
+        Shared admin key for the analytics dashboard. Intended for scripts and smoke tests.
+        The dashboard UI signs in instead and sends a `portalToken` whose account has the
+        `admin` role, so the shared key never ships to a browser.
   parameters:
     accountId:
       name: accountId
@@ -635,9 +878,17 @@ components:
     window:
       name: window
       in: query
+      description: Reporting window. Chart buckets scale with it, so a series is always 60–170 points.
       schema:
         type: string
-        enum: ['1h', '6h', '24h', '7d']
+        enum: ['1h', '6h', '24h', '7d', '30d']
+        default: '24h'
+    portalWindow:
+      name: window
+      in: query
+      schema:
+        type: string
+        enum: ['1h', '24h', '7d', '30d']
         default: '24h'
   responses:
     Error:
@@ -651,7 +902,10 @@ components:
         application/json:
           schema: { $ref: '#/components/schemas/Error' }
     AdminUnauthorized:
-      description: '`code` is `admin_key_required` or `invalid_admin_key`.'
+      description: |
+        `code` is `admin_key_required` (no credential at all), `invalid_admin_key`,
+        or one of the portal token codes. A valid portal token whose account is not
+        an admin gets 403 `admin_required` instead.
       content:
         application/json:
           schema: { $ref: '#/components/schemas/Error' }
@@ -747,7 +1001,26 @@ components:
         email: { type: string, format: email }
         name: { type: string }
         company: { type: [string, 'null'] }
+        role:
+          type: string
+          enum: [developer, admin]
+          description: |
+            `admin` is bank staff, and is the only role the analytics dashboard admits.
+            Self-service signup always creates a `developer`.
         created_at: { type: string, format: date-time }
+    SandboxConsent:
+      type: object
+      nullable: true
+      description: A pre-authorised consent for the demo customer, flagged `sandbox` so dashboards can tell it apart.
+      properties:
+        consent_id: { type: string, format: uuid }
+        status: { type: string, example: authorised }
+        scopes: { type: array, items: { type: string } }
+        account_ids: { type: array, items: { type: string } }
+        customer_id: { type: [string, 'null'] }
+        authorised_at: { type: [string, 'null'], format: date-time }
+        expires_at: { type: [string, 'null'], format: date-time }
+        revoked_at: { type: [string, 'null'], format: date-time }
     PortalApp:
       type: object
       description: A registered app. The client secret is never part of this shape.

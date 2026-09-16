@@ -1,367 +1,282 @@
-import { useState } from 'react'
-import type { Environment, RequestLog } from './model'
-import { codeExample, dateTime, endpoints } from './model'
-import { Badge, Button, CodeBlock, Field, Panel } from './ui'
+import { useCallback, useEffect, useState } from 'react'
+import { ApiError } from '../../lib/api'
+import { describeError, relativeTime } from '../../lib/admin'
+import { portal } from '../../lib/portal'
+import type { AppTraffic, LogStatusFilter, RequestLog } from '../../lib/portal'
+import {
+  Button,
+  Chip,
+  CopyButton,
+  EmptyState,
+  ErrorNote,
+  MethodBadge,
+  Modal,
+  Panel,
+  Segmented,
+  Skeleton,
+  StatusCode,
+} from '../dash/ui'
 
-export default function Logs({
-  logs,
-  environment,
-  onReplay,
-  onRetry,
-}: {
-  logs: RequestLog[]
-  environment: Environment
-  onReplay: (log: RequestLog) => void
-  onRetry: (log: RequestLog) => boolean
-}) {
-  const [query, setQuery] = useState('')
-  const [status, setStatus] = useState('all')
-  const [api, setApi] = useState('all')
-  const [days, setDays] = useState('7')
-  const [page, setPage] = useState(1)
-  const [ascending, setAscending] = useState(false)
-  const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [detailTab, setDetailTab] = useState('Request')
-  const [notice, setNotice] = useState('')
-  const [now] = useState(() => Date.now())
-  const filtered = logs
-    .filter(
-      (log) =>
-        log.environment === environment &&
-        `${log.path} ${log.id}`.toLowerCase().includes(query.toLowerCase()) &&
-        (status === 'all' ||
-          (status === 'success' ? log.status < 400 : log.status >= 400)) &&
-        (api === 'all' || api === log.api) &&
-        (days === 'all' ||
-          new Date(log.time).getTime() >= now - Number(days) * 86400000),
-    )
-    .sort(
-      (a, b) =>
-        (new Date(a.time).getTime() - new Date(b.time).getTime()) *
-        (ascending ? 1 : -1),
-    )
-  const pages = Math.max(1, Math.ceil(filtered.length / 10))
-  const currentPage = Math.min(page, pages)
-  const visible = filtered.slice((currentPage - 1) * 10, currentPage * 10)
-  const selected = filtered.find((log) => log.id === selectedId)
-  function exportCsv() {
-    const quote = (value: unknown) =>
-      `"${String(value)
-        .replace(/^[=+@-]/, "'$&")
-        .replaceAll('"', '""')}"`
-    const rows = [
-      [
-        'Time',
-        'Request ID',
-        'Environment',
-        'Method',
-        'Endpoint',
-        'Status',
-        'Latency ms',
-      ],
-      ...filtered.map((log) => [
-        log.time,
-        log.id,
-        log.environment,
-        log.method,
-        log.path,
-        log.status,
-        log.latency,
-      ]),
-    ]
-    const url = URL.createObjectURL(
-      new Blob(
-        ['\uFEFF' + rows.map((row) => row.map(quote).join(',')).join('\r\n')],
-        { type: 'text/csv;charset=utf-8' },
-      ),
-    )
-    const anchor = document.createElement('a')
-    anchor.href = url
-    anchor.download = `portal-${environment.toLowerCase()}-logs.csv`
-    document.body.append(anchor)
-    anchor.click()
-    anchor.remove()
-    window.setTimeout(() => URL.revokeObjectURL(url), 1000)
-    setNotice(`Exported ${filtered.length} filtered requests.`)
+/**
+ * The developer's own request log — the same rows the bank's audit trail holds,
+ * filtered to their apps.
+ *
+ * Paginates on the backend's keyset cursor rather than accumulating everything
+ * client-side, so "Load more" stays correct while new calls arrive at the top.
+ */
+
+const STATUS_FILTERS: { value: LogStatusFilter | 'all'; label: string }[] = [
+  { value: 'all', label: 'All' },
+  { value: '2xx', label: 'Success' },
+  { value: 'errors', label: 'Failed' },
+  { value: '4xx', label: '4xx' },
+  { value: '5xx', label: '5xx' },
+]
+
+function fullTime(iso: string) {
+  return new Date(iso).toLocaleString([], {
+    day: '2-digit',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  })
+}
+
+export default function Logs({ apps }: { apps: AppTraffic[] }) {
+  const [status, setStatus] = useState<LogStatusFilter | 'all'>('all')
+  const [appId, setAppId] = useState('')
+  const [rows, setRows] = useState<RequestLog[]>([])
+  const [cursor, setCursor] = useState<string | undefined>()
+  const [hasMore, setHasMore] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [error, setError] = useState('')
+  const [selected, setSelected] = useState<RequestLog | null>(null)
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    setError('')
+    try {
+      const page = await portal.logs({
+        status: status === 'all' ? undefined : status,
+        appId: appId || undefined,
+        limit: 25,
+      })
+      setRows(page.data)
+      setCursor(page.meta.pagination.next_cursor)
+      setHasMore(page.meta.pagination.has_more)
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Could not load your request log.')
+    } finally {
+      setLoading(false)
+    }
+  }, [status, appId])
+
+  useEffect(() => {
+    void load()
+  }, [load])
+
+  async function loadMore() {
+    if (!cursor || loadingMore) return
+    setLoadingMore(true)
+    try {
+      const page = await portal.logs({
+        status: status === 'all' ? undefined : status,
+        appId: appId || undefined,
+        limit: 25,
+        cursor,
+      })
+      setRows((current) => [...current, ...page.data])
+      setCursor(page.meta.pagination.next_cursor)
+      setHasMore(page.meta.pagination.has_more)
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Could not load more.')
+    } finally {
+      setLoadingMore(false)
+    }
   }
-  const endpoint = selected
-    ? endpoints.find((item) => item.id === selected.endpointId)
-    : null
+
   return (
-    <div className="space-y-5">
-      <div className="flex justify-end">
-        <Button secondary onClick={exportCsv}>
-          ↓ Export CSV
-        </Button>
-      </div>
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-[2fr_1fr_1fr_1fr]">
-        <Field label="Search endpoint or request ID">
-          <input
-            type="search"
-            placeholder="Search endpoint or request ID..."
-            value={query}
-            onChange={(e) => {
-              setQuery(e.target.value)
-              setPage(1)
-            }}
-          />
-        </Field>
-        <Field label="Status">
-          <select
-            value={status}
-            onChange={(e) => {
-              setStatus(e.target.value)
-              setPage(1)
-            }}
-          >
-            <option value="all">All statuses</option>
-            <option value="success">Successful</option>
-            <option value="error">Errors</option>
-          </select>
-        </Field>
-        <Field label="API">
-          <select
-            value={api}
-            onChange={(e) => {
-              setApi(e.target.value)
-              setPage(1)
-            }}
-          >
-            <option value="all">All APIs</option>
-            {[...new Set(logs.map((log) => log.api))].map((name) => (
-              <option key={name}>{name}</option>
-            ))}
-          </select>
-        </Field>
-        <Field label="Time range">
-          <select
-            value={days}
-            onChange={(e) => {
-              setDays(e.target.value)
-              setPage(1)
-            }}
-          >
-            <option value="1">Last 24 hours</option>
-            <option value="7">Last 7 days</option>
-            <option value="30">Last 30 days</option>
-            <option value="all">All time</option>
-          </select>
-        </Field>
-      </div>
-      {notice && (
-        <p role="status" className="text-xs text-blue-700">
-          {notice}
-        </p>
-      )}
-      <div
-        className={`grid items-start gap-5 ${selected ? 'xl:grid-cols-[1.4fr_1fr]' : ''}`}
+    <div className="flex flex-col gap-5">
+      <Panel
+        title="Request log"
+        subtitle="Every call your apps made through the gateway, newest first. Select a row for the full record."
+        padded={false}
+        action={
+          <div className="flex flex-wrap items-center gap-2">
+            {apps.length > 1 && (
+              <label className="text-xs text-[#65758e]">
+                <span className="sr-only">Filter by app</span>
+                <select
+                  value={appId}
+                  onChange={(event) => setAppId(event.target.value)}
+                  className="min-h-9 cursor-pointer rounded-lg border border-[#e1e8f2] bg-white px-3 text-xs text-[#142033]"
+                >
+                  <option value="">All apps</option>
+                  {apps.map((app) => (
+                    <option key={app.app_id} value={app.app_id}>
+                      {app.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+            <Segmented label="Filter by outcome" value={status} options={STATUS_FILTERS} onChange={setStatus} />
+            <Button secondary onClick={() => void load()}>
+              Refresh
+            </Button>
+          </div>
+        }
+        footer={
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <span className="tabular-nums">
+              {rows.length} {rows.length === 1 ? 'call' : 'calls'} shown
+            </span>
+            {hasMore && (
+              <Button secondary onClick={() => void loadMore()} disabled={loadingMore}>
+                {loadingMore ? 'Loading…' : 'Load more'}
+              </Button>
+            )}
+          </div>
+        }
       >
-        <section
-          aria-label="Request logs"
-          className="min-w-0 overflow-hidden rounded-xl border border-[#e1e8f2] bg-white"
-        >
+        {error && (
+          <div className="px-5 pb-4">
+            <ErrorNote message={error} onRetry={() => void load()} />
+          </div>
+        )}
+
+        {loading ? (
+          <div className="px-5 pb-5">
+            <Skeleton rows={6} />
+          </div>
+        ) : rows.length === 0 ? (
+          <div className="px-5 pb-5">
+            <EmptyState
+              title={status === 'all' ? 'No calls recorded yet' : 'Nothing matches this filter'}
+              message={
+                status === 'all'
+                  ? 'Mint a sandbox token and call an endpoint — the request shows up here within a second.'
+                  : 'Try a different outcome filter, or widen it to All.'
+              }
+            />
+          </div>
+        ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[560px] text-left text-xs">
-              <thead className="bg-slate-50 text-[10px] uppercase tracking-wide text-slate-500">
-                <tr>
-                  <th
-                    className="p-4"
-                    aria-sort={ascending ? 'ascending' : 'descending'}
-                  >
-                    <button onClick={() => setAscending(!ascending)}>
-                      Time {ascending ? '↑' : '↓'}
-                    </button>
-                  </th>
-                  {['Method', 'Endpoint', 'Status', 'Latency', 'Details'].map(
-                    (label) => (
-                      <th key={label} className="p-3">
-                        {label}
-                      </th>
-                    ),
-                  )}
+            <table className="w-full min-w-[720px] border-collapse text-left">
+              <thead>
+                <tr className="border-b border-[#eef2f8] text-[10px] uppercase tracking-wide text-[#8ea3c0]">
+                  <th scope="col" className="px-5 py-2 font-medium">Status</th>
+                  <th scope="col" className="py-2 pr-3 font-medium">Endpoint</th>
+                  <th scope="col" className="py-2 pr-3 font-medium">App</th>
+                  <th scope="col" className="py-2 pr-3 text-right font-medium">Took</th>
+                  <th scope="col" className="py-2 pr-5 text-right font-medium">When</th>
                 </tr>
               </thead>
               <tbody>
-                {visible.map((log) => (
+                {rows.map((log) => (
                   <tr
                     key={log.id}
-                    className={`border-t border-slate-100 ${selectedId === log.id ? 'bg-blue-50' : ''}`}
+                    onClick={() => setSelected(log)}
+                    tabIndex={0}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault()
+                        setSelected(log)
+                      }
+                    }}
+                    className="cursor-pointer border-b border-[#f4f7fb] last:border-0 hover:bg-[#f9fbfe] focus-visible:bg-[#f9fbfe] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-blue-600"
                   >
-                    <td className="p-3 text-[11px] text-slate-500">
-                      {dateTime(log.time)}
-                    </td>
-                    <td className="p-3">
-                      <span
-                        className={`rounded px-2 py-1 text-[10px] ${log.method === 'GET' ? 'bg-emerald-50 text-emerald-600' : 'bg-blue-100 text-blue-600'}`}
-                      >
-                        {log.method}
+                    <td className="px-5 py-3">
+                      <span className="flex items-center gap-2">
+                        <StatusCode code={log.status_code} />
+                        {log.error_code && (
+                          <span className="hidden text-[10px] text-[#8ea3c0] sm:inline">
+                            {describeError(log.error_code)}
+                          </span>
+                        )}
                       </span>
                     </td>
-                    <td className="max-w-48 break-all p-3 text-slate-600">
-                      {log.path}
+                    <td className="py-3 pr-3">
+                      <span className="flex items-center gap-2">
+                        <MethodBadge method={log.method} />
+                        <span className="max-w-[26ch] truncate font-mono text-[11px] text-[#142033] lg:max-w-none">
+                          {log.path}
+                        </span>
+                      </span>
                     </td>
-                    <td className="p-3">
-                      <Badge bad={log.status >= 400} amber={log.status === 429}>
-                        {log.status}
-                      </Badge>
-                    </td>
-                    <td className="whitespace-nowrap p-3 text-slate-500">
-                      {log.latency} ms
-                    </td>
-                    <td className="p-3">
-                      <button
-                        aria-label={`Inspect ${log.id}`}
-                        onClick={() => {
-                          setSelectedId(log.id)
-                          setDetailTab('Request')
-                        }}
-                        className="rounded p-2 text-blue-600"
-                      >
-                        →
-                      </button>
+                    <td className="py-3 pr-3 text-xs text-[#65758e]">{log.app_name}</td>
+                    <td className="py-3 pr-3 text-right text-xs tabular-nums text-[#65758e]">{log.duration_ms}ms</td>
+                    <td className="py-3 pr-5 text-right text-xs tabular-nums text-[#8ea3c0]">
+                      {relativeTime(log.created_at)}
                     </td>
                   </tr>
                 ))}
-                {!visible.length && (
-                  <tr>
-                    <td colSpan={6} className="p-10 text-center text-slate-500">
-                      No requests match these filters.
-                    </td>
-                  </tr>
-                )}
               </tbody>
             </table>
           </div>
-          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 p-4 text-xs text-slate-500">
-            <span>
-              Showing {filtered.length ? (currentPage - 1) * 10 + 1 : 0}–
-              {Math.min(currentPage * 10, filtered.length)} of {filtered.length}{' '}
-              requests
-            </span>
-            <div className="flex items-center gap-2">
-              <Button
-                secondary
-                disabled={currentPage === 1}
-                onClick={() => setPage(currentPage - 1)}
-              >
-                ‹
-              </Button>
-              <span>
-                Page {currentPage} of {pages}
-              </span>
-              <Button
-                secondary
-                disabled={currentPage === pages}
-                onClick={() => setPage(currentPage + 1)}
-              >
-                ›
-              </Button>
-            </div>
-          </div>
-        </section>
-        {selected && (
-          <Panel
-            title="Request details"
-            action={
-              <button
-                aria-label="Close request details"
-                onClick={() => setSelectedId(null)}
-              >
-                ✕
-              </button>
-            }
-          >
-            <div className="space-y-4">
-              <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
-                <Badge bad={selected.status >= 400}>
-                  {selected.status}{' '}
-                  {selected.status < 400 ? 'Success' : 'Error'}
-                </Badge>
-                <span>{selected.latency} ms</span>
-                <span>{dateTime(selected.time)}</span>
-              </div>
-              <CodeBlock
-                title="Endpoint"
-                text={`${selected.method} ${selected.path}`}
-              />
-              <CodeBlock title="Request ID" text={selected.id} />
-              <div
-                role="group"
-                aria-label="Request detail view"
-                className="flex gap-5 border-b border-slate-100"
-              >
-                {['Request', 'Response', 'Headers'].map((tab) => (
-                  <button
-                    key={tab}
-                    aria-pressed={detailTab === tab}
-                    onClick={() => setDetailTab(tab)}
-                    className={`pb-3 text-xs ${detailTab === tab ? 'border-b-2 border-blue-600 text-blue-600' : ''}`}
-                  >
-                    {tab}
-                  </button>
-                ))}
-              </div>
-              <CodeBlock
-                title={detailTab}
-                text={JSON.stringify(
-                  detailTab === 'Request'
-                    ? { body: selected.request, query: selected.query }
-                    : detailTab === 'Response'
-                      ? selected.response
-                      : {
-                          request: selected.headers,
-                          response: {
-                            'Content-Type': 'application/json',
-                            'X-Request-ID': selected.id,
-                          },
-                        },
-                  null,
-                  2,
-                )}
-              />
-              {endpoint && (
-                <CodeBlock
-                  title="cURL"
-                  text={codeExample(
-                    'cURL',
-                    endpoint,
-                    selected.request,
-                    selected.environment,
-                    selected.headers,
-                    selected.query,
-                  )}
-                />
-              )}
-              <div className="flex flex-wrap gap-3">
-                <Button
-                  secondary
-                  disabled={!endpoint}
-                  onClick={() => onReplay(selected)}
-                >
-                  Open in API Explorer ↗
-                </Button>
-                <Button
-                  disabled={!endpoint || environment === 'Production'}
-                  onClick={() => {
-                    setNotice(
-                      onRetry(selected)
-                        ? 'Retry added as a new request.'
-                        : 'Retry unavailable. An active sandbox key is required.',
-                    )
-                  }}
-                >
-                  Retry Request ⟳
-                </Button>
-              </div>
-              {!endpoint && (
-                <p className="text-xs text-slate-500">
-                  Webhook deliveries can be tested from the Webhooks tab.
-                </p>
-              )}
-            </div>
-          </Panel>
         )}
-      </div>
+      </Panel>
+
+      {selected && (
+        <Modal title="Request detail" onClose={() => setSelected(null)}>
+          <div className="flex flex-col gap-5">
+            <div className="flex flex-wrap items-center gap-3">
+              <StatusCode code={selected.status_code} />
+              <MethodBadge method={selected.method} />
+              <span className="min-w-0 break-all font-mono text-xs text-[#142033]">{selected.path}</span>
+            </div>
+
+            {selected.error_code && (
+              <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+                <p className="text-xs font-semibold text-red-800">{describeError(selected.error_code)}</p>
+                <p className="mt-1 font-mono text-[11px] text-red-700">{selected.error_code}</p>
+              </div>
+            )}
+
+            <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-6 gap-y-3 text-xs">
+              {[
+                ['App', <span key="app">{selected.app_name}</span>],
+                ['Client ID', <code key="cid" className="font-mono text-[11px]">{selected.client_id}</code>],
+                [
+                  'Consent',
+                  selected.consent_id ? (
+                    <code key="consent" className="break-all font-mono text-[11px]">{selected.consent_id}</code>
+                  ) : (
+                    <span key="noconsent" className="text-[#8ea3c0]">Not tied to a consent</span>
+                  ),
+                ],
+                ['Duration', <span key="dur" className="tabular-nums">{selected.duration_ms}ms</span>],
+                ['When', <span key="when" className="tabular-nums">{fullTime(selected.created_at)}</span>],
+              ].map(([label, value]) => (
+                <div key={String(label)} className="contents">
+                  <dt className="text-[#8ea3c0]">{label}</dt>
+                  <dd className="min-w-0 text-[#142033]">{value}</dd>
+                </div>
+              ))}
+            </dl>
+
+            <div className="rounded-xl border border-[#e1e8f2] bg-[#f7f9fc] p-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-xs font-semibold text-[#142033]">Correlation ID</p>
+                <CopyButton value={selected.correlation_id} />
+              </div>
+              <p className="mt-2 break-all font-mono text-[11px] text-[#465b78]">{selected.correlation_id}</p>
+              <p className="mt-2 text-[11px] leading-5 text-[#65758e]">
+                Returned on every response as <code className="font-mono">X-Correlation-Id</code>. Quote it when you
+                raise a support request and we can find this exact call.
+              </p>
+            </div>
+
+            {selected.error_code === 'consent_revoked' && (
+              <Chip tone="warn">
+                The customer withdrew access. Send them through the consent flow again to reconnect.
+              </Chip>
+            )}
+          </div>
+        </Modal>
+      )}
     </div>
   )
 }

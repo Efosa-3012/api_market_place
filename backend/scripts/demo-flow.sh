@@ -80,10 +80,31 @@ echo "   calls per client:"
 curl -s "$B/analytics/calls-per-client" -H "x-admin-key: $ADMIN_KEY"; echo
 echo "   consents by status:"
 curl -s "$B/analytics/consents" -H "x-admin-key: $ADMIN_KEY"; echo
+echo "   busiest partner endpoints:"
+curl -s "$B/analytics/top-endpoints?window=24h" -H "x-admin-key: $ADMIN_KEY"; echo
 echo "   last 5 calls (note the 403 after revocation is still attributed to $CLIENT_ID):"
 curl -s "$B/analytics/recent-calls?limit=5" -H "x-admin-key: $ADMIN_KEY"; echo
 echo "   without the admin key:"
 curl -s "$B/analytics/summary"; echo
+
+step "10b. The dashboard signs in as bank staff instead of shipping the admin key to a browser"
+ADMIN_EMAIL=${ADMIN_EMAIL:-admin@stanbic.example}
+ADMIN_PASS=${ADMIN_PASS:-password123}
+STAFF_TOKEN=$(curl -s -X POST "$B/portal/login" -H 'content-type: application/json' \
+  -d "{\"email\":\"$ADMIN_EMAIL\",\"password\":\"$ADMIN_PASS\"}" | json portal_token)
+echo "   staff portal token: ${STAFF_TOKEN:0:28}..."
+echo "   same analytics endpoint, no admin key:"
+curl -s "$B/analytics/summary" -H "authorization: Bearer $STAFF_TOKEN"; echo
+echo "   and a plain developer account is refused:"
+DEV_TOKEN=$(curl -s -X POST "$B/portal/login" -H 'content-type: application/json' \
+  -d '{"email":"dev@budgetbuddy.example","password":"password123"}' | json portal_token)
+curl -s "$B/analytics/summary" -H "authorization: Bearer $DEV_TOKEN"; echo
+
+step "10c. The developer sees their own slice of the same audit trail"
+echo "   their activity summary:"
+curl -s "$B/portal/summary?window=24h" -H "authorization: Bearer $DEV_TOKEN"; echo
+echo "   their request log (only their apps — note the 403 they caused is here too):"
+curl -s "$B/portal/logs?limit=3" -H "authorization: Bearer $DEV_TOKEN"; echo
 
 step "11. Developer portal: self-service registration, then the blast-radius switch"
 PORTAL_EMAIL=${PORTAL_EMAIL:-demo-partner@example.com}

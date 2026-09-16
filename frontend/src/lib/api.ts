@@ -102,6 +102,8 @@ export interface Developer {
   email: string
   name: string
   company: string | null
+  /** 'admin' is bank staff — the only role the analytics dashboard admits. */
+  role: 'developer' | 'admin'
   created_at: string
 }
 
@@ -129,6 +131,9 @@ export const portalSession = {
   },
   isLoggedIn() {
     return Boolean(readToken('portal'))
+  },
+  isAdmin() {
+    return this.developer()?.role === 'admin'
   },
 }
 

@@ -21,15 +21,19 @@ export default function LoginPage() {
  const requestedPath =
   (location.state as { from?: string } | null)?.from
 
-const defaultPath =
-  signInMode === 'admin' ? '/admin/dashboard' : '/app/marketplace'
-
 const allowedPrefix = signInMode === 'admin' ? '/admin/' : '/app/'
 
-const redirectTo =
-  requestedPath?.startsWith(allowedPrefix)
-    ? requestedPath
-    : defaultPath
+/**
+ * Where to land after signing in. The mode picker is a destination, not a
+ * credential — the account's own role decides whether the admin console opens,
+ * and that is enforced by the backend on every analytics call regardless of
+ * what this page does.
+ */
+function destinationFor(role: 'developer' | 'admin') {
+  const home = role === 'admin' ? '/admin/dashboard' : '/app/marketplace'
+  if (role !== 'admin' && requestedPath?.startsWith('/admin/')) return home
+  return requestedPath?.startsWith(allowedPrefix) ? requestedPath : home
+}
 
 async function handleSubmit(event: FormEvent<HTMLFormElement>) {
   event.preventDefault()
@@ -40,13 +44,26 @@ async function handleSubmit(event: FormEvent<HTMLFormElement>) {
   setMessage('')
 
   try {
-    await portal.login(identifier.trim(), password)
-    navigate(redirectTo, { replace: true })
+    const developer = await portal.login(identifier.trim(), password)
+
+    if (signInMode === 'admin' && developer.role !== 'admin') {
+      // Signed in fine, but this is not a staff account. Say so instead of
+      // redirecting to a console that would only turn them away again.
+      setMessage(
+        'That account is a developer account, so the admin console is not available. Switch to Developer to continue.',
+      )
+      setSignInMode('developer')
+      return
+    }
+
+    navigate(destinationFor(developer.role), { replace: true })
   } catch (err) {
     if (err instanceof ApiError && err.code === 'invalid_credentials') {
       setMessage('Incorrect email or password.')
     } else if (err instanceof ApiError && err.code === 'validation_error') {
       setMessage('Enter the email address you registered with.')
+    } else if (err instanceof ApiError && err.code === 'rate_limited') {
+      setMessage('Too many attempts. Wait a minute and try again.')
     } else {
       setMessage(
         err instanceof Error

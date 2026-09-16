@@ -1,7 +1,6 @@
 import { randomBytes } from 'node:crypto';
 import bcrypt from 'bcryptjs';
 import { Router, type RequestHandler } from 'express';
-import jwt from 'jsonwebtoken';
 import { z } from 'zod';
 import { config } from '../../config.js';
 import { pool } from '../../lib/db.js';
@@ -10,6 +9,7 @@ import { parse } from '../../lib/validate.js';
 import { coreBanking } from '../../core-banking/index.js';
 import { issueAccessToken } from '../auth/tokens.js';
 import { consentService } from '../consent/service.js';
+import { developerFromRequest, issuePortalToken, publicDeveloper, type DeveloperRow } from './session.js';
 
 /**
  * Developer portal backend: signup, login, app registration, credentials.
@@ -24,16 +24,7 @@ import { consentService } from '../consent/service.js';
  */
 export const portalRouter = Router();
 
-const PORTAL_TOKEN_TTL_SECONDS = 86_400;
 const BCRYPT_ROUNDS = 10;
-
-interface DeveloperRow {
-  id: string;
-  email: string;
-  name: string;
-  company: string | null;
-  created_at: Date;
-}
 
 interface ClientRow {
   id: string;
@@ -45,10 +36,6 @@ interface ClientRow {
   status: 'active' | 'deactivated';
   created_at: Date;
   deactivated_at: Date | null;
-}
-
-function publicDeveloper(d: DeveloperRow) {
-  return { id: d.id, email: d.email, name: d.name, company: d.company, created_at: d.created_at };
 }
 
 function publicClient(c: ClientRow) {
@@ -65,20 +52,6 @@ function publicClient(c: ClientRow) {
   };
 }
 
-/**
- * Portal session token. Deliberately NOT the partner access-token shape: it
- * carries a developer_id and a typ marker, so a portal token can never be
- * presented as a partner token (authenticate would find no consent for it) and
- * a partner token can never be presented here.
- */
-function issuePortalToken(developerId: string) {
-  return jwt.sign({ typ: 'portal', developer_id: developerId }, config.JWT_SECRET, {
-    algorithm: 'HS256',
-    subject: developerId,
-    expiresIn: PORTAL_TOKEN_TTL_SECONDS,
-  });
-}
-
 declare module 'express-serve-static-core' {
   interface Request {
     developer?: DeveloperRow;
@@ -88,31 +61,7 @@ declare module 'express-serve-static-core' {
 /** Authorization: Bearer <portal token> issued by signup/login. */
 const requirePortalAuth: RequestHandler = async (req, _res, next) => {
   try {
-    const [scheme, token] = (req.header('authorization') ?? '').split(' ');
-    if (scheme?.toLowerCase() !== 'bearer' || !token) {
-      throw ApiError.unauthorized('portal_token_required', 'Log in to the developer portal first');
-    }
-
-    let claims: { typ?: string; developer_id?: string };
-    try {
-      claims = jwt.verify(token, config.JWT_SECRET, { algorithms: ['HS256'] }) as typeof claims;
-    } catch (err) {
-      const expired = err instanceof jwt.TokenExpiredError;
-      throw ApiError.unauthorized(
-        expired ? 'portal_token_expired' : 'invalid_portal_token',
-        expired ? 'Portal session has expired, log in again' : 'Portal token is invalid',
-      );
-    }
-    if (claims.typ !== 'portal' || !claims.developer_id) {
-      throw ApiError.unauthorized('invalid_portal_token', 'Portal token is invalid');
-    }
-
-    const { rows } = await pool.query<DeveloperRow>(
-      `SELECT id, email, name, company, created_at FROM developers WHERE id = $1`,
-      [claims.developer_id],
-    );
-    if (!rows[0]) throw ApiError.unauthorized('invalid_portal_token', 'Portal token is invalid');
-    req.developer = rows[0];
+    req.developer = await developerFromRequest(req.header('authorization'));
     next();
   } catch (err) {
     next(err);
@@ -154,7 +103,7 @@ portalRouter.post('/signup', async (req, res, next) => {
       `INSERT INTO developers (email, password_hash, name, company)
        VALUES ($1, $2, $3, $4)
        ON CONFLICT (email) DO NOTHING
-       RETURNING id, email, name, company, created_at`,
+       RETURNING id, email, name, company, role::text AS role, created_at`,
       [body.email.toLowerCase(), await bcrypt.hash(body.password, BCRYPT_ROUNDS), body.name, body.company ?? null],
     );
     const developer = rows[0];
@@ -175,7 +124,7 @@ portalRouter.post('/login', async (req, res, next) => {
   try {
     const body = parse(loginBody, req.body);
     const { rows } = await pool.query<DeveloperRow & { password_hash: string }>(
-      `SELECT id, email, name, company, created_at, password_hash FROM developers WHERE email = $1`,
+      `SELECT id, email, name, company, role::text AS role, created_at, password_hash FROM developers WHERE email = $1`,
       [body.email.toLowerCase()],
     );
     const developer = rows[0];
@@ -295,6 +244,152 @@ portalRouter.post('/apps/:id/deactivate', requirePortalAuth, async (req, res, ne
     const consentsRevoked = await consentService.revokeAllForClient(client.id);
 
     res.json({ ...publicClient(rows[0]!), consents_revoked: consentsRevoked });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Integration activity — the developer's own slice of the gateway audit trail.
+//
+// Same `api_calls` table the bank's analytics dashboard reads, scoped to the
+// caller's own apps. A developer sees what their integration did and nothing
+// else: no other developer's traffic, and none of the customer identifiers the
+// bank keeps for its own audit.
+// ---------------------------------------------------------------------------
+
+/** Windows the portal may ask for, mapped to Postgres intervals. */
+const PORTAL_WINDOWS = { '1h': '1 hour', '24h': '24 hours', '7d': '7 days', '30d': '30 days' } as const;
+const portalWindowQuery = z.object({ window: z.enum(['1h', '24h', '7d', '30d']).default('24h') });
+
+// GET /portal/summary?window=24h — the headline tiles on the portal overview
+portalRouter.get('/summary', requirePortalAuth, async (req, res, next) => {
+  try {
+    const { window } = parse(portalWindowQuery, req.query);
+    const interval = PORTAL_WINDOWS[window];
+    const developerId = req.developer!.id;
+
+    const [traffic, byApp, consents] = await Promise.all([
+      pool.query<{
+        calls: number;
+        errors: number;
+        client_errors: number;
+        server_errors: number;
+        p95_latency_ms: number;
+      }>(
+        `SELECT (count(*))::int AS calls,
+                (count(*) FILTER (WHERE ac.status_code >= 400))::int AS errors,
+                (count(*) FILTER (WHERE ac.status_code BETWEEN 400 AND 499))::int AS client_errors,
+                (count(*) FILTER (WHERE ac.status_code >= 500))::int AS server_errors,
+                (coalesce(percentile_disc(0.95) WITHIN GROUP (ORDER BY ac.duration_ms), 0))::int AS p95_latency_ms
+           FROM api_calls ac
+           JOIN clients cl ON cl.id = ac.client_id
+          WHERE cl.developer_id = $1 AND ac.created_at > now() - $2::interval`,
+        [developerId, interval],
+      ),
+      pool.query(
+        `SELECT cl.id AS app_id, cl.client_id, cl.name, cl.status::text AS status,
+                (count(ac.id) FILTER (WHERE ac.created_at > now() - $2::interval))::int AS calls,
+                (count(ac.id) FILTER (WHERE ac.created_at > now() - $2::interval AND ac.status_code >= 400))::int AS errors
+           FROM clients cl
+           LEFT JOIN api_calls ac ON ac.client_id = cl.id
+          WHERE cl.developer_id = $1
+          GROUP BY cl.id, cl.client_id, cl.name, cl.status
+          ORDER BY calls DESC, cl.name ASC`,
+        [developerId, interval],
+      ),
+      pool.query<{ active_consents: number; sandbox_consents: number; revoked_consents: number }>(
+        `SELECT (count(*) FILTER (WHERE c.status = 'authorised' AND NOT c.sandbox))::int AS active_consents,
+                (count(*) FILTER (WHERE c.status = 'authorised' AND c.sandbox))::int AS sandbox_consents,
+                (count(*) FILTER (WHERE c.status = 'revoked'))::int AS revoked_consents
+           FROM consents c
+           JOIN clients cl ON cl.id = c.client_id
+          WHERE cl.developer_id = $1`,
+        [developerId],
+      ),
+    ]);
+
+    const t = traffic.rows[0]!;
+    const apps = byApp.rows as { status: string; calls: number }[];
+    res.json({
+      window,
+      calls: t.calls,
+      errors: t.errors,
+      client_errors: t.client_errors,
+      server_errors: t.server_errors,
+      error_rate: t.calls > 0 ? Math.round((t.errors / t.calls) * 10000) / 10000 : 0,
+      p95_latency_ms: t.p95_latency_ms,
+      apps_total: apps.length,
+      apps_active: apps.filter((a) => a.status === 'active').length,
+      ...consents.rows[0]!,
+      by_app: byApp.rows,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /portal/logs — the developer's request log, newest first.
+//
+// Keyset pagination on the bigserial id: stable under inserts, unlike an offset,
+// and the audit trail is append-only so a cursor never goes stale.
+const logsQuery = z.object({
+  app_id: z.string().uuid('Must be a valid app id').optional(),
+  status: z.enum(['2xx', '4xx', '5xx', 'errors']).optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(25),
+  cursor: z.string().regex(/^\d+$/, 'Cursor must come from meta.next_cursor').optional(),
+});
+
+portalRouter.get('/logs', requirePortalAuth, async (req, res, next) => {
+  try {
+    const q = parse(logsQuery, req.query);
+
+    // Status filter as an inclusive [min, max] band so one pair of parameters
+    // covers a single class and the catch-all "errors".
+    const band: [number, number] | null =
+      q.status === '2xx' ? [200, 299]
+      : q.status === '4xx' ? [400, 499]
+      : q.status === '5xx' ? [500, 599]
+      : q.status === 'errors' ? [400, 599]
+      : null;
+
+    const { rows } = await pool.query(
+      `SELECT ac.id::text AS id,
+              ac.correlation_id,
+              cl.id AS app_id,
+              cl.client_id,
+              cl.name AS app_name,
+              ac.consent_id,
+              ac.method,
+              ac.path,
+              ac.status_code,
+              ac.error_code,
+              ac.duration_ms,
+              ac.created_at
+         FROM api_calls ac
+         JOIN clients cl ON cl.id = ac.client_id
+        WHERE cl.developer_id = $1
+          AND ($2::uuid IS NULL OR cl.id = $2)
+          AND ($3::int IS NULL OR ac.status_code BETWEEN $3 AND $4)
+          AND ($5::bigint IS NULL OR ac.id < $5)
+        ORDER BY ac.id DESC
+        LIMIT $6`,
+      [req.developer!.id, q.app_id ?? null, band?.[0] ?? null, band?.[1] ?? null, q.cursor ?? null, q.limit + 1],
+    );
+
+    // One row over the limit tells us there is another page without a count(*).
+    const hasMore = rows.length > q.limit;
+    const data = hasMore ? rows.slice(0, q.limit) : rows;
+    res.json({
+      data,
+      meta: {
+        pagination: {
+          limit: q.limit,
+          has_more: hasMore,
+          ...(hasMore ? { next_cursor: String(data[data.length - 1]!.id) } : {}),
+        },
+      },
+    });
   } catch (err) {
     next(err);
   }
