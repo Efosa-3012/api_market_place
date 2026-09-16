@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { findApiDetails } from '../../components/marketplace/apiDetails'
 import type { ApiDetails } from '../../components/marketplace/apiDetails'
@@ -27,20 +27,8 @@ export default function ApiDetailsPage() {
   return <ApiDetailContent key={api.id} api={api} />
 }
 function ApiDetailContent({ api }: { api: ApiDetails }) {
-  const [copied, setCopied] = useState(''),
-    [accessOpen, setAccessOpen] = useState(false),
-    [requested, setRequested] = useState(false),
-    [environment, setEnvironment] = useState('Sandbox'),
-    [purpose, setPurpose] = useState(''),
-    [error, setError] = useState('')
-  const dialogRef = useRef<HTMLDialogElement>(null)
+  const [copied, setCopied] = useState('')
   const requestText = `${api.method} ${api.path}${api.request ? '\nContent-Type: application/json\n\n' + JSON.stringify(api.request, null, 2) : ''}`
-  useEffect(() => {
-    if (!accessOpen) return
-    const dialog = dialogRef.current
-    dialog?.showModal()
-    return () => dialog?.close()
-  }, [accessOpen])
   async function copy() {
     try {
       await navigator.clipboard.writeText(requestText)
@@ -74,18 +62,13 @@ function ApiDetailContent({ api }: { api: ApiDetails }) {
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
-            <button
-              disabled={requested}
-              onClick={() => {
-                setError('')
-                setAccessOpen(true)
-              }}
-              className={`${primary} disabled:cursor-default disabled:bg-blue-100 disabled:text-blue-700`}
-            >
-              {requested ? 'Access Requested' : 'Get API Access'}
-            </button>
-            <Link to={sandbox} className={secondary}>
+            {/* Sandbox access is immediate for every registered app; production access
+                is a verification step, not a per-API request. */}
+            <Link to={sandbox} className={primary}>
               Try in Sandbox
+            </Link>
+            <Link to="/app/my-apis" className={secondary}>
+              Register an app
             </Link>
           </div>
         </div>
@@ -102,15 +85,6 @@ function ApiDetailContent({ api }: { api: ApiDetails }) {
           </Link>
         </div>
       </header>
-      {requested && (
-        <p
-          role="status"
-          className="mb-4 rounded-lg border border-blue-100 bg-blue-50 p-4 text-xs text-blue-800"
-        >
-          Your {environment.toLowerCase()} access request was recorded in this
-          preview. No access has been granted or request sent to the server.
-        </p>
-      )}
       <section className={panel}>
         <h2 className="text-lg font-semibold">Overview</h2>
         <p className="mt-2 text-sm leading-6 text-[#34445e]">{api.overview}</p>
@@ -244,90 +218,6 @@ function ApiDetailContent({ api }: { api: ApiDetails }) {
           ))}
         </dl>
       </section>
-      {accessOpen && (
-        <dialog
-          ref={dialogRef}
-          aria-labelledby="access-title"
-          onCancel={(e) => {
-            e.preventDefault()
-            setAccessOpen(false)
-          }}
-          className="fixed inset-0 m-auto max-h-[90dvh] w-[calc(100%_-_2rem)] max-w-lg overflow-auto rounded-2xl bg-white p-6 text-[#132238] shadow-xl backdrop:bg-black/40"
-        >
-          <div className="mb-5 flex items-center justify-between gap-3">
-            <h2 id="access-title" className="text-lg font-semibold">
-              Request API access
-            </h2>
-            <button
-              onClick={() => setAccessOpen(false)}
-              aria-label="Close access request"
-              className="rounded p-2"
-            >
-              ✕
-            </button>
-          </div>
-          <p className="mb-4 text-sm text-[#526783]">{api.name}</p>
-          <form
-            className="space-y-4"
-            onSubmit={(e) => {
-              e.preventDefault()
-              if (!purpose.trim()) {
-                setError('Describe how you plan to use this API.')
-                return
-              }
-              setRequested(true)
-              setAccessOpen(false)
-            }}
-          >
-            <label className="block text-xs font-medium">
-              Environment
-              <select
-                value={environment}
-                onChange={(e) => setEnvironment(e.target.value)}
-                className="mt-2 block w-full rounded-lg border border-slate-200 bg-white p-3 text-sm"
-              >
-                <option>Sandbox</option>
-                <option>Production</option>
-              </select>
-            </label>
-            <label className="block text-xs font-medium">
-              How will you use this API?
-              <textarea
-                required
-                rows={4}
-                maxLength={1000}
-                value={purpose}
-                onChange={(e) => {
-                  setPurpose(e.target.value)
-                  setError('')
-                }}
-                className="mt-2 block w-full rounded-lg border border-slate-200 p-3 text-sm"
-              />
-            </label>
-            <p className="text-xs leading-5 text-[#657790]">
-              This preview records your request locally. Production access will
-              require backend approval.
-            </p>
-            {error && (
-              <p role="alert" className="text-xs text-red-600">
-                {error}
-              </p>
-            )}
-            <div className="flex justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => setAccessOpen(false)}
-                className={secondary}
-              >
-                Cancel
-              </button>
-              <button type="submit" className={primary}>
-                Request Access
-              </button>
-            </div>
-          </form>
-        </dialog>
-      )}
     </div>
   )
 }
