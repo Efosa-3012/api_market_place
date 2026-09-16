@@ -43,6 +43,9 @@ interface ClientRow {
   redirect_uris: string[];
   allowed_scopes: string[];
   status: 'active' | 'deactivated';
+  website_url: string | null;
+  privacy_policy_url: string | null;
+  logo_url: string | null;
   created_at: Date;
   deactivated_at: Date | null;
 }
@@ -60,6 +63,9 @@ function publicClient(c: ClientRow) {
     redirect_uris: c.redirect_uris,
     allowed_scopes: c.allowed_scopes,
     status: c.status,
+    website_url: c.website_url,
+    privacy_policy_url: c.privacy_policy_url,
+    logo_url: c.logo_url,
     created_at: c.created_at,
     deactivated_at: c.deactivated_at,
   };
@@ -209,11 +215,29 @@ portalRouter.get('/apps', requirePortalAuth, async (req, res, next) => {
 // The secret in this response is the only time it exists in readable form.
 // We keep the bcrypt hash and nothing else.
 // ---------------------------------------------------------------------------
+// Identity fields are what the customer sees on the consent screen. Optional at
+// registration, but a real onboarding gate would require them before production.
+const identityFields = {
+  website_url: z.string().url().max(500).optional().nullable(),
+  privacy_policy_url: z.string().url().max(500).optional().nullable(),
+  logo_url: z.string().url().max(500).optional().nullable(),
+};
+
 const createAppBody = z.object({
   name: z.string().min(1).max(200),
   description: z.string().max(1000).optional(),
   redirect_uris: z.array(z.string().url('Each redirect_uri must be an absolute URL')).min(1).max(5),
+  ...identityFields,
 });
+
+const updateAppBody = z
+  .object({
+    name: z.string().min(1).max(200),
+    description: z.string().max(1000).nullable(),
+    redirect_uris: z.array(z.string().url('Each redirect_uri must be an absolute URL')).min(1).max(5),
+    ...identityFields,
+  })
+  .partial();
 
 /** cl_ plus 16 base64url chars — short enough for a developer to recognise. */
 const newClientId = () => `cl_${randomBytes(12).toString('base64url')}`;
@@ -225,8 +249,9 @@ portalRouter.post('/apps', requirePortalAuth, async (req, res, next) => {
     const secret = newClientSecret();
 
     const { rows } = await pool.query<ClientRow>(
-      `INSERT INTO clients (developer_id, name, description, client_id, client_secret_hash, redirect_uris)
-       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+      `INSERT INTO clients (developer_id, name, description, client_id, client_secret_hash, redirect_uris,
+                            website_url, privacy_policy_url, logo_url)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
       [
         req.developer!.id,
         body.name,
@@ -234,6 +259,9 @@ portalRouter.post('/apps', requirePortalAuth, async (req, res, next) => {
         newClientId(),
         await bcrypt.hash(secret, BCRYPT_ROUNDS),
         body.redirect_uris,
+        body.website_url ?? null,
+        body.privacy_policy_url ?? null,
+        body.logo_url ?? null,
       ],
     );
 
@@ -242,6 +270,29 @@ portalRouter.post('/apps', requirePortalAuth, async (req, res, next) => {
       client_secret: secret,
       warning: 'Store this secret now. It is hashed on our side and cannot be shown again.',
     });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ---------------------------------------------------------------------------
+// PATCH /portal/apps/:id — edit name, description, redirect URIs and identity
+// ---------------------------------------------------------------------------
+portalRouter.patch('/apps/:id', requirePortalAuth, async (req, res, next) => {
+  try {
+    const { id } = parse(appIdParam, req.params);
+    const body = parse(updateAppBody, req.body);
+    const client = await findOwnClient(id, req.developer!.id);
+
+    const fields = Object.entries(body).filter(([, v]) => v !== undefined);
+    if (fields.length === 0) throw ApiError.badRequest('nothing_to_update', 'Provide at least one field to change');
+
+    const sets = fields.map(([k], i) => `${k} = $${i + 2}`).join(', ');
+    const { rows } = await pool.query<ClientRow>(`UPDATE clients SET ${sets} WHERE id = $1 RETURNING *`, [
+      client.id,
+      ...fields.map(([, v]) => v),
+    ]);
+    res.json(publicClient(rows[0]!));
   } catch (err) {
     next(err);
   }

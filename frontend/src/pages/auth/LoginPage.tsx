@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { ApiError } from '../../lib/api'
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
+import { ApiError, adminSession } from '../../lib/api'
+import { analytics } from '../../lib/analytics'
 import { portal } from '../../lib/portal'
 import SignInModeSelector from '../../components/auth/SignInModeSelector'
 import type { SignInMode } from '../../components/auth/SignInModeSelector'
@@ -9,17 +10,22 @@ import type { SignInMode } from '../../components/auth/SignInModeSelector'
 export default function LoginPage() {
   const navigate = useNavigate()
   const location = useLocation()
-  const [signInMode, setSignInMode] = useState<SignInMode>('developer')
+  const [params] = useSearchParams()
+  const [signInMode, setSignInMode] = useState<SignInMode>(params.get('mode') === 'admin' ? 'admin' : 'developer')
+  const [adminKey, setAdminKey] = useState('')
   const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-  const [message, setMessage] = useState('')
+  const [message, setMessage] = useState(
+    params.get('reason') === 'expired' ? 'Your session expired. Log in again to continue.' : '',
+  )
   const [submitting, setSubmitting] = useState(false)
 
-  const canSubmit = identifier.trim().length > 0 && password.length > 0 && !submitting
+  const canSubmit =
+    (signInMode === 'admin' ? adminKey.trim().length > 0 : identifier.trim().length > 0 && password.length > 0) && !submitting
 
  const requestedPath =
-  (location.state as { from?: string } | null)?.from
+  (location.state as { from?: string } | null)?.from ?? params.get('from') ?? undefined
 
 const defaultPath =
   signInMode === 'admin' ? '/admin/dashboard' : '/app/marketplace'
@@ -40,10 +46,19 @@ async function handleSubmit(event: FormEvent<HTMLFormElement>) {
   setMessage('')
 
   try {
-    await portal.login(identifier.trim(), password)
+    if (signInMode === 'admin') {
+      // Staff access: a shared key checked against the analytics API. Production
+      // would be the bank's SSO; the key is the MVP stand-in.
+      await analytics.verifyKey(adminKey.trim())
+      adminSession.save(adminKey.trim())
+    } else {
+      await portal.login(identifier.trim(), password)
+    }
     navigate(redirectTo, { replace: true })
   } catch (err) {
-    if (err instanceof ApiError && err.code === 'invalid_credentials') {
+    if (err instanceof ApiError && (err.code === 'invalid_admin_key' || err.code === 'admin_key_required')) {
+      setMessage('That access key is not valid.')
+    } else if (err instanceof ApiError && err.code === 'invalid_credentials') {
       setMessage('Incorrect email or password.')
     } else if (err instanceof ApiError && err.code === 'validation_error') {
       setMessage('Enter the email address you registered with.')
@@ -98,6 +113,26 @@ async function handleSubmit(event: FormEvent<HTMLFormElement>) {
               onChange={setSignInMode}
             />
 
+            {signInMode === 'admin' ? (
+              <div>
+                <label htmlFor="admin-key" className="mb-2 block text-sm font-medium text-[#151c2d]">
+                  Admin access key
+                </label>
+                <input
+                  id="admin-key"
+                  name="admin-key"
+                  type="password"
+                  autoComplete="off"
+                  required
+                  value={adminKey}
+                  onChange={(event) => setAdminKey(event.target.value)}
+                  placeholder="Enter the staff access key"
+                  className="h-12 w-full rounded-md border border-transparent bg-[#f7f7f8] px-4 text-sm text-[#151c2d] outline-none placeholder:text-[#8195b0] focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+                />
+                <p className="mt-2 text-xs text-[#58708f]">Bank staff only. Opens the analytics control room.</p>
+              </div>
+            ) : (
+            <>
             <div>
               <label
                 htmlFor="login-identifier"
@@ -167,6 +202,9 @@ async function handleSubmit(event: FormEvent<HTMLFormElement>) {
                 </button>
               </div>
             </div>
+
+            </>
+            )}
 
             <button
               type="submit"

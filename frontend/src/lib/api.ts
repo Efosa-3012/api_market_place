@@ -26,7 +26,7 @@ export class ApiError extends Error {
 type AuthKind = 'none' | 'portal' | 'bank'
 
 interface RequestOptions {
-  method?: 'GET' | 'POST' | 'PUT' | 'DELETE'
+  method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
   body?: unknown
   /** Which stored token to send as a bearer. Default: none. */
   auth?: AuthKind
@@ -73,7 +73,9 @@ export async function api<T>(path: string, options: RequestOptions = {}): Promis
     // Standard envelope: { error: { code, message, correlation_id } }
     const env = json?.error
     if (env && typeof env === 'object') {
-      throw new ApiError(res.status, env.code ?? 'error', env.message ?? res.statusText, env.correlation_id)
+      const error = new ApiError(res.status, env.code ?? 'error', env.message ?? res.statusText, env.correlation_id)
+      if (res.status === 401) handleSessionLoss(auth, error.code)
+      throw error
     }
     // OAuth token endpoint (RFC 6749): { error, error_description }
     if (typeof json?.error === 'string') {
@@ -83,6 +85,40 @@ export async function api<T>(path: string, options: RequestOptions = {}): Promis
   }
 
   return json as T
+}
+
+/**
+ * A 401 on an authenticated call means the stored session is dead (expired, or
+ * the server was reseeded). Clear it and send the user to the right login page
+ * with a reason, instead of letting every page fail quietly.
+ */
+const SESSION_LOSS_CODES = new Set([
+  'portal_token_required', 'portal_token_expired', 'invalid_portal_token',
+  'bank_session_required', 'bank_session_expired',
+  'admin_key_required', 'invalid_admin_key',
+])
+
+function handleSessionLoss(kind: AuthKind, code: string) {
+  if (!SESSION_LOSS_CODES.has(code)) return
+  const here = `${window.location.pathname}${window.location.search}`
+  if (code.includes('admin')) {
+    adminSession.clear()
+    if (!window.location.pathname.startsWith('/login')) {
+      window.location.assign(`/login?mode=admin&reason=expired&from=${encodeURIComponent(here)}`)
+    }
+    return
+  }
+  if (kind === 'portal') {
+    portalSession.clear()
+    if (!window.location.pathname.startsWith('/login')) {
+      window.location.assign(`/login?reason=expired&from=${encodeURIComponent(here)}`)
+    }
+  } else {
+    bankSession.clear()
+    if (!window.location.pathname.startsWith('/bank/login')) {
+      window.location.assign(`/bank/login?reason=expired&next=${encodeURIComponent(here)}`)
+    }
+  }
 }
 
 function safeJson(text: string) {
@@ -129,6 +165,31 @@ export const portalSession = {
   },
   isLoggedIn() {
     return Boolean(readToken('portal'))
+  },
+}
+
+// ---------------------------------------------------------------------------
+// Bank-staff admin session (analytics dashboard) — a shared key for the MVP
+// ---------------------------------------------------------------------------
+
+const ADMIN_KEY = 'marketplace.admin_key'
+
+export const adminSession = {
+  save(key: string) {
+    localStorage.setItem(ADMIN_KEY, key)
+  },
+  clear() {
+    localStorage.removeItem(ADMIN_KEY)
+  },
+  key() {
+    try {
+      return localStorage.getItem(ADMIN_KEY)
+    } catch {
+      return null
+    }
+  },
+  isLoggedIn() {
+    return Boolean(adminSession.key())
   },
 }
 

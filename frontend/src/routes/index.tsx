@@ -7,6 +7,7 @@ import BankLayout from '../layouts/BankLayout'
 
 import LandingPage from '../pages/public/LandingPage'
 import CallbackPage from '../pages/public/CallbackPage'
+import NotFoundPage from '../pages/public/NotFoundPage'
 import LoginPage from '../pages/auth/LoginPage'
 import SignupPage from '../pages/auth/SignupPage'
 
@@ -34,6 +35,7 @@ import AdminSettingsPage from '../pages/admin/AdminSettingsPage'
 const router = createBrowserRouter([
   {
     element: <PublicLayout />,
+    errorElement: <NotFoundPage />,
     children: [
       {
         path: '/',
@@ -137,6 +139,7 @@ const router = createBrowserRouter([
       },
     ],
   },
+  { path: '*', element: <NotFoundPage /> },
 ])
 
 export default router

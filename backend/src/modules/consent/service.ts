@@ -29,10 +29,16 @@ export interface ConsentWithClient extends Consent {
   client_name: string;
   client_description: string | null;
   client_public_id: string;
+  client_website_url: string | null;
+  client_privacy_policy_url: string | null;
+  client_logo_url: string | null;
+  client_created_at: Date;
 }
 
 const withClientSql = `
-  SELECT c.*, cl.name AS client_name, cl.description AS client_description, cl.client_id AS client_public_id
+  SELECT c.*, cl.name AS client_name, cl.description AS client_description, cl.client_id AS client_public_id,
+         cl.website_url AS client_website_url, cl.privacy_policy_url AS client_privacy_policy_url,
+         cl.logo_url AS client_logo_url, cl.created_at AS client_created_at
     FROM consents c JOIN clients cl ON cl.id = c.client_id`;
 
 /**

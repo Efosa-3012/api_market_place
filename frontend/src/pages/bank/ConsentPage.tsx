@@ -28,6 +28,19 @@ const ACCOUNT_TYPE_LABEL: Record<string, string> = {
   fixed_deposit: 'Fixed deposit',
 }
 
+/** Partner logo if they supplied one, otherwise a lettermark — never a blank box. */
+function AppLogo({ name, url }: { name: string; url: string | null }) {
+  const [failed, setFailed] = useState(false)
+  if (url && !failed) {
+    return <img src={url} alt="" onError={() => setFailed(true)} className="size-14 shrink-0 rounded-xl border border-[#e3e9f2] bg-white object-contain p-1" />
+  }
+  return (
+    <span aria-hidden="true" className="grid size-14 shrink-0 place-items-center rounded-xl bg-[#0b2858] text-xl font-semibold text-white">
+      {name.trim().charAt(0).toUpperCase()}
+    </span>
+  )
+}
+
 export default function ConsentPage() {
   const [params] = useSearchParams()
   const consentId = params.get('consent_id')
@@ -153,13 +166,27 @@ export default function ConsentPage() {
         {/* Who */}
         <header className="border-b border-[#edf0f5] p-6 sm:p-8">
           <p className="text-xs font-semibold uppercase tracking-wide text-[#58708f]">Connection request</p>
-          <h1 id="consent-title" className="mt-2 text-2xl font-semibold tracking-tight">
-            <span className="text-[#0b2858]">{consent.client.name}</span> wants to access your account
-          </h1>
-          {consent.client.description && <p className="mt-2 text-sm leading-6 text-[#58708f]">{consent.client.description}</p>}
-          <p className="mt-3 text-xs text-[#8195b0]">
-            Registered partner · client ID <code>{consent.client.client_id}</code>
-          </p>
+          <div className="mt-3 flex items-start gap-4">
+            <AppLogo name={consent.client.name} url={consent.client.logo_url} />
+            <div className="min-w-0">
+              <h1 id="consent-title" className="text-2xl font-semibold tracking-tight">
+                <span className="text-[#0b2858]">{consent.client.name}</span> wants to access your account
+              </h1>
+              {consent.client.description && <p className="mt-2 text-sm leading-6 text-[#58708f]">{consent.client.description}</p>}
+              <ul className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[#58708f]">
+                <li className="inline-flex items-center gap-1">
+                  <span aria-hidden="true" className="grid size-4 place-items-center rounded-full bg-green-50 text-[10px] text-green-700">✓</span>
+                  Registered partner since {new Date(consent.client.registered_at).toLocaleDateString('en-NG', { month: 'short', year: 'numeric' })}
+                </li>
+                {consent.client.website_url && (
+                  <li><a href={consent.client.website_url} target="_blank" rel="noreferrer" className="text-[#0b2858] underline">{consent.client.website_url.replace(/^https?:\/\//, '')}</a></li>
+                )}
+                {consent.client.privacy_policy_url && (
+                  <li><a href={consent.client.privacy_policy_url} target="_blank" rel="noreferrer" className="text-[#0b2858] underline">Privacy policy</a></li>
+                )}
+              </ul>
+            </div>
+          </div>
         </header>
 
         {/* What */}

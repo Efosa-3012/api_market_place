@@ -20,6 +20,7 @@ export default function BankLoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const expired = params.get('reason') === 'expired'
 
   // Already logged in? Skip straight to where they were going.
   if (bankSession.token()) return <Navigate to={next} replace />
@@ -37,8 +38,8 @@ export default function BankLoginPage() {
     } catch (err) {
       if (err instanceof ApiError && err.code === 'invalid_credentials') {
         setError('Incorrect username or password.')
-      } else if (err instanceof ApiError && err.code === 'rate_limited') {
-        setError('Too many attempts. Wait a minute and try again.')
+      } else if (err instanceof ApiError && (err.code === 'rate_limited' || err.code === 'account_locked')) {
+        setError(err.code === 'account_locked' ? err.message : 'Too many attempts. Wait a minute and try again.')
       } else {
         setError(err instanceof Error ? err.message : 'Could not log in. Try again.')
       }
@@ -49,6 +50,12 @@ export default function BankLoginPage() {
 
   return (
     <div className="mx-auto max-w-md">
+      {expired && (
+        <p role="status" className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          Your session expired. Log in again to continue.
+        </p>
+      )}
+
       {isConsentFlow && (
         <p className="mb-4 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900">
           An app is asking to connect to your Stanbic account. Log in to review exactly what it wants
@@ -124,7 +131,7 @@ export default function BankLoginPage() {
       </section>
 
       <p className="mt-4 text-center text-xs text-[#58708f]">
-        Demo customers: <code>ada</code>, <code>emeka</code>, <code>fatima</code>… password <code>password123</code>
+        Demo customers: <code>ada</code> / <code>adaeze-ada-okonkwo</code>, <code>emeka</code> / <code>emeka-emeka-okafor</code> — pattern <em>firstname-shortname-lastname</em>
       </p>
     </div>
   )

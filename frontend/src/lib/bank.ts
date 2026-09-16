@@ -17,7 +17,15 @@ export interface Consent {
   authorised_at: string | null
   expires_at: string | null
   revoked_at: string | null
-  client: { client_id: string; name: string; description: string | null }
+  client: {
+    client_id: string
+    name: string
+    description: string | null
+    website_url: string | null
+    privacy_policy_url: string | null
+    logo_url: string | null
+    registered_at: string
+  }
 }
 
 /** The account shape the consent screen gets — enough to choose, not the full core record. */

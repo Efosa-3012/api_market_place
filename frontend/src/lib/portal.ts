@@ -10,6 +10,9 @@ export interface App {
   redirect_uris: string[]
   allowed_scopes: string[]
   status: 'active' | 'deactivated'
+  website_url: string | null
+  privacy_policy_url: string | null
+  logo_url: string | null
   created_at: string
   deactivated_at: string | null
 }
@@ -47,8 +50,19 @@ export const portal = {
     return res.data
   },
 
-  createApp(input: { name: string; description?: string; redirect_uris: string[] }) {
+  createApp(input: {
+    name: string
+    description?: string
+    redirect_uris: string[]
+    website_url?: string
+    privacy_policy_url?: string
+    logo_url?: string
+  }) {
     return api<AppWithSecret>('/portal/apps', { method: 'POST', body: input, auth: 'portal' })
+  },
+
+  updateApp(appId: string, input: Partial<Pick<App, 'name' | 'description' | 'redirect_uris' | 'website_url' | 'privacy_policy_url' | 'logo_url'>>) {
+    return api<App>(`/portal/apps/${appId}`, { method: 'PATCH', body: input, auth: 'portal' })
   },
 
   rotateSecret(appId: string) {

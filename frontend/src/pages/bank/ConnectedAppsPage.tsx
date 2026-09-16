@@ -90,7 +90,14 @@ export default function ConnectedAppsPage() {
                   <li key={c.id} className="rounded-2xl border border-[#e3e9f2] bg-white p-5 shadow-sm">
                     <div className="flex flex-wrap items-start justify-between gap-4">
                       <div>
-                        <h3 className="text-base font-semibold">{c.client.name}</h3>
+                        <h3 className="text-base font-semibold">
+                          {c.client.name}
+                          {c.client.website_url && (
+                            <a href={c.client.website_url} target="_blank" rel="noreferrer" className="ml-2 text-xs font-normal text-[#0b2858] underline">
+                              {c.client.website_url.replace(/^https?:\/\//, '')}
+                            </a>
+                          )}
+                        </h3>
                         {c.client.description && <p className="mt-1 text-sm text-[#58708f]">{c.client.description}</p>}
                         <dl className="mt-3 grid gap-x-8 gap-y-1 text-xs text-[#465b78] sm:grid-cols-2">
                           <div><dt className="inline text-[#8195b0]">Connected </dt><dd className="inline">{fmt(c.authorised_at)}</dd></div>

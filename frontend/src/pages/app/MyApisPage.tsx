@@ -146,12 +146,19 @@ export default function MyApisPage() {
   }
 
   function describeError(err: unknown, fallback: string) {
-    if (err instanceof ApiError && err.code === 'validation_error') return 'Check the form: every redirect URI must be an absolute URL.'
+    if (err instanceof ApiError && err.code === 'validation_error') return 'Check the form: redirect URIs and links must be absolute URLs (https://…).'
     return err instanceof Error ? err.message : fallback
   }
 
   // --- Register --------------------------------------------------------------
-  const [form, setForm] = useState({ name: '', description: '', redirectUris: 'http://localhost:3000/callback' })
+  const [form, setForm] = useState({
+    name: '',
+    description: '',
+    redirectUris: 'http://localhost:3000/callback',
+    websiteUrl: '',
+    privacyPolicyUrl: '',
+    logoUrl: '',
+  })
   const [formError, setFormError] = useState('')
 
   async function submitRegister(event: FormEvent<HTMLFormElement>) {
@@ -171,9 +178,12 @@ export default function MyApisPage() {
         name: form.name.trim(),
         description: form.description.trim() || undefined,
         redirect_uris,
+        website_url: form.websiteUrl.trim() || undefined,
+        privacy_policy_url: form.privacyPolicyUrl.trim() || undefined,
+        logo_url: form.logoUrl.trim() || undefined,
       })
       setRegistering(false)
-      setForm({ name: '', description: '', redirectUris: 'http://localhost:3000/callback' })
+      setForm({ name: '', description: '', redirectUris: 'http://localhost:3000/callback', websiteUrl: '', privacyPolicyUrl: '', logoUrl: '' })
       setApps((current) => [created, ...current])
       setRevealed(created)
     } catch (err) {
@@ -385,6 +395,11 @@ export default function MyApisPage() {
                       {app.description && (
                         <span className="mt-1 block max-w-64 text-[11px] text-[#58708f]">{app.description}</span>
                       )}
+                      {app.website_url && (
+                        <a href={app.website_url} target="_blank" rel="noreferrer" className="mt-1 block max-w-64 truncate text-[11px] text-blue-600 hover:underline">
+                          {app.website_url.replace(/^https?:\/\//, '')}
+                        </a>
+                      )}
                     </th>
 
                     <td className="px-3 py-5">
@@ -535,6 +550,25 @@ export default function MyApisPage() {
             <textarea id="app-redirects" required rows={3} value={form.redirectUris} onChange={(e) => setForm({ ...form, redirectUris: e.target.value })} className={`${inputClass} h-auto py-2 font-mono text-xs`} />
             <p className="mt-1 text-xs text-[#58708f]">Where we send the customer back after they approve. Must match exactly at runtime.</p>
           </div>
+
+          <fieldset className="rounded-lg border border-[#e6ebf3] p-4">
+            <legend className="px-1 text-xs font-semibold uppercase tracking-wide text-[#58708f]">Shown to customers on the consent screen</legend>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <label htmlFor="app-website" className="mb-1.5 block text-sm font-medium">Website</label>
+                <input id="app-website" type="url" value={form.websiteUrl} onChange={(e) => setForm({ ...form, websiteUrl: e.target.value })} placeholder="https://budgetbuddy.example" className={inputClass} />
+              </div>
+              <div>
+                <label htmlFor="app-privacy" className="mb-1.5 block text-sm font-medium">Privacy policy</label>
+                <input id="app-privacy" type="url" value={form.privacyPolicyUrl} onChange={(e) => setForm({ ...form, privacyPolicyUrl: e.target.value })} placeholder="https://budgetbuddy.example/privacy" className={inputClass} />
+              </div>
+              <div className="sm:col-span-2">
+                <label htmlFor="app-logo" className="mb-1.5 block text-sm font-medium">Logo URL <span className="font-normal text-[#58708f]">(square, https)</span></label>
+                <input id="app-logo" type="url" value={form.logoUrl} onChange={(e) => setForm({ ...form, logoUrl: e.target.value })} placeholder="https://…/logo.png" className={inputClass} />
+              </div>
+            </div>
+            <p className="mt-2 text-xs text-[#58708f]">Optional in the sandbox. Production access will require a website and privacy policy.</p>
+          </fieldset>
 
           {formError && <p role="alert" className="rounded-md bg-red-50 p-3 text-sm text-red-700">{formError}</p>}
 

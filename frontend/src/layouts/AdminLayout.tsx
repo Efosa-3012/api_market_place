@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
-import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { Link, Navigate, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { adminSession } from '../lib/api'
 const navigation = [
   {
     label: 'Dashboard',
@@ -25,8 +26,19 @@ const navigation = [
 ]
 export default function AdminLayout() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
+
+  // The control room is staff-only. No admin key, no entry.
+  if (!adminSession.isLoggedIn()) {
+    return <Navigate to="/login?mode=admin" replace state={{ from: location.pathname }} />
+  }
+
+  function signOut() {
+    adminSession.clear()
+    navigate('/login?mode=admin', { replace: true })
+  }
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     navigate(
@@ -108,18 +120,22 @@ export default function AdminLayout() {
               API health alerts are listed in the dashboard below.
             </div>
           </details>
-          <Link
-            to="/admin/settings"
-            className="flex items-center gap-3 border-l border-slate-200 pl-3"
-          >
+          <div className="flex items-center gap-3 border-l border-slate-200 pl-3">
             <span className="grid size-9 place-items-center rounded-full bg-[#0b2858] text-xs text-white">
               AD
             </span>
             <span className="hidden text-xs leading-5 md:block">
               <strong className="block">Administrator</strong>
-              <span className="text-slate-500">Admin workspace</span>
+              <span className="text-slate-500">Bank staff</span>
             </span>
-          </Link>
+            <button
+              type="button"
+              onClick={signOut}
+              className="min-h-9 cursor-pointer rounded-md border border-slate-200 px-3 text-xs hover:bg-slate-50"
+            >
+              Sign out
+            </button>
+          </div>
         </div>
       </header>
       {open && (

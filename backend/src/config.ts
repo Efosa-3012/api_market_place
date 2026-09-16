@@ -15,6 +15,9 @@ const schema = z.object({
   CONSENT_REQUEST_TTL_MINUTES: z.coerce.number().positive().default(15),
   // Demo customer whose accounts back developer sandbox tokens (must exist in core banking).
   SANDBOX_CUSTOMER_ID: z.string().default('customer-demo-001'),
+  // Bank login lockout: after this many failures the username is locked for this long.
+  LOGIN_MAX_FAILURES: z.coerce.number().int().positive().default(5),
+  LOGIN_LOCKOUT_MINUTES: z.coerce.number().int().positive().default(15),
 
   CONSENT_UI_URL: z.string().url().default('http://localhost:3000/consent'),
 
@@ -51,4 +54,16 @@ if (!parsed.success) {
 }
 
 export const config = parsed.data;
+
+// A production process must never run on the secrets shipped in .env.example / compose.
+if (config.NODE_ENV === 'production') {
+  const leaks = ([
+    ['JWT_SECRET', config.JWT_SECRET],
+    ['ADMIN_KEY', config.ADMIN_KEY],
+  ] as const).filter(([, v]) => /change-me|dev-only|^test-/i.test(v));
+  if (leaks.length > 0) {
+    console.error(`Refusing to start in production with placeholder secrets: ${leaks.map(([k]) => k).join(', ')}`);
+    process.exit(1);
+  }
+}
 export type Config = typeof config;
