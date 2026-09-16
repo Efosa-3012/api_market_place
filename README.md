@@ -8,7 +8,7 @@ borrows access, and can lose it at any time.
 ## Structure
 
 - `backend/` — API gateway, auth + consent services, resource APIs, portal + analytics backend (Node + Express + TypeScript + Postgres)
-- `frontend/` — bank consent UI, developer portal, analytics dashboard, sample fintech app (Next.js)
+- `frontend/` — developer portal + sandbox, bank consent pages, analytics dashboard (Vite + React)
 - `docker-compose.yml` — the whole stack with one command
 - Core banking mock lives in a separate repo: https://github.com/Derakoptes/core-banking (Go)
 
@@ -18,7 +18,7 @@ borrows access, and can lose it at any time.
 # one-time: clone the core banking mock next to this repo
 git clone https://github.com/Derakoptes/core-banking.git ../core-banking
 
-docker compose up --build            # postgres :5433, core-banking :8081, backend :4000
+docker compose up --build            # postgres :5433, redis :6379, core-banking :8081, backend :4000
 ```
 
 Then open http://localhost:4000/docs.
@@ -26,7 +26,7 @@ Then open http://localhost:4000/docs.
 ## Backend development (hot reload)
 
 ```bash
-docker compose up -d postgres core-banking   # dependencies only
+docker compose up -d postgres redis core-banking   # dependencies only
 cd backend
 cp .env.example .env                         # defaults work with the compose services
 npm install
@@ -40,6 +40,18 @@ Smoke-test the entire consent journey with curl:
 bash backend/scripts/demo-flow.sh
 ```
 
+## Frontend development
+
+```bash
+cd frontend
+cp .env.example .env        # VITE_API_URL=http://localhost:4000
+npm install
+npm run dev                 # http://localhost:3000
+```
+
+Routes: `/login`, `/signup`, `/app/*` (developer portal, My Apps, Sandbox), `/bank/login`, `/consent`,
+`/bank/connected-apps` (customer side), `/callback` (where the demo app lands), `/admin/*`.
+
 Or in Postman: import `backend/postman/api-marketplace.postman_collection.json` and run the
 folders top to bottom (or use the Collection Runner). Each request stores what the next one
 needs — consent id, session, code, token — in collection variables.
@@ -48,8 +60,10 @@ needs — consent id, session, code, token — in collection variables.
 
 | What | Value |
 |---|---|
-| Bank customers (mock login) | `ada`, `emeka`, `fatima`, `seun`, `chiamaka`, `ibrahim`, `ngozi`, `tunde`, `amina`, `kelechi` / `password123` |
+| Bank customers (core banking seed) | `ada` / `adaeze-ada-okonkwo`, `emeka` / `emeka-emeka-okafor`, `fatima` / `fatima-fatima-abubakar` … pattern `firstname-shortname-lastname` |
 | Sample fintech app | client_id `budgetbuddy`, secret `budgetbuddy-secret-dev-only`, redirect `http://localhost:3000/callback` |
+| Developer portal | `dev@budgetbuddy.example` / `password123` |
+| Analytics admin key | `dev-admin-key-change-me` (header `X-Admin-Key`) |
 | Accounts | `acct-demo-001` … `acct-demo-010` (one per customer; 006 is dormant; 007 USD, 009 GBP) |
 
 ## How the pieces fit
@@ -80,9 +94,9 @@ backend/src
 └── modules/
     ├── auth/               /oauth/authorize, /oauth/token
     ├── consent/            consent state machine + authorization codes
-    ├── bank/               /bank/* — backend for the bank's own login/consent/connected-apps pages
+    ├── bank/               /bank/* — login (delegated to core banking), consent screen, connected apps
     ├── resources/          /api/v1/accounts (partner-facing, consent enforced on every call)
-    ├── portal/             /portal/* — developer signup, app registration
+    ├── portal/             /portal/* — developer signup, app registration, sandbox tokens
     └── analytics/          /analytics/* — dashboard data from api_calls  
 ```
 

@@ -10,20 +10,20 @@ import { pool } from '../lib/db.js';
 import { isMain } from '../lib/isMain.js';
 import { logger } from '../lib/logger.js';
 
-// Bank customers: ids match the Go core banking seed (customer-demo-001..010).
-// All demo logins use the password below.
-export const DEMO_CUSTOMER_PASSWORD = 'password123';
-const customers = [
-  ['customer-demo-001', 'ada', 'Adaeze Ngozi Okonkwo'],
-  ['customer-demo-002', 'emeka', 'Emeka Chukwuemeka Okafor'],
-  ['customer-demo-003', 'fatima', 'Fatima Zahra Abubakar'],
-  ['customer-demo-004', 'seun', 'Oluwaseun Adebayo Johnson'],
-  ['customer-demo-005', 'chiamaka', 'Chiamaka Blessing Eze'],
-  ['customer-demo-006', 'ibrahim', 'Ibrahim Musa Danjuma'],
-  ['customer-demo-007', 'ngozi', 'Ngozi Patience Nwosu'],
-  ['customer-demo-008', 'tunde', 'Tunde Olumide Bakare'],
-  ['customer-demo-009', 'amina', 'Amina Hauwa Yusuf'],
-  ['customer-demo-010', 'kelechi', 'Kelechi Obinna Madu'],
+// Bank customers live in the core banking service (its seed creates ten, with
+// password `firstname-shortname-lastname`, e.g. ada / adaeze-ada-okonkwo). The
+// marketplace holds no customer credentials. Listed here only for the console hint.
+export const DEMO_CUSTOMERS = [
+  ['ada', 'adaeze-ada-okonkwo'],
+  ['emeka', 'emeka-emeka-okafor'],
+  ['fatima', 'fatima-fatima-abubakar'],
+  ['seun', 'oluwaseun-seun-johnson'],
+  ['chiamaka', 'chiamaka-chiamaka-eze'],
+  ['ibrahim', 'ibrahim-ibrahim-danjuma'],
+  ['ngozi', 'ngozi-ngozi-nwosu'],
+  ['tunde', 'tunde-tunde-bakare'],
+  ['amina', 'amina-amina-yusuf'],
+  ['kelechi', 'kelechi-kelechi-madu'],
 ] as const;
 
 // The sample fintech app used in the demo.
@@ -33,23 +33,14 @@ export const DEMO_CLIENT = {
   name: 'BudgetBuddy',
   description: 'A simple budgeting app that shows you where your money goes.',
   redirect_uris: ['http://localhost:3000/callback', 'http://localhost:3001/callback'],
+  website_url: 'https://budgetbuddy.example',
+  privacy_policy_url: 'https://budgetbuddy.example/privacy',
 };
 
 export const DEMO_DEVELOPER = { email: 'dev@budgetbuddy.example', password: 'password123', name: 'Demo Developer' };
 
 export async function seed() {
   await migrate();
-  const passwordHash = await bcrypt.hash(DEMO_CUSTOMER_PASSWORD, 10);
-
-  for (const [customerId, username, fullName] of customers) {
-    await pool.query(
-      `INSERT INTO bank_customers (customer_id, username, password_hash, full_name)
-       VALUES ($1, $2, $3, $4)
-       ON CONFLICT (customer_id) DO UPDATE SET username = EXCLUDED.username,
-         password_hash = EXCLUDED.password_hash, full_name = EXCLUDED.full_name`,
-      [customerId, username, passwordHash, fullName],
-    );
-  }
 
   const dev = await pool.query<{ id: string }>(
     `INSERT INTO developers (email, password_hash, name, company)
@@ -59,11 +50,13 @@ export async function seed() {
   );
 
   await pool.query(
-    `INSERT INTO clients (developer_id, name, description, client_id, client_secret_hash, redirect_uris)
-     VALUES ($1, $2, $3, $4, $5, $6)
+    `INSERT INTO clients (developer_id, name, description, client_id, client_secret_hash, redirect_uris,
+                          website_url, privacy_policy_url)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
      ON CONFLICT (client_id) DO UPDATE SET developer_id = EXCLUDED.developer_id, name = EXCLUDED.name,
        description = EXCLUDED.description, client_secret_hash = EXCLUDED.client_secret_hash,
-       redirect_uris = EXCLUDED.redirect_uris, status = 'active', deactivated_at = NULL`,
+       redirect_uris = EXCLUDED.redirect_uris, website_url = EXCLUDED.website_url,
+       privacy_policy_url = EXCLUDED.privacy_policy_url, status = 'active', deactivated_at = NULL`,
     [
       dev.rows[0]!.id,
       DEMO_CLIENT.name,
@@ -71,11 +64,13 @@ export async function seed() {
       DEMO_CLIENT.client_id,
       await bcrypt.hash(DEMO_CLIENT.client_secret, 10),
       DEMO_CLIENT.redirect_uris,
+      DEMO_CLIENT.website_url,
+      DEMO_CLIENT.privacy_policy_url,
     ],
   );
 
   logger.info('seed complete');
-  logger.info(`bank login:   any of ${customers.map((c) => c[1]).join(', ')} / ${DEMO_CUSTOMER_PASSWORD}`);
+  logger.info(`bank login:   ${DEMO_CUSTOMERS.slice(0, 3).map(([u, p]) => `${u} / ${p}`).join(', ')} … (core banking seed)`);
   logger.info(`demo client:  ${DEMO_CLIENT.client_id} / ${DEMO_CLIENT.client_secret}`);
 }
 

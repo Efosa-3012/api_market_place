@@ -2,6 +2,7 @@ import type {
   Account,
   Balance,
   CoreBankingAdapter,
+  Customer,
   Page,
   Transaction,
   TransactionQuery,
@@ -113,7 +114,27 @@ const transactions: Transaction[] = Array.from({ length: 12 }, (_, i) => ({
   value_date: daysAgo(i),
 }));
 
+/** Demo logins for the in-memory core. Same password for everyone; ids match the Go seed. */
+export const MEMORY_CUSTOMER_PASSWORD = 'password123';
+const customers: (Customer & { username: string })[] = [
+  { customer_id: 'customer-demo-001', username: 'ada', full_name: 'Adaeze Ngozi Okonkwo', short_name: 'Ada', email: 'ada.okonkwo@example.ng', phone_number: '08031234567' },
+  { customer_id: 'customer-demo-002', username: 'emeka', full_name: 'Emeka Chukwuemeka Okafor', short_name: 'Emeka', email: 'emeka.okafor@example.ng', phone_number: '08059876543' },
+  { customer_id: 'customer-demo-006', username: 'ibrahim', full_name: 'Ibrahim Musa Danjuma', short_name: 'Ibrahim', email: 'ibrahim.danjuma@example.ng', phone_number: '08134567890' },
+];
+
 export class MemoryCoreBankingAdapter implements CoreBankingAdapter {
+  async authenticateCustomer(username: string, password: string) {
+    const c = customers.find((x) => x.username === username.toLowerCase());
+    return c && password === MEMORY_CUSTOMER_PASSWORD ? { customer_id: c.customer_id } : null;
+  }
+
+  async getCustomer(customerId: string) {
+    const c = customers.find((x) => x.customer_id === customerId);
+    if (!c) return null;
+    const { username: _username, ...profile } = c;
+    return profile;
+  }
+
   async getAccount(accountId: string) {
     return accounts.find((a) => a.account_id === accountId) ?? null;
   }

@@ -13,9 +13,10 @@ import { pool } from '../src/lib/db.js';
 const CLIENT_ID = 'test-client';
 const CLIENT_SECRET = 'test-client-secret';
 const REDIRECT_URI = 'http://localhost:3000/callback';
-const USERNAME = 'test-customer';
-const PASSWORD = 'test-password';
-const OTHER_USERNAME = 'other-customer';
+// Bank logins resolve through the in-memory core adapter.
+const USERNAME = 'ada';
+const PASSWORD = 'password123';
+const OTHER_USERNAME = 'emeka';
 const OTHER_CUSTOMER_ID = 'customer-demo-002';
 
 // Ids that exist in the in-memory core banking adapter.
@@ -80,20 +81,7 @@ beforeAll(async () => {
     [developer.rows[0]!.id, 'Test Client', CLIENT_ID, await bcrypt.hash(CLIENT_SECRET, 4), [REDIRECT_URI]],
   );
 
-  await pool.query(
-    `INSERT INTO bank_customers (customer_id, username, password_hash, full_name)
-     VALUES ($1, $2, $3, $4)
-     ON CONFLICT (customer_id) DO UPDATE SET username = EXCLUDED.username,
-       password_hash = EXCLUDED.password_hash`,
-    [CUSTOMER_ID, USERNAME, await bcrypt.hash(PASSWORD, 4), 'Test Customer'],
-  );
-  await pool.query(
-    `INSERT INTO bank_customers (customer_id, username, password_hash, full_name)
-     VALUES ($1, $2, $3, $4)
-     ON CONFLICT (customer_id) DO UPDATE SET username = EXCLUDED.username,
-       password_hash = EXCLUDED.password_hash`,
-    [OTHER_CUSTOMER_ID, OTHER_USERNAME, await bcrypt.hash(PASSWORD, 4), 'Other Customer'],
-  );
+  await pool.query('TRUNCATE bank_login_attempts');
 });
 
 async function login(username: string) {
@@ -241,5 +229,20 @@ describe('consent request ownership', () => {
 
     const { rows } = await pool.query(`SELECT status FROM consents WHERE id = $1`, [consentId]);
     expect(rows[0].status).toBe('expired');
+  });
+});
+
+describe('bank login policy', () => {
+  it('locks a username after repeated failures and unlocks on the configured window', async () => {
+    for (let i = 0; i < 5; i++) {
+      await request(app).post('/bank/login').send({ username: 'ibrahim', password: 'wrong' }).expect(401);
+    }
+    const locked = await request(app).post('/bank/login').send({ username: 'ibrahim', password: PASSWORD });
+    expect(locked.status).toBe(423);
+    expect(locked.body.error.code).toBe('account_locked');
+
+    // Expire the lock and the right password works again.
+    await pool.query(`UPDATE bank_login_attempts SET locked_until = now() - interval '1 second' WHERE username = 'ibrahim'`);
+    await request(app).post('/bank/login').send({ username: 'ibrahim', password: PASSWORD }).expect(200);
   });
 });

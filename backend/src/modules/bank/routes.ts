@@ -1,6 +1,6 @@
-import bcrypt from 'bcryptjs';
 import { Router, type RequestHandler } from 'express';
 import { z } from 'zod';
+import { config } from '../../config.js';
 import { coreBanking } from '../../core-banking/index.js';
 import { pool } from '../../lib/db.js';
 import { ApiError } from '../../lib/errors.js';
@@ -12,8 +12,9 @@ import { consentService, type ConsentWithClient } from '../consent/service.js';
  * domain: login, the consent screen, and Connected Apps. These are NOT
  * partner-facing; the fintech never calls them.
  *
- * Login here is a mock. In production this is the bank's real identity
- * provider and none of this code exists.
+ * Login is delegated to the core banking service's identity provider; the
+ * marketplace never sees or stores a customer password. What lives here is
+ * gateway policy around that login: sessions and the failed-attempt lockout.
  */
 export const bankRouter = Router();
 
@@ -37,10 +38,8 @@ const requireBankSession: RequestHandler = async (req, _res, next) => {
     if (scheme?.toLowerCase() !== 'bearer' || !sessionId) {
       throw ApiError.unauthorized('bank_session_required', 'Log in to your bank account first');
     }
-    const { rows } = await pool.query<BankCustomer>(
-      `SELECT bc.customer_id, bc.full_name
-         FROM bank_sessions s JOIN bank_customers bc ON bc.customer_id = s.customer_id
-        WHERE s.id::text = $1 AND s.expires_at > now()`,
+    const { rows } = await pool.query<{ customer_id: string; full_name: string }>(
+      `SELECT customer_id, full_name FROM bank_sessions WHERE id::text = $1 AND expires_at > now()`,
       [sessionId],
     );
     if (!rows[0]) throw ApiError.unauthorized('bank_session_expired', 'Your session has expired, log in again');
@@ -61,7 +60,15 @@ function publicConsent(c: ConsentWithClient) {
     authorised_at: c.authorised_at,
     expires_at: c.expires_at,
     revoked_at: c.revoked_at,
-    client: { client_id: c.client_public_id, name: c.client_name, description: c.client_description },
+    client: {
+      client_id: c.client_public_id,
+      name: c.client_name,
+      description: c.client_description,
+      website_url: c.client_website_url,
+      privacy_policy_url: c.client_privacy_policy_url,
+      logo_url: c.client_logo_url,
+      registered_at: c.client_created_at,
+    },
   };
 }
 
@@ -71,30 +78,81 @@ function redirectWith(redirectUri: string, params: Record<string, string | undef
   return url.toString();
 }
 
-// POST /bank/login — mock internet-banking login
-const loginBody = z.object({ username: z.string().min(1), password: z.string().min(1) });
+// ---------------------------------------------------------------------------
+// Failed-login lockout. Per username, so it works through proxies and NATs
+// where the per-IP limit cannot tell customers apart.
+// ---------------------------------------------------------------------------
+async function assertNotLocked(username: string) {
+  const { rows } = await pool.query<{ locked_until: Date | null }>(
+    `SELECT locked_until FROM bank_login_attempts WHERE username = $1`,
+    [username],
+  );
+  const until = rows[0]?.locked_until;
+  if (until && until.getTime() > Date.now()) {
+    const minutes = Math.max(1, Math.ceil((until.getTime() - Date.now()) / 60_000));
+    throw new ApiError(423, 'account_locked', `Too many failed attempts. Try again in ${minutes} minute${minutes === 1 ? '' : 's'}.`);
+  }
+}
+
+async function recordFailure(username: string) {
+  await pool.query(
+    `INSERT INTO bank_login_attempts (username, failed_count, updated_at) VALUES ($1, 1, now())
+     ON CONFLICT (username) DO UPDATE SET
+       failed_count = CASE WHEN bank_login_attempts.locked_until IS NOT NULL AND bank_login_attempts.locked_until < now()
+                           THEN 1 ELSE bank_login_attempts.failed_count + 1 END,
+       locked_until = CASE WHEN (CASE WHEN bank_login_attempts.locked_until IS NOT NULL AND bank_login_attempts.locked_until < now()
+                                      THEN 1 ELSE bank_login_attempts.failed_count + 1 END) >= $2
+                           THEN now() + ($3 || ' minutes')::interval ELSE NULL END,
+       updated_at = now()`,
+    [username, config.LOGIN_MAX_FAILURES, String(config.LOGIN_LOCKOUT_MINUTES)],
+  );
+}
+
+async function clearFailures(username: string) {
+  await pool.query(`DELETE FROM bank_login_attempts WHERE username = $1`, [username]);
+}
+
+// POST /bank/login — internet-banking login, delegated to the core's identity provider
+const loginBody = z.object({ username: z.string().min(1).max(100), password: z.string().min(1).max(200) });
 
 bankRouter.post('/login', async (req, res, next) => {
   try {
-    const { username, password } = parse(loginBody, req.body);
-    const { rows } = await pool.query<{ customer_id: string; full_name: string; password_hash: string }>(
-      `SELECT customer_id, full_name, password_hash FROM bank_customers WHERE username = $1`,
-      [username.toLowerCase()],
-    );
-    const customer = rows[0];
-    if (!customer || !(await bcrypt.compare(password, customer.password_hash))) {
+    const { username: rawUsername, password } = parse(loginBody, req.body);
+    const username = rawUsername.trim().toLowerCase();
+
+    await assertNotLocked(username);
+
+    const auth = await coreBanking.authenticateCustomer(username, password);
+    if (!auth) {
+      await recordFailure(username);
       throw ApiError.unauthorized('invalid_credentials', 'Incorrect username or password');
     }
+    await clearFailures(username);
+
+    const profile = await coreBanking.getCustomer(auth.customer_id);
+    const fullName = profile?.full_name ?? username;
+
     const session = await pool.query<{ id: string; expires_at: Date }>(
-      `INSERT INTO bank_sessions (customer_id, expires_at)
-       VALUES ($1, now() + ($2 || ' minutes')::interval) RETURNING id, expires_at`,
-      [customer.customer_id, String(SESSION_TTL_MINUTES)],
+      `INSERT INTO bank_sessions (customer_id, full_name, expires_at)
+       VALUES ($1, $2, now() + ($3 || ' minutes')::interval) RETURNING id, expires_at`,
+      [auth.customer_id, fullName, String(SESSION_TTL_MINUTES)],
     );
     res.json({
       session_token: session.rows[0]!.id,
       expires_at: session.rows[0]!.expires_at,
-      customer: { customer_id: customer.customer_id, full_name: customer.full_name },
+      customer: { customer_id: auth.customer_id, full_name: fullName },
     });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /bank/logout — end the session server-side, not just in the browser
+bankRouter.post('/logout', requireBankSession, async (req, res, next) => {
+  try {
+    const [, sessionId] = (req.header('authorization') ?? '').split(' ');
+    await pool.query(`DELETE FROM bank_sessions WHERE id::text = $1`, [sessionId]);
+    res.status(204).end();
   } catch (err) {
     next(err);
   }

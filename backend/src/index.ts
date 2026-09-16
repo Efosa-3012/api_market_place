@@ -1,11 +1,13 @@
 import { createApp } from './app.js';
 import { config } from './config.js';
 import { migrate } from './db/migrate.js';
+import { startSweep } from './jobs/sweep.js';
 import { pool } from './lib/db.js';
 import { logger } from './lib/logger.js';
 
 async function main() {
   await migrate();
+  const stopSweep = startSweep();
   const app = createApp();
   const server = app.listen(config.PORT, () => {
     logger.info({ port: config.PORT, env: config.NODE_ENV }, 'api marketplace backend listening');
@@ -14,6 +16,7 @@ async function main() {
 
   const shutdown = (signal: string) => {
     logger.info({ signal }, 'shutting down');
+    stopSweep();
     server.close(() => {
       pool.end().finally(() => process.exit(0));
     });

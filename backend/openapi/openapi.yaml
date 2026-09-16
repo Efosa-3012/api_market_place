@@ -222,10 +222,89 @@ paths:
         '429': { $ref: '#/components/responses/RateLimited' }
         '404': { description: Not found, or not one of the consented accounts }
 
+  /portal/apps/{id}:
+    patch:
+      tags: [Portal]
+      summary: Edit an app (name, description, redirect URIs, identity shown on the consent screen)
+      security: [{ portalToken: [] }]
+      parameters: [{ name: id, in: path, required: true, schema: { type: string, format: uuid } }]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                description: { type: string, nullable: true }
+                redirect_uris: { type: array, items: { type: string, format: uri } }
+                website_url: { type: string, format: uri, nullable: true }
+                privacy_policy_url: { type: string, format: uri, nullable: true }
+                logo_url: { type: string, format: uri, nullable: true }
+      responses:
+        '200': { description: Updated app }
+        '400': { $ref: '#/components/responses/Error' }
+        '404': { description: Not one of your apps }
+
+  /portal/apps/{id}/sandbox:
+    get:
+      tags: [Portal]
+      summary: Sandbox state for an app — demo customer, accounts, active sandbox consent
+      security: [{ portalToken: [] }]
+      parameters: [{ name: id, in: path, required: true, schema: { type: string, format: uuid } }]
+      responses:
+        '200': { description: OK }
+
+  /portal/apps/{id}/sandbox-token:
+    post:
+      tags: [Portal]
+      summary: Mint a sandbox access token
+      description: |
+        A real access token bound to a pre-authorised consent for the demo customer (all accounts, the
+        app's allowed scopes). It passes through exactly the same checks as a token from the OAuth flow.
+        Reuses the active sandbox consent if one exists.
+      security: [{ portalToken: [] }]
+      parameters: [{ name: id, in: path, required: true, schema: { type: string, format: uuid } }]
+      responses:
+        '200':
+          description: Token plus the consent it is bound to
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token: { type: string }
+                  token_type: { type: string, example: Bearer }
+                  expires_in: { type: integer }
+                  scope: { type: string }
+                  consent_id: { type: string, format: uuid }
+                  customer_id: { type: string }
+                  account_ids: { type: array, items: { type: string } }
+        '409': { description: App is deactivated }
+
+  /portal/apps/{id}/sandbox/revoke:
+    post:
+      tags: [Portal]
+      summary: Revoke the app's sandbox consent (simulates the customer removing access)
+      security: [{ portalToken: [] }]
+      parameters: [{ name: id, in: path, required: true, schema: { type: string, format: uuid } }]
+      responses:
+        '200': { description: '`{ consents_revoked: n }`' }
+
+  /bank/logout:
+    post:
+      tags: [Bank UI]
+      summary: End the bank session server-side
+      security: [{ bankSession: [] }]
+      responses:
+        '204': { description: Logged out }
+
   /bank/login:
     post:
       tags: [Bank UI]
-      summary: Mock internet-banking login
+      summary: Internet-banking login (delegated to the core banking identity provider)
+      description: |
+        The marketplace never stores customer passwords. Five failed attempts lock the username for
+        15 minutes (`423 account_locked`).
       requestBody:
         required: true
         content:
@@ -233,7 +312,7 @@ paths:
             schema:
               type: object
               required: [username, password]
-              properties: { username: { type: string, example: ada }, password: { type: string, example: password123 } }
+              properties: { username: { type: string, example: ada }, password: { type: string, example: adaeze-ada-okonkwo } }
       responses:
         '200':
           description: 'Session issued. Send as `Authorization: Bearer <session_token>` to the other Bank UI endpoints.'

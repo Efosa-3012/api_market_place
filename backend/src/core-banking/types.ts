@@ -63,6 +63,15 @@ export interface Page<T> {
   pagination: Pagination;
 }
 
+/** Customer profile from the core (never exposed to partners as-is). */
+export interface Customer {
+  customer_id: string;
+  full_name: string;
+  short_name: string;
+  email: string;
+  phone_number: string;
+}
+
 /**
  * The adapter boundary. Everything above this line is the same in production;
  * only the implementation behind it changes (mock today, real core tomorrow).
@@ -72,5 +81,12 @@ export interface CoreBankingAdapter {
   listCustomerAccounts(customerId: string): Promise<Account[]>;
   listBalances(accountId: string): Promise<Balance[]>;
   listTransactions(accountId: string, query?: TransactionQuery): Promise<Page<Transaction>>;
+  /**
+   * The bank's own customer login. Returns the customer id on success, null on
+   * bad credentials. In production this is the bank's identity provider; the
+   * marketplace never stores customer passwords.
+   */
+  authenticateCustomer(username: string, password: string): Promise<{ customer_id: string } | null>;
+  getCustomer(customerId: string): Promise<Customer | null>;
   healthy(): Promise<boolean>;
 }
