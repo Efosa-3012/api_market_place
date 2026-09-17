@@ -88,7 +88,7 @@ export default function Quickstart({ summary }: { summary: PortalSummary | null 
       <div className="flex min-w-0 flex-col gap-5">
         <Panel
           title="Get to your first call"
-          subtitle="Four steps against the live gateway. Progress is read from your real activity."
+          subtitle="Four steps against the live gateway."
           action={
             <Chip tone={done === steps.length ? 'ok' : 'accent'}>
               {done} of {steps.length} done
@@ -137,7 +137,7 @@ export default function Quickstart({ summary }: { summary: PortalSummary | null 
         </Panel>
 
         <Panel
-          title="Then handle the case most integrations forget"
+          title="Handle revocation"
           subtitle="A customer can withdraw access at any moment, and it takes effect on your very next call."
           action={hasHandledRevocation ? <Chip tone="ok">Tried it</Chip> : <Chip tone="warn">Not tried yet</Chip>}
         >

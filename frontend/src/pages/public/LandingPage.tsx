@@ -27,6 +27,10 @@ export default function LandingPage() {
         <p>Secure, reliable access to Stanbic IBTC’s banking services. Discover, test, and integrate APIs built to help you create innovative financial solutions for individuals and businesses.</p>
         <div className="hero-actions"><Link className="landing-button" to="/signup">Get Started</Link><a className="landing-button secondary" href="#apis">Explore APIs</a></div>
         <ul className="trust-list">{['Secure & Compliant', 'Developer support', 'Sandbox Environment'].map(item => <li key={item}><span aria-hidden="true">✓</span>{item}</li>)}</ul>
+        {/* Entry point for the end-to-end demo: see the platform from the customer's side. */}
+        <p className="hero-sample">
+          Curious what customers see? <Link to="/budgetbuddy">Try BudgetBuddy, our sample app →</Link>
+        </p>
       </div>
       <div className="hero-placeholder">
         <img

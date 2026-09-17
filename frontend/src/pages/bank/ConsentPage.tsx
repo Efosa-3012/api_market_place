@@ -261,7 +261,7 @@ export default function ConsentPage() {
         <div className="p-6 sm:p-8">
           <p className="text-base leading-6 text-body">
             Access lasts <strong>{expiryDays} days</strong>. You can withdraw it at any time from{' '}
-            <Link to="/bank/connected-apps" className="text-bank underline">Connected Apps</Link> — the app loses access immediately and your password never changes.
+            <Link to="/bank/connected-apps" className="text-bank underline">Connected Apps</Link>.
           </p>
 
           {actionError && <Notice tone="bad" className="mt-4">{actionError}</Notice>}

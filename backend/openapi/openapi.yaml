@@ -28,6 +28,10 @@ tags:
     description: Developer self-service. Sign up, register apps, manage credentials.
   - name: Analytics
     description: Admin dashboard data. Requires the `X-Admin-Key` header; never exposed to partners.
+  - name: Demo
+    description: >-
+      The sample fintech app's own backend, not the bank's. Present only where
+      DEMO_SAMPLE_APP is enabled; everywhere else these paths return 404.
   - name: Platform
 
 paths:
@@ -868,6 +872,61 @@ paths:
                   consents_revoked: { type: integer }
         '401': { $ref: '#/components/responses/PortalUnauthorized' }
         '404': { description: No such app under your account }
+
+  /demo/sample-app:
+    get:
+      tags: [Demo]
+      summary: What the sample app needs to start a connection
+      description: Returns 404 unless `DEMO_SAMPLE_APP` is enabled.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  client_id: { type: string, example: budgetbuddy }
+                  scopes: { type: array, items: { type: string } }
+                  authorize_url: { type: string, example: /oauth/authorize }
+        '404': { description: The demo endpoints are not enabled here }
+
+  /demo/sample-app/token:
+    post:
+      tags: [Demo]
+      summary: Exchange the sample app's authorization code
+      description: |
+        Stands in for the fintech's own server. The sample app runs in the browser, but the
+        token exchange needs a client secret — so it happens here instead, exactly as it would
+        on the partner's machine. Only ever acts for the one seeded demo client, and returns
+        404 unless `DEMO_SAMPLE_APP` is enabled.
+
+        This is not part of the bank's product surface. Partners use `POST /oauth/token`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code, redirect_uri]
+              properties:
+                code: { type: string, description: Single-use code from the bank redirect }
+                redirect_uri: { type: string, format: uri }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token: { type: string }
+                  token_type: { type: string, example: Bearer }
+                  expires_in: { type: integer, example: 86400 }
+                  scope: { type: string }
+                  consent_id: { type: string, format: uuid }
+        '400': { description: '`invalid_grant`, `invalid_redirect_uri` or `demo_client_unavailable`' }
+        '404': { description: The demo endpoints are not enabled here }
 
 components:
   securitySchemes:

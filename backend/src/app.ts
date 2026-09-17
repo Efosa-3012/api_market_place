@@ -18,6 +18,7 @@ import { publicRateLimit } from './middleware/rateLimit.js';
 import { analyticsRouter } from './modules/analytics/routes.js';
 import { oauthRouter } from './modules/auth/routes.js';
 import { bankRouter } from './modules/bank/routes.js';
+import { demoRouter } from './modules/demo/routes.js';
 import { portalRouter } from './modules/portal/routes.js';
 import { resourcesRouter } from './modules/resources/routes.js';
 
@@ -74,6 +75,9 @@ export function createApp() {
   app.use('/api/v1', resourcesRouter); // partner-facing resource APIs (token + consent enforced)
   app.use('/portal', portalRouter); // developer portal backend
   app.use('/analytics', analyticsRouter); // dashboard data
+  // Stands in for the sample fintech app's own server — not part of the product,
+  // and disabled outside development. See modules/demo/routes.ts.
+  app.use('/demo', publicRateLimit, demoRouter);
 
   app.use(notFound);
   app.use(errorHandler);

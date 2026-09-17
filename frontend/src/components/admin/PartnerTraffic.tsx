@@ -91,7 +91,7 @@ export function TopEndpoints({ endpoints, windowLabel }: { endpoints: EndpointTr
       {endpoints.length === 0 ? (
         <EmptyState
           title="No partner calls in this window"
-          message="Only /api/v1 traffic is counted here — the bank's own pages and the portal are not products."
+          message="Partner API calls will appear here once traffic comes in."
         />
       ) : (
         <ol className="flex flex-col gap-4">

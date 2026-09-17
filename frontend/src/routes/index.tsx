@@ -4,6 +4,7 @@ import PublicLayout from '../layouts/PublicLayout'
 import AppLayout from '../layouts/AppLayout'
 import AdminLayout from '../layouts/AdminLayout'
 import BankLayout from '../layouts/BankLayout'
+import SampleAppLayout from '../layouts/SampleAppLayout'
 
 import LandingPage from '../pages/public/LandingPage'
 import CallbackPage from '../pages/public/CallbackPage'
@@ -22,6 +23,7 @@ import BankLoginPage from '../pages/bank/BankLoginPage'
 import ConsentPage from '../pages/bank/ConsentPage'
 import ConnectedAppsPage from '../pages/bank/ConnectedAppsPage'
 import SandboxPage from '../pages/app/SandboxPage'
+import BudgetBuddyPage from '../pages/sample/BudgetBuddyPage'
 
 import AdminDashboardPage from '../pages/admin/AdminDashboardPage'
 import AdminAnalyticsPage from '../pages/admin/AdminAnalyticsPage'
@@ -81,7 +83,13 @@ const router = createBrowserRouter([
     ],
   },
 
-  // The sample fintech app's redirect_uri (registered on the demo client).
+  // BudgetBuddy — the sample fintech app. Deliberately outside the marketplace
+  // chrome: the customer should feel they left this app to visit their bank.
+  {
+    element: <SampleAppLayout />,
+    children: [{ path: '/budgetbuddy', element: <BudgetBuddyPage /> }],
+  },
+  // Its registered redirect_uri, where the bank sends the customer back.
   { path: '/callback', element: <CallbackPage /> },
 
   // The bank's own customer-facing pages. /consent is where /oauth/authorize

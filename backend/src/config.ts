@@ -15,6 +15,16 @@ const schema = z.object({
   CONSENT_REQUEST_TTL_MINUTES: z.coerce.number().positive().default(15),
   // Demo customer whose accounts back developer sandbox tokens (must exist in core banking).
   SANDBOX_CUSTOMER_ID: z.string().default('customer-demo-001'),
+
+  // The seeded sample fintech app. /demo/* acts as that app's own backend so the
+  // browser never holds its secret.
+  DEMO_CLIENT_ID: z.string().default('budgetbuddy'),
+  // Hosting the sample app is an explicit choice, never an accident: a real
+  // deployment leaves this off and /demo/* returns 404.
+  DEMO_SAMPLE_APP: z
+    .enum(['true', 'false'])
+    .default('false')
+    .transform((v) => v === 'true'),
   // Bank login lockout: after this many failures the username is locked for this long.
   LOGIN_MAX_FAILURES: z.coerce.number().int().positive().default(5),
   LOGIN_LOCKOUT_MINUTES: z.coerce.number().int().positive().default(15),

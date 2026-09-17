@@ -13,7 +13,7 @@ REDIRECT_URI=${REDIRECT_URI:-http://localhost:3000/callback}
 USERNAME=${BANK_USER:-ada}
 PASSWORD=${BANK_PASS:-adaeze-ada-okonkwo}   # core banking seed: firstname-shortname-lastname
 ACCOUNT=${ACCOUNT:-acct-demo-001}
-ADMIN_KEY=${ADMIN_KEY:-dev-admin-key-change-me}
+ADMIN_KEY=${ADMIN_KEY:-local-demo-admin-key-5d1b73c6}
 RATE_LIMIT_MAX=${RATE_LIMIT_MAX:-60}
 
 json() { sed -n "s/.*\"$1\":\"\([^\"]*\)\".*/\1/p"; }

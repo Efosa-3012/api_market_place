@@ -72,14 +72,28 @@ services:
     build: ./backend
     environment:
       PORT: 4000
+      # The image is a production build (npm ci --omit=dev, node dist/index.js), so
+      # this stays 'production'. Note that means no pino-pretty in the container —
+      # it is a devDependency, and 'development' here would fail to boot.
       NODE_ENV: production
       LOG_LEVEL: info
       DATABASE_URL: postgres://postgres:postgres@postgres:5432/marketplace
-      JWT_SECRET: dev-only-secret-change-me-in-any-real-deployment
+      # Local-only values, but deliberately NOT the placeholder patterns config.ts
+      # rejects in production — that guard has to stay able to fire for real.
+      # Rotate both for any deployment that is not this compose file.
+      JWT_SECRET: local-demo-jwt-secret-8f2c42ae9b174d30
       CONSENT_UI_URL: http://localhost:3000/consent
       CORE_BANKING_URL: http://core-banking:8081
       CORE_BANKING_API_KEY: mockcore-api-key
-      ADMIN_KEY: dev-admin-key-change-me
+      # 'memory' runs the small built-in dataset, so the stack works without the Go
+      # core. Switch to the real service per run:
+      #   CORE_BANKING_ADAPTER=http docker compose up -d backend
+      CORE_BANKING_ADAPTER: ${CORE_BANKING_ADAPTER:-memory}
+      # Hosts the sample fintech app's stand-in backend (/demo/*), so BudgetBuddy
+      # can exchange its authorization code without the secret reaching a browser.
+      # A real deployment leaves this off.
+      DEMO_SAMPLE_APP: 'true'
+      ADMIN_KEY: local-demo-admin-key-5d1b73c6
     ports:
       - '4000:4000'
     depends_on:

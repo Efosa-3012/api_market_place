@@ -28,7 +28,7 @@ export default function Activity({
           value={compactNumber(summary.calls)}
           detail={windowLabel.toLowerCase()}
           tone="accent"
-          hint="Every request your apps made through the gateway in this window."
+          hint="All requests your apps made in this window."
         />
         <StatTile
           label="Error rate"
@@ -39,14 +39,14 @@ export default function Activity({
               : `${summary.client_errors} rejected · ${summary.server_errors} server`
           }
           tone={summary.calls === 0 ? 'neutral' : healthy ? 'ok' : 'warn'}
-          hint="Share of calls the gateway answered with status 400 or above."
+          hint="Share of calls answered with status 400 or above."
         />
         <StatTile
           label="p95 latency"
           value={summary.calls === 0 ? '—' : duration(summary.p95_latency_ms)}
-          detail="95% of calls were faster than this"
+          detail="95th percentile"
           tone="neutral"
-          hint="The 95th percentile, not the average — averages hide the slow tail."
+          hint="95% of calls completed faster than this."
         />
         <StatTile
           label="Live consents"
@@ -110,7 +110,7 @@ export default function Activity({
             <div className="px-5 pb-5">
               <EmptyState
                 title="Nothing here yet"
-                message="Make a call from the Sandbox and it will appear here within a second."
+                message="Calls from your apps will appear here."
                 action={
                   <Link
                     to="/app/sandbox"

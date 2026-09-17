@@ -29,7 +29,7 @@ export default function ConnectedAppsPage() {
   const [notice, setNotice] = useState('')
   // When access was removed, so the notice can count up: "cut off 12 s ago".
   const [revokedAt, setRevokedAt] = useState<Date | null>(null)
-  const [now, setNow] = useState(Date.now())
+  const [now, setNow] = useState(() => Date.now())
 
   useEffect(() => {
     if (!revokedAt) return
@@ -75,7 +75,7 @@ export default function ConnectedAppsPage() {
         <h1 className="text-2xl font-semibold tracking-tight">Connected Apps</h1>
         <p className="mt-2 text-base leading-6 text-muted">
           Apps and services you&apos;ve allowed to read your Stanbic account data{customer ? `, ${customer.full_name.split(' ')[0]}` : ''}.
-          You can withdraw access at any time — the app is cut off immediately and your password never changes.
+          You can withdraw access at any time.
         </p>
       </header>
 

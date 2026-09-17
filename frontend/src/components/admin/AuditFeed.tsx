@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { AuditCall } from '../../lib/admin'
 import { clockTime, describeError } from '../../lib/admin'
-import { Button, Chip, CopyButton, EmptyState, MethodBadge, Modal, Panel, Segmented, StatusCode } from '../dash/ui'
+import { Button, CopyButton, EmptyState, MethodBadge, Modal, Panel, Segmented, StatusCode } from '../dash/ui'
 
 /**
  * The live audit trail: one row per request through the gateway.
@@ -54,7 +54,7 @@ export default function AuditFeed({
     <>
       <Panel
         title="Live audit trail"
-        subtitle="Every request through the gateway — who called, on whose behalf, and how it went."
+        subtitle="Every request through the gateway, newest first."
         padded={false}
         action={
           <div className="flex flex-wrap items-center gap-2">
@@ -101,7 +101,7 @@ export default function AuditFeed({
               title={filter === 'errors' ? 'No rejected calls' : 'No traffic yet'}
               message={
                 filter === 'errors'
-                  ? 'Nothing has been refused recently — every call in the window passed its consent and scope checks.'
+                  ? 'No calls have been refused recently.'
                   : 'Requests appear here the moment a partner calls the gateway.'
               }
             />
@@ -201,12 +201,6 @@ export default function AuditFeed({
               >
                 <p className="text-xs font-semibold text-ink">{describeError(selected.error_code)}</p>
                 <p className="mt-1 font-mono text-[11px] text-body">{selected.error_code}</p>
-                {selected.error_code === 'consent_revoked' && (
-                  <p className="mt-2 text-[11px] leading-5 text-red-800">
-                    The customer withdrew this consent. The call was still attributed to the partner that made it,
-                    which is how this trail shows a partner losing access the instant it happens.
-                  </p>
-                )}
               </div>
             )}
 
@@ -235,12 +229,6 @@ export default function AuditFeed({
               <p className="mt-2 break-all font-mono text-[11px] text-body">{selected.correlation_id}</p>
             </div>
 
-            {selected.customer_id && (
-              <Chip tone="neutral">
-                This record is the bank's audit evidence that the partner read this customer's data, under a consent
-                the customer granted.
-              </Chip>
-            )}
           </div>
         </Modal>
       )}
