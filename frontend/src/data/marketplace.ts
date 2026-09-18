@@ -78,6 +78,39 @@ export const marketplaceApis: MarketplaceApi[] = [
         ],
     },
 
+    {
+        id: 'bank-list-api',
+        category: 'Reference',
+        title: 'Bank List',
+        description:
+            'Every Nigerian bank with its CBN code, for building account forms and routing transfers. Reference data: no customer, no consent — any partner token works.',
+        pricing: 'Free',
+        authentication: 'OAuth 2.0',
+        popularity: 'New',
+        availability: 'live',
+        scope: 'reference:read',
+        endpoints: [
+            { method: 'GET', path: '/api/v1/reference/banks' },
+            { method: 'GET', path: '/api/v1/reference/banks/{code}' },
+        ],
+    },
+    {
+        id: 'nuban-api',
+        category: 'Reference',
+        title: 'NUBAN Validator',
+        description:
+            'Generate or verify the check digit on a 10-digit NUBAN before you send money to it. The CBN algorithm as a service: catches a mistyped account number without calling the bank.',
+        pricing: 'Free',
+        authentication: 'OAuth 2.0',
+        popularity: 'New',
+        availability: 'live',
+        scope: 'reference:read',
+        endpoints: [
+            { method: 'GET', path: '/api/v1/reference/nuban/validate' },
+            { method: 'GET', path: '/api/v1/reference/nuban/generate' },
+        ],
+    },
+
     // ------------------------------------------------------------------
     // Roadmap. Listed so partners can see where the platform is going, but
     // not callable: each needs a capability the core does not expose yet

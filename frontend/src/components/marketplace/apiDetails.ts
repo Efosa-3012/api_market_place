@@ -190,6 +190,72 @@ export const apiDetails: ApiDetails[] = [
   },
 ]
 
+/**
+ * Reference products: about the banking system, not about a customer. No
+ * consent screen, no account selection — any token from an active client.
+ */
+export const referenceApiDetails: ApiDetails[] = [
+  {
+    id: 'bank-list-api',
+    name: 'Bank List',
+    category: 'Reference',
+    summary: 'Every Nigerian bank with its CBN code.',
+    overview:
+      'The list of deposit money banks the CBN licenses, each with the 3-digit code that transfer systems route on and that the NUBAN check digit is computed from. Maintained by the bank, so a partner never ships a stale hard-coded list. Filter by name, slug or code, or by bank type.',
+    useCases: [
+      { title: 'Account forms', description: 'Populate a bank picker that is always current.' },
+      { title: 'Transfer routing', description: 'Resolve a bank name to the code the rails expect.' },
+      { title: 'Data cleansing', description: 'Normalise bank names in imported payment files.' },
+      { title: 'Reconciliation', description: 'Map the codes on your statements back to bank names.' },
+    ],
+    features: [
+      'GET /api/v1/reference/banks — every bank, optional ?q= and ?type=',
+      'GET /api/v1/reference/banks/{code} — one bank by CBN code',
+      'Commercial, non-interest and merchant banks',
+      'Stable slugs for your own records',
+      'Works with a client_credentials token — no customer needed',
+      'Same per-client quota and audit trail as every other product',
+    ],
+    method: 'GET',
+    path: '/api/v1/reference/banks?q=stanbic',
+    request: null,
+    exampleResponse: {
+      data: [{ code: '221', name: 'Stanbic IBTC Bank', slug: 'stanbic-ibtc', type: 'commercial' }],
+      meta: { total: 1, source: 'CBN bank codes, maintained by the bank' },
+    },
+    paid: false,
+  },
+  {
+    id: 'nuban-api',
+    name: 'NUBAN Validator',
+    category: 'Reference',
+    summary: 'Generate or verify the check digit on a 10-digit account number.',
+    overview:
+      'A NUBAN is a 9-digit serial plus a check digit computed from the bank’s CBN code — weights 3, 7, 3 over the twelve digits, then (10 − sum mod 10) mod 10. Validate an account number a customer typed before you send money to it, or generate the check digit for a serial you hold. Pure arithmetic: nothing is stored, nothing is looked up.',
+    useCases: [
+      { title: 'Pre-transfer checks', description: 'Reject a mistyped account number before the transfer is attempted.' },
+      { title: 'Payment file validation', description: 'Screen a batch of beneficiaries for bad numbers in one pass.' },
+      { title: 'Onboarding forms', description: 'Show “did you mean …4?” as the customer types.' },
+      { title: 'Core system migration', description: 'Generate compliant numbers for accounts you issue.' },
+    ],
+    features: [
+      'GET /api/v1/reference/nuban/validate — bank_code + account_number → valid, expected_check_digit',
+      'GET /api/v1/reference/nuban/generate — bank_code + serial → account_number',
+      'CBN Revised Standards on NUBAN, 3-digit bank codes',
+      '400 with a clear message for malformed input',
+      'Works with a client_credentials token — no customer needed',
+      'Deterministic and side-effect free',
+    ],
+    method: 'GET',
+    path: '/api/v1/reference/nuban/validate?bank_code=221&account_number=0000000124',
+    request: null,
+    exampleResponse: {
+      data: { bank_code: '221', bank_name: 'Stanbic IBTC Bank', account_number: '0000000124', valid: true, expected_check_digit: 4 },
+    },
+    paid: false,
+  },
+]
+
 export function findApiDetails(id?: string) {
-  return apiDetails.find((api) => api.id === id)
+  return [...apiDetails, ...referenceApiDetails].find((api) => api.id === id)
 }

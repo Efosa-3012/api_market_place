@@ -171,7 +171,9 @@ export default function SandboxPage() {
     )
   }
 
-  const hasScope = token ? token.scopes.includes(endpoint.scope) : true
+  // Reference data needs no customer scope: every token from an active client carries it implicitly.
+  const isReference = endpoint.scope === 'reference:read'
+  const hasScope = token ? isReference || token.scopes.includes(endpoint.scope) : true
   const tokenPreview = token ? `${token.access_token.slice(0, 24)}…${token.access_token.slice(-8)}` : ''
 
   return (
@@ -309,7 +311,7 @@ export default function SandboxPage() {
           <div className="mt-3 flex items-center gap-2 text-xs">
             <span className="rounded bg-tint px-2 py-1 font-semibold text-primary">{endpoint.method}</span>
             <code className="truncate">{endpoint.path}</code>
-            <span className="ml-auto shrink-0 text-muted">needs <code>{endpoint.scope}</code></span>
+            <span className="ml-auto shrink-0 text-muted">{isReference ? 'any partner token' : <>needs <code>{endpoint.scope}</code></>}</span>
           </div>
           {!hasScope && (
             <p className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">

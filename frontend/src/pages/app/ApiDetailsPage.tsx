@@ -35,6 +35,7 @@ function ApiDetailContent({ api }: { api: ApiDetails }) {
   const scope = marketplaceApis.find((entry) => entry.id === api.id)?.scope
   const hasScope = scope && scope !== '—'
   const isConsentFlow = api.id === 'consent-api'
+  const isReference = api.category === 'Reference'
 
   const requestText = api.request
     ? `${api.method} ${api.path}\nContent-Type: application/x-www-form-urlencoded\nAuthorization: Basic <client_id:client_secret>\n\n${Object.entries(api.request)
@@ -44,10 +45,10 @@ function ApiDetailContent({ api }: { api: ApiDetails }) {
 
   const facts: [string, string][] = [
     ['Auth', INTEGRATION_FACTS.auth],
-    ['Scope', hasScope ? scope : 'n/a'],
+    ['Scope', isReference ? 'any partner token' : hasScope ? scope : 'n/a'],
     ['Rate limit', INTEGRATION_FACTS.rateLimit],
     ['Token life', INTEGRATION_FACTS.tokenLife],
-    ['Consent life', INTEGRATION_FACTS.consentLife],
+    ['Consent life', isReference ? 'none needed' : INTEGRATION_FACTS.consentLife],
     ['Pricing', INTEGRATION_FACTS.pricing],
   ]
 
@@ -109,10 +110,17 @@ function ApiDetailContent({ api }: { api: ApiDetails }) {
           <div className="min-w-0 flex-[1_1_380px]">
             <p className="text-[15px] leading-7 text-body text-pretty">
               {api.overview}
-              {hasScope && (
+              {hasScope && !isReference && (
                 <>
                   {' '}
                   Requires the <span className="code-chip text-[13px]">{scope}</span> scope.
+                </>
+              )}
+              {isReference && (
+                <>
+                  {' '}
+                  Any token from an active client works, including one from the{' '}
+                  <span className="code-chip text-[13px]">client_credentials</span> grant.
                 </>
               )}
             </p>
@@ -184,30 +192,41 @@ function ApiDetailContent({ api }: { api: ApiDetails }) {
 
             <section className="rounded-xl border border-line bg-white p-[18px]">
               <h2 className="text-[13px] font-semibold tracking-[-0.01em]">
-                {isConsentFlow ? 'How the flow runs' : 'Before you call this'}
+                {isConsentFlow ? 'How the flow runs' : isReference ? 'Two calls, no customer' : 'Before you call this'}
               </h2>
-              <ol className="mt-2.5 flex list-decimal flex-col gap-2 pl-[18px] text-xs leading-relaxed text-muted">
-                <li>Register an app to get a client ID and secret.</li>
-                <li>
-                  Send the customer through <span className="font-mono text-[11px] text-ink">/oauth/authorize</span>.
-                </li>
-                <li>
-                  Exchange the code at <span className="font-mono text-[11px] text-ink">/oauth/token</span>.
-                </li>
-                {!isConsentFlow && (
+              {isReference ? (
+                <ol className="mt-2.5 flex list-decimal flex-col gap-2 pl-[18px] text-xs leading-relaxed text-muted">
+                  <li>Register an app to get a client ID and secret.</li>
                   <li>
-                    Call this endpoint with the token; the consent must include{' '}
-                    <span className="font-mono text-[11px] text-ink">{scope}</span>.
+                    <span className="font-mono text-[11px] text-ink">POST /oauth/token</span> with{' '}
+                    <span className="font-mono text-[11px] text-ink">grant_type=client_credentials</span> and Basic auth.
                   </li>
-                )}
-              </ol>
+                  <li>Call this endpoint with the token. No customer is involved, so no consent screen.</li>
+                </ol>
+              ) : (
+                <ol className="mt-2.5 flex list-decimal flex-col gap-2 pl-[18px] text-xs leading-relaxed text-muted">
+                  <li>Register an app to get a client ID and secret.</li>
+                  <li>
+                    Send the customer through <span className="font-mono text-[11px] text-ink">/oauth/authorize</span>.
+                  </li>
+                  <li>
+                    Exchange the code at <span className="font-mono text-[11px] text-ink">/oauth/token</span>.
+                  </li>
+                  {!isConsentFlow && (
+                    <li>
+                      Call this endpoint with the token; the consent must include{' '}
+                      <span className="font-mono text-[11px] text-ink">{scope}</span>.
+                    </li>
+                  )}
+                </ol>
+              )}
               <ButtonLink
-                to={isConsentFlow ? docs : '/app/marketplace/consent-api'}
+                to={isConsentFlow || isReference ? docs : '/app/marketplace/consent-api'}
                 secondary
                 size="sm"
                 className="mt-3.5"
               >
-                {isConsentFlow ? 'Read the full guide' : 'Read the consent guide'}
+                {isConsentFlow ? 'Read the full guide' : isReference ? 'Read the docs' : 'Read the consent guide'}
                 <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                   <path d="M5 12h13M13 6l6 6-6 6" />
                 </svg>

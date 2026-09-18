@@ -10,7 +10,7 @@ import { ApiError } from '../lib/errors.js';
  * to dodge its quota by spreading calls across hosts. The IP fallback only
  * applies to requests that never reached a valid token.
  *
- * Mount AFTER `authenticate` so req.auth is populated.
+ * Mount AFTER `authenticate` (or `authenticatePartner`) so the client is known.
  *
  * Gateway concerns are Express middleware for the MVP; in production this is
  * Kong or Apigee with per-plan quotas shared across instances. The in-process
@@ -21,7 +21,7 @@ export const partnerRateLimit = rateLimit({
   limit: config.RATE_LIMIT_MAX,
   standardHeaders: 'draft-7', // RateLimit: limit=..., remaining=..., reset=...
   legacyHeaders: false,
-  keyGenerator: (req) => req.auth?.token.client_id ?? ipKeyGenerator(req.ip ?? ''),
+  keyGenerator: (req) => req.auth?.token.client_id ?? req.partner?.clientId ?? ipKeyGenerator(req.ip ?? ''),
   // Route through ApiError so the 429 comes out in the standard envelope and
   // the error handler stamps req.errorCode for the audit log.
   handler: (_req, _res, next) =>

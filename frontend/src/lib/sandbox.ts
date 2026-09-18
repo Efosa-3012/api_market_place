@@ -76,6 +76,27 @@ export const SANDBOX_ENDPOINTS: SandboxEndpoint[] = [
     params: [{ name: 'accountId', kind: 'path', input: 'account', required: true }],
   },
   {
+    id: 'banks', api: 'Bank List', title: 'List banks', method: 'GET', path: '/api/v1/reference/banks', scope: 'reference:read',
+    params: [
+      { name: 'q', kind: 'query', input: 'text', placeholder: 'stanbic' },
+      { name: 'type', kind: 'query', input: 'select', options: ['', 'commercial', 'non_interest', 'merchant'] },
+    ],
+  },
+  {
+    id: 'nuban-validate', api: 'NUBAN Validator', title: 'Validate an account number', method: 'GET', path: '/api/v1/reference/nuban/validate', scope: 'reference:read',
+    params: [
+      { name: 'bank_code', kind: 'query', input: 'text', placeholder: '221', required: true },
+      { name: 'account_number', kind: 'query', input: 'text', placeholder: '0000000124', required: true },
+    ],
+  },
+  {
+    id: 'nuban-generate', api: 'NUBAN Validator', title: 'Generate a check digit', method: 'GET', path: '/api/v1/reference/nuban/generate', scope: 'reference:read',
+    params: [
+      { name: 'bank_code', kind: 'query', input: 'text', placeholder: '221', required: true },
+      { name: 'serial', kind: 'query', input: 'text', placeholder: '000000012', required: true },
+    ],
+  },
+  {
     id: 'transactions', api: 'Transactions API', title: 'List transactions', method: 'GET', path: '/api/v1/accounts/{accountId}/transactions', scope: 'transactions:read',
     params: [
       { name: 'accountId', kind: 'path', input: 'account', required: true },

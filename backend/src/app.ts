@@ -20,6 +20,7 @@ import { oauthRouter } from './modules/auth/routes.js';
 import { bankRouter } from './modules/bank/routes.js';
 import { demoRouter } from './modules/demo/routes.js';
 import { portalRouter } from './modules/portal/routes.js';
+import { referenceRouter } from './modules/reference/routes.js';
 import { resourcesRouter } from './modules/resources/routes.js';
 
 const openapiPath = join(dirname(fileURLToPath(import.meta.url)), '..', 'openapi', 'openapi.yaml');
@@ -72,6 +73,7 @@ export function createApp() {
   app.use('/oauth', publicRateLimit, oauthRouter); // partner-facing OAuth 2.0 endpoints
   app.use('/bank/login', publicRateLimit);
   app.use('/bank', bankRouter); // backend for the bank's own consent UI (login, approve, connected apps)
+  app.use('/api/v1/reference', referenceRouter); // partner-facing reference data (token enforced, no consent needed) — before /api/v1 so it is matched first
   app.use('/api/v1', resourcesRouter); // partner-facing resource APIs (token + consent enforced)
   app.use('/portal', portalRouter); // developer portal backend
   app.use('/analytics', analyticsRouter); // dashboard data

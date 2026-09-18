@@ -45,6 +45,9 @@ export const authenticate: RequestHandler = async (req, _res, next) => {
       );
     }
 
+    // A client_credentials token has no consent behind it and must never reach customer data.
+    if (!claims.consent_id) throw ApiError.unauthorized('invalid_token', 'This token is not bound to a customer consent');
+
     const { rows } = await pool.query<ConsentRow>(
       `SELECT c.id AS consent_id, c.status AS consent_status, c.expires_at, c.account_ids, c.scopes,
               c.customer_id, cl.id AS client_row_id, cl.status AS client_status
@@ -87,6 +90,55 @@ export const authenticate: RequestHandler = async (req, _res, next) => {
       scopes: row.scopes,
       accountIds: row.account_ids,
     };
+    next();
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * The partner on its own behalf, for the reference APIs (bank list, NUBAN).
+ * Any valid token from an active client will do — a client_credentials token
+ * or a customer-bound one — because reference data involves no customer. What
+ * it still enforces: the signature, the client existing, and the client being
+ * active, so deactivation cuts these off too. Never grants access to /api/v1/accounts.
+ */
+export const authenticatePartner: RequestHandler = async (req, _res, next) => {
+  try {
+    const header = req.header('authorization') ?? '';
+    const [scheme, token] = header.split(' ');
+    if (scheme?.toLowerCase() !== 'bearer' || !token) {
+      throw ApiError.unauthorized('invalid_token', 'Missing or malformed Authorization header');
+    }
+
+    let claims: { typ?: string; client_id?: string };
+    try {
+      claims = jwt.verify(token, config.JWT_SECRET, { algorithms: ['HS256'] }) as typeof claims;
+    } catch (err) {
+      const expired = err instanceof jwt.TokenExpiredError;
+      throw ApiError.unauthorized(
+        expired ? 'token_expired' : 'invalid_token',
+        expired ? 'Access token has expired' : 'Access token is invalid',
+      );
+    }
+    // Portal sessions carry typ 'portal' and no client_id; they are not partner tokens.
+    if (!claims.client_id || (claims.typ !== undefined && claims.typ !== 'client')) {
+      throw ApiError.unauthorized('invalid_token', 'Access token is invalid');
+    }
+
+    const { rows } = await pool.query<{ id: string; status: string }>(
+      `SELECT id, status FROM clients WHERE client_id = $1`,
+      [claims.client_id],
+    );
+    const client = rows[0];
+    if (!client) throw ApiError.unauthorized('invalid_token', 'Token does not match a registered client');
+
+    req.audit = { clientRowId: client.id };
+    if (client.status !== 'active') {
+      throw ApiError.forbidden('client_deactivated', 'This client application has been deactivated');
+    }
+
+    req.partner = { clientRowId: client.id, clientId: claims.client_id, kind: claims.typ === 'client' ? 'client' : 'consent' };
     next();
   } catch (err) {
     next(err);

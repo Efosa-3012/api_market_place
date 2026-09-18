@@ -6,7 +6,7 @@ import { pool } from '../../lib/db.js';
 import { ApiError, OAuthError } from '../../lib/errors.js';
 import { parse } from '../../lib/validate.js';
 import { consentService, SCOPES } from '../consent/service.js';
-import { issueAccessToken } from './tokens.js';
+import { issueAccessToken, issueClientToken } from './tokens.js';
 
 export const oauthRouter = Router();
 
@@ -126,8 +126,14 @@ oauthRouter.post('/token', async (req, res, next) => {
     }
     if (client.status !== 'active') throw new OAuthError(401, 'invalid_client', 'Client has been deactivated');
 
+    // The partner acting for itself: reference data only, no customer, no consent.
+    if (body.grant_type === 'client_credentials') {
+      res.setHeader('Cache-Control', 'no-store');
+      return res.json(issueClientToken({ clientId: client.client_id }));
+    }
+
     if (body.grant_type !== 'authorization_code') {
-      throw new OAuthError(400, 'unsupported_grant_type', 'Only authorization_code is supported');
+      throw new OAuthError(400, 'unsupported_grant_type', 'Only authorization_code and client_credentials are supported');
     }
     if (!body.code || !body.redirect_uri) {
       throw new OAuthError(400, 'invalid_request', 'code and redirect_uri are required');

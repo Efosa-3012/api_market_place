@@ -22,6 +22,10 @@ tags:
     description: Partner-facing authorization endpoints
   - name: Accounts
     description: Account information APIs (require a consented access token)
+  - name: Reference
+    description: >-
+      Banking-system reference data — bank codes and NUBAN check digits. No customer is involved,
+      so any valid token from an active client works, including one from the client_credentials grant.
   - name: Bank UI
     description: Used only by the bank's own consent pages — not for partners
   - name: Portal
@@ -79,7 +83,12 @@ paths:
     post:
       tags: [OAuth]
       summary: Exchange an authorization code for an access token
-      description: Client authentication via HTTP Basic (`client_id:client_secret`) or form fields.
+      description: |
+        Client authentication via HTTP Basic (`client_id:client_secret`) or form fields.
+
+        Two grants: `authorization_code` (a customer's consent → token bound to that consent) and
+        `client_credentials` (the partner on its own behalf → token with scope `reference:read`,
+        usable only on the Reference APIs).
       security: [{ clientBasic: [] }, {}]
       requestBody:
         required: true
@@ -87,9 +96,9 @@ paths:
           application/x-www-form-urlencoded:
             schema:
               type: object
-              required: [grant_type, code, redirect_uri]
+              required: [grant_type]
               properties:
-                grant_type: { type: string, enum: [authorization_code] }
+                grant_type: { type: string, enum: [authorization_code, client_credentials] }
                 code: { type: string }
                 redirect_uri: { type: string, format: uri }
                 client_id: { type: string }
@@ -225,6 +234,95 @@ paths:
         '403': { $ref: '#/components/responses/Forbidden' }
         '429': { $ref: '#/components/responses/RateLimited' }
         '404': { description: Not found, or not one of the consented accounts }
+
+  /api/v1/reference/banks:
+    get:
+      tags: [Reference]
+      summary: Every Nigerian bank with its CBN code
+      security: [{ bearerToken: [] }]
+      parameters:
+        - { name: q, in: query, description: 'Filter by name, slug or code', schema: { type: string } }
+        - { name: type, in: query, schema: { type: string, enum: [commercial, non_interest, merchant] } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { type: array, items: { $ref: '#/components/schemas/Bank' } }
+                  meta: { type: object, properties: { total: { type: integer } } }
+        '401': { $ref: '#/components/responses/Error' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+
+  /api/v1/reference/banks/{code}:
+    get:
+      tags: [Reference]
+      summary: One bank by CBN code
+      security: [{ bearerToken: [] }]
+      parameters:
+        - { name: code, in: path, required: true, schema: { type: string, example: '221' } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { type: object, properties: { data: { $ref: '#/components/schemas/Bank' } } }
+        '404': { description: No bank with that code }
+
+  /api/v1/reference/nuban/generate:
+    get:
+      tags: [Reference]
+      summary: Compute the NUBAN check digit for a 9-digit serial
+      description: 'CBN standard: weights 3, 7, 3 over bank code + serial; check = (10 − sum mod 10) mod 10.'
+      security: [{ bearerToken: [] }]
+      parameters:
+        - { name: bank_code, in: query, required: true, schema: { type: string, pattern: '^\d{3}$', example: '221' } }
+        - { name: serial, in: query, required: true, schema: { type: string, pattern: '^\d{9}$', example: '000000012' } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      bank_code: { type: string, example: '221' }
+                      bank_name: { type: string, nullable: true, example: Stanbic IBTC Bank }
+                      serial: { type: string, example: '000000012' }
+                      check_digit: { type: integer, example: 4 }
+                      account_number: { type: string, example: '0000000124' }
+        '400': { $ref: '#/components/responses/Error' }
+
+  /api/v1/reference/nuban/validate:
+    get:
+      tags: [Reference]
+      summary: Check a 10-digit account number against its bank code
+      security: [{ bearerToken: [] }]
+      parameters:
+        - { name: bank_code, in: query, required: true, schema: { type: string, pattern: '^\d{3}$', example: '221' } }
+        - { name: account_number, in: query, required: true, schema: { type: string, pattern: '^\d{10}$', example: '0000000124' } }
+      responses:
+        '200':
+          description: 'OK — read data.valid'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      bank_code: { type: string }
+                      bank_name: { type: string, nullable: true }
+                      account_number: { type: string }
+                      valid: { type: boolean }
+                      expected_check_digit: { type: integer, description: The digit that would make it valid }
+        '400': { $ref: '#/components/responses/Error' }
 
   /portal/apps/{id}:
     patch:
@@ -1101,6 +1199,13 @@ components:
         application/json:
           schema: { $ref: '#/components/schemas/Error' }
   schemas:
+    Bank:
+      type: object
+      properties:
+        code: { type: string, example: '221', description: 3-digit CBN bank code }
+        name: { type: string, example: Stanbic IBTC Bank }
+        slug: { type: string, example: stanbic-ibtc }
+        type: { type: string, enum: [commercial, non_interest, merchant] }
     Error:
       type: object
       properties:
