@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { compactNumber, describeError, duration, percent, relativeTime } from '../../lib/admin'
 import type { PortalSummary, RequestLog } from '../../lib/portal'
-import { Chip, EmptyState, MethodBadge, Panel, ShareBar, StatTile, StatusCode } from '../dash/ui'
+import { Chip, EmptyState, MethodBadge, Panel, ShareBar, StatGrid, StatTile, StatusCode } from '../dash/ui'
 
 /**
  * What the developer's integration actually did, from the gateway's audit trail.
@@ -22,7 +22,7 @@ export default function Activity({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <StatGrid>
         <StatTile
           label="API calls"
           value={compactNumber(summary.calls)}
@@ -55,7 +55,7 @@ export default function Activity({
           tone={summary.active_consents > 0 ? 'ok' : 'neutral'}
           hint="Customers who currently allow your apps to read their accounts."
         />
-      </div>
+      </StatGrid>
 
       <div className="grid items-start gap-6 lg:grid-cols-2">
         <Panel

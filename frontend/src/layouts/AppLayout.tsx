@@ -14,7 +14,7 @@ export default function AppLayout() {
   }
 
   return (
-    <div className="min-h-dvh bg-white font-[Arial,Helvetica,sans-serif] text-ink">
+    <div className="min-h-dvh bg-white font-sans text-ink">
       <Header
         menuOpen={menuOpen}
         onMenuClick={() => setMenuOpen((current) => !current)}

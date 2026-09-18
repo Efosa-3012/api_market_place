@@ -16,7 +16,7 @@ import type {
   EndpointTraffic,
   TimeseriesPoint,
 } from '../../lib/admin'
-import { AreaChart, Button, ErrorNote, Panel, Segmented, ShareBar, Skeleton, StatTile } from '../../components/dash/ui'
+import { AreaChart, Button, ErrorNote, Panel, Segmented, ShareBar, Skeleton, StatGrid, StatTile } from '../../components/dash/ui'
 import AuditFeed from '../../components/admin/AuditFeed'
 import ConsentPanel from '../../components/admin/ConsentPanel'
 import { PartnerTraffic, TopEndpoints } from '../../components/admin/PartnerTraffic'
@@ -175,7 +175,7 @@ export default function AdminDashboardPage() {
 
         {data && summary && (
           <>
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <StatGrid>
               <StatTile
                 label="API calls"
                 value={compactNumber(summary.calls)}
@@ -208,7 +208,7 @@ export default function AdminDashboardPage() {
                 tone={summary.revocations > 0 ? 'warn' : 'ok'}
                 hint="Customers who currently allow a partner to read their accounts."
               />
-            </div>
+            </StatGrid>
 
             <div className="grid gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
               <Panel

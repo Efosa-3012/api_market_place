@@ -29,7 +29,7 @@ export default function BankLayout() {
   }
 
   return (
-    <div className="min-h-dvh bg-canvas font-[Arial,Helvetica,sans-serif] text-ink">
+    <div className="min-h-dvh bg-canvas font-sans text-ink">
       <header className="bg-bank text-white">
         <div className="mx-auto flex h-16 max-w-5xl items-center justify-between gap-4 px-4 sm:px-6">
           <Link to={customer ? '/bank/connected-apps' : '/bank/login'} className="flex items-center gap-3">

@@ -26,7 +26,7 @@ export default function AdminLayout() {
   }
   if (!portalSession.isAdmin()) {
     return (
-      <main className="grid min-h-dvh place-items-center bg-canvas px-4 font-[Arial,Helvetica,sans-serif]">
+      <main className="grid min-h-dvh place-items-center bg-canvas px-4 font-sans">
         <section className="w-full max-w-md rounded-2xl border border-line bg-white p-8 text-center">
           <h1 className="text-xl font-semibold text-ink">Staff access only</h1>
           <p className="mt-3 text-sm leading-6 text-body">
@@ -71,7 +71,7 @@ export default function AdminLayout() {
     navigate('/login', { replace: true })
   }
   return (
-    <div className="min-h-dvh bg-canvas font-[Arial,Helvetica,sans-serif] text-ink [&_button:focus-visible]:outline-2 [&_button:focus-visible]:outline-offset-2 [&_button:focus-visible]:outline-blue-600 [&_a:focus-visible]:outline-2 [&_a:focus-visible]:outline-blue-600">
+    <div className="min-h-dvh bg-canvas font-sans text-ink [&_button:focus-visible]:outline-2 [&_button:focus-visible]:outline-offset-2 [&_button:focus-visible]:outline-blue-600 [&_a:focus-visible]:outline-2 [&_a:focus-visible]:outline-blue-600">
       <header className="sticky top-0 z-50 flex h-16 items-center gap-4 border-b border-line bg-white px-4">
         <a
           href="#admin-main"

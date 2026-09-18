@@ -78,7 +78,18 @@ export function Panel({
 }
 
 /**
- * A headline figure. The rule down the left is the only colour most tiles carry —
+ * A row of headline figures drawn as one block: the tiles sit edge to edge and
+ * 1px of --color-line shows through the gaps, so four numbers read as one
+ * instrument rather than four floating cards.
+ */
+export function StatGrid({ children, columns = 4 }: { children: ReactNode; columns?: 2 | 3 | 4 }) {
+  const cols = columns === 2 ? 'sm:grid-cols-2' : columns === 3 ? 'sm:grid-cols-3' : 'sm:grid-cols-2 xl:grid-cols-4'
+  return <div className={`tile-grid grid-cols-1 ${cols}`}>{children}</div>
+}
+
+/**
+ * A headline figure, for use inside StatGrid. The label is a mono eyebrow, the
+ * value is mono so digits line up across tiles, and the tone is a single dot —
  * enough to read severity at a glance without turning the row into a rainbow.
  */
 export function StatTile({
@@ -98,13 +109,15 @@ export function StatTile({
   children?: ReactNode
 }) {
   return (
-    <div className="relative flex min-w-0 flex-col overflow-hidden rounded-2xl border border-line bg-white p-5">
-      <span aria-hidden="true" className={`absolute inset-y-0 left-0 w-1 ${TONE_RULE[tone]}`} />
-      <p className="text-xs font-medium text-muted" title={hint}>
+    <div className="flex min-w-0 flex-col bg-white p-5">
+      <p className="eyebrow flex items-center gap-2" title={hint}>
+        {tone !== 'neutral' && <span aria-hidden="true" className={`size-1.5 rounded-full ${TONE_RULE[tone]}`} />}
         {label}
       </p>
-      <p className="mt-3 text-3xl font-semibold tabular-nums tracking-tight text-ink">{value}</p>
-      {detail && <p className="mt-2 text-xs leading-5 text-muted">{detail}</p>}
+      <p className="mt-3.5 font-mono text-[30px] font-medium leading-none tabular-nums tracking-[-0.04em] text-ink">
+        {value}
+      </p>
+      {detail && <p className="mt-2.5 text-[11.5px] leading-5 text-faint">{detail}</p>}
       {children && <div className="mt-4">{children}</div>}
     </div>
   )

@@ -10,7 +10,7 @@ export default function NotFoundPage() {
   const notFound = !error || (isRouteErrorResponse(error) && error.status === 404)
 
   return (
-    <div className="grid min-h-dvh place-items-center bg-canvas px-4 font-[Arial,Helvetica,sans-serif] text-ink">
+    <div className="grid min-h-dvh place-items-center bg-canvas px-4 font-sans text-ink">
       <div className="w-full max-w-md rounded-2xl border border-line bg-white p-8 text-center shadow-sm">
         <img src="/images/LogoBlue_.png" alt="Stanbic IBTC" className="mx-auto mb-6 h-9 object-contain" />
         <h1 className="text-xl font-semibold">{notFound ? 'Page not found' : 'Something went wrong'}</h1>

@@ -1,7 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { marketplaceApis } from '../../data/marketplace'
 import type { MarketplaceApi } from '../../data/marketplace'
+import { compactNumber, duration } from '../../lib/admin'
+import { portal, type PortalSummary } from '../../lib/portal'
 
 const categories = ['Accounts', 'Consent']
 
@@ -62,14 +64,12 @@ function FilterGroup({
               className="size-4 shrink-0 cursor-pointer accent-primary"
             />
 
-            <span>
-              {option}
-              {counts && (
-                <span className="text-muted">
-                  {' '}({counts[option] ?? 0})
-                </span>
-              )}
-            </span>
+            <span className="flex-1">{option}</span>
+            {counts && (
+              <span className="font-mono text-[10px] tabular-nums text-faint">
+                {String(counts[option] ?? 0).padStart(2, '0')}
+              </span>
+            )}
           </label>
         ))}
       </fieldset>
@@ -77,82 +77,107 @@ function FilterGroup({
   )
 }
 
-function ApiCard({ api }: { api: MarketplaceApi }) {
+/** A green dot and a mono word: the one way "live" is said anywhere in the app. */
+function LiveMark({ live }: { live: boolean }) {
   return (
-    <article className="flex h-full flex-col rounded-lg border border-line bg-white p-5">
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <div className="flex flex-wrap gap-2">
-          <span className="rounded-sm bg-canvas px-2 py-1 text-xs font-bold uppercase tracking-wide text-body">
-            {api.category === 'Identity' ? 'Identity & KYC' : api.category}
-          </span>
+    <span
+      className={`inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.06em] ${
+        live ? 'text-live' : 'text-faint'
+      }`}
+    >
+      <span
+        aria-hidden="true"
+        className={`size-[5px] rounded-full ${live ? 'bg-live' : 'bg-faint'}`}
+      />
+      {live ? 'Live' : 'Coming soon'}
+    </span>
+  )
+}
 
-          <span
-            className={`rounded-sm px-2 py-1 text-xs font-bold uppercase tracking-wide ${
-              api.pricing === 'Paid'
-                ? 'bg-blue-50 text-primary'
-                : 'bg-red-50 text-red-600'
-            }`}
-          >
-            {api.pricing}
-          </span>
-
-          {api.availability === 'live' ? (
-            <span className="rounded-sm bg-green-50 px-2 py-1 text-xs font-bold uppercase tracking-wide text-green-700">
-              Live
-            </span>
-          ) : (
-            <span className="rounded-sm bg-canvas px-2 py-1 text-xs font-bold uppercase tracking-wide text-muted">
-              Coming soon
-            </span>
-          )}
-        </div>
-
-        <svg
-          aria-hidden="true"
-          width="19"
-          height="19"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="#ff6268"
-          strokeWidth="1.5"
-          className="shrink-0"
-        >
-          <circle cx="12" cy="12" r="9" />
-          <ellipse cx="12" cy="12" rx="4" ry="9" />
-          <path d="M3 12h18M5 6.5c4 2 10 2 14 0M5 17.5c4-2 10-2 14 0" />
-        </svg>
+function ApiCard({ api }: { api: MarketplaceApi }) {
+  const live = api.availability === 'live'
+  return (
+    <article className="flex h-full flex-col rounded-xl border border-line bg-white p-5 transition-[border-color,box-shadow] hover:border-[#c9d2e4] hover:shadow-[0_2px_8px_rgba(14,23,38,0.05)]">
+      <div className="flex items-center justify-between gap-3">
+        <span className="eyebrow text-muted">{api.category}</span>
+        <LiveMark live={live} />
       </div>
 
-      <h2 className="text-base font-semibold leading-6">
+      <h2 className="mt-3.5 text-[17px] font-semibold leading-tight tracking-[-0.02em]">
         {api.title}
       </h2>
 
-      <span
-        aria-hidden="true"
-        className="mb-3 mt-2 h-[3px] w-7 bg-[#ff3545]"
-      />
-
-      <p className="mb-8 text-xs leading-5 text-body">
+      <p className="mt-2 text-[13px] leading-relaxed text-muted text-pretty">
         {api.description}
       </p>
 
-      {api.availability === 'live' ? (
-        <Link
-          to={`/app/marketplace/${api.id}`}
-          aria-label={`Explore ${api.title}`}
-          className="mt-auto flex min-h-10 items-center justify-center gap-1 bg-primary px-4 py-2 text-xs font-bold text-white hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600"
-        >
-          EXPLORE API <span aria-hidden="true">→</span>
-        </Link>
-      ) : (
-        <span
-          aria-label={`${api.title} is coming soon`}
-          className="mt-auto flex min-h-10 cursor-not-allowed items-center justify-center gap-1 bg-canvas px-4 py-2 text-xs font-bold text-muted"
-        >
-          COMING SOON
-        </span>
-      )}
+      <div className="mt-4 flex flex-wrap gap-1.5">
+        {api.scope !== '—' && <span className="code-chip">{api.scope}</span>}
+        <span className="code-chip">{api.authentication}</span>
+        <span className="code-chip">{api.pricing}</span>
+      </div>
+
+      <div className="mt-auto flex items-center justify-between gap-3 border-t border-line-soft pt-4">
+        <span className="font-mono text-[10px] text-faint">{api.popularity}</span>
+
+        {live ? (
+          <Link
+            to={`/app/marketplace/${api.id}`}
+            aria-label={`Explore ${api.title}`}
+            className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-line bg-white px-3 text-xs font-semibold text-ink transition-colors hover:border-blue-300 hover:bg-tint hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+          >
+            Explore
+            <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <path d="M5 12h13M13 6l6 6-6 6" />
+            </svg>
+          </Link>
+        ) : (
+          <span
+            aria-label={`${api.title} is coming soon`}
+            className="inline-flex h-8 cursor-not-allowed items-center rounded-lg border border-line bg-canvas px-3 text-xs font-semibold text-faint"
+          >
+            Coming soon
+          </span>
+        )}
+      </div>
     </article>
+  )
+}
+
+/**
+ * Three figures under the banner. Only numbers the signed-in developer can
+ * actually see: the catalogue size, and their own traffic from /portal/summary.
+ * No platform-wide uptime or latency — that lives on the staff dashboard.
+ */
+function LiveNumbers({ liveCount }: { liveCount: number }) {
+  const [summary, setSummary] = useState<PortalSummary | null | undefined>(undefined)
+
+  useEffect(() => {
+    portal
+      .summary('24h')
+      .then(setSummary)
+      .catch(() => setSummary(null))
+  }, [])
+
+  const calls = summary === undefined ? '…' : summary === null ? '—' : compactNumber(summary.calls)
+  const p95 =
+    summary === undefined ? '…' : !summary || summary.calls === 0 ? '—' : duration(summary.p95_latency_ms)
+
+  const items: [string, string][] = [
+    [String(liveCount).padStart(2, '0'), 'Live products'],
+    [calls, 'Your calls · 24h'],
+    [p95, 'p95 latency · 24h'],
+  ]
+
+  return (
+    <dl className="flex flex-wrap gap-x-8 gap-y-3 border-b border-line py-5">
+      {items.map(([value, label]) => (
+        <div key={label}>
+          <dd className="font-mono text-[26px] font-medium leading-none tracking-[-0.03em] text-ink">{value}</dd>
+          <dt className="eyebrow mt-1.5">{label}</dt>
+        </div>
+      ))}
+    </dl>
   )
 }
 
@@ -250,22 +275,23 @@ export default function MarketplacePage() {
 
         <div className="absolute inset-0 -z-10 bg-gradient-to-r from-tint via-tint/95 to-transparent" />
 
-        <p className="text-xs font-bold uppercase tracking-wider text-muted">
-          Marketplace
-        </p>
+        <p className="eyebrow">Marketplace</p>
 
         <h1
           id="marketplace-title"
-          className="mt-2 max-w-xl text-2xl font-bold tracking-tight sm:text-3xl"
+          className="mt-2 max-w-xl text-2xl font-semibold tracking-[-0.03em] sm:text-3xl"
         >
           APIs for a more connected Africa
         </h1>
 
-        <p className="mt-3 max-w-lg text-sm leading-5 text-body">
-          Explore, integrate, and build powerful solutions with Stanbic
-          IBTC APIs.
+        <p className="mt-3 max-w-lg text-sm leading-6 text-muted text-pretty">
+          Discover, test and integrate Stanbic IBTC banking capabilities. Every
+          product listed here is live on the gateway and callable from the
+          sandbox today.
         </p>
       </section>
+
+      <LiveNumbers liveCount={marketplaceApis.filter((api) => api.availability === 'live').length} />
 
       <div className="mt-6">
         <label
@@ -304,10 +330,10 @@ export default function MarketplacePage() {
       <div className="mt-5 grid items-start gap-6 xl:grid-cols-[200px_minmax(0,1fr)]">
         <aside aria-label="API filters">
           <div className="flex items-center justify-between gap-3">
-            <h2 className="text-sm font-semibold">
+            <h2 className="eyebrow">
               Filters
               {selectedFilterCount > 0 && (
-                <span className="ml-2 text-blue-600">
+                <span className="ml-2 text-primary">
                   ({selectedFilterCount})
                 </span>
               )}
@@ -376,8 +402,10 @@ export default function MarketplacePage() {
         </aside>
 
         <section aria-label="Available APIs" className="min-w-0">
-          <p role="status" className="sr-only">
-            {filteredApis.length} APIs found.
+          <p role="status" className="mb-3.5 text-xs text-faint">
+            <span className="font-mono text-ink">{filteredApis.length}</span>{' '}
+            {filteredApis.length === 1 ? 'product' : 'products'}
+            {filteredApis.length > 0 && filteredApis.every((api) => api.availability === 'live') && ' · all live in sandbox'}
           </p>
 
           {filteredApis.length > 0 ? (

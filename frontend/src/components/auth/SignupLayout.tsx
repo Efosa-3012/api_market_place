@@ -7,7 +7,7 @@ interface Props {
 
 export default function SignupLayout({ children }: Props) {
   return (
-    <div className="min-h-dvh bg-white font-[Arial,Helvetica,sans-serif] text-ink">
+    <div className="min-h-dvh bg-white font-sans text-ink">
       <div className="mx-auto grid min-h-dvh max-w-[1600px] lg:grid-cols-[52%_48%]">
         <div className="px-6 py-5 sm:px-10 lg:py-6 lg:pl-[15%] lg:pr-10">
           <div className="mx-auto w-full max-w-[380px] lg:mx-0">

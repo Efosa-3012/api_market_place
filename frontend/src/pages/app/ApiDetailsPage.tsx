@@ -1,14 +1,18 @@
-import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { findApiDetails } from '../../components/marketplace/apiDetails'
+import { INTEGRATION_FACTS, findApiDetails } from '../../components/marketplace/apiDetails'
 import type { ApiDetails } from '../../components/marketplace/apiDetails'
-const primary =
-  'inline-flex min-h-10 items-center justify-center rounded-lg bg-primary px-4 py-2.5 text-xs font-semibold text-white hover:bg-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600'
-const secondary =
-  'inline-flex min-h-10 items-center justify-center rounded-lg border border-line bg-white px-4 py-2.5 text-xs font-semibold text-body hover:bg-blue-50'
-const panel = 'rounded-xl border border-line bg-white p-5 sm:p-8'
+import { ButtonLink, CodeBlock } from '../../components/ui'
+import { marketplaceApis } from '../../data/marketplace'
+
+/**
+ * One product in the catalogue. The left column says what it does and shows a
+ * real response; the sticky right column lists what the gateway enforces —
+ * every figure there is a backend default, not marketing.
+ */
+
 const sandbox = '/app/sandbox'
-const docs = '/app/developer-portal?tab=documentation&env=sandbox'
+const docs = '/app/developer-portal?tab=documentation'
+
 export default function ApiDetailsPage() {
   const { id } = useParams()
   const api = findApiDetails(id)
@@ -16,208 +20,202 @@ export default function ApiDetailsPage() {
     return (
       <div className="min-h-[calc(100dvh-4rem)] bg-canvas p-6 sm:p-9">
         <h1 className="text-2xl font-semibold">API not found</h1>
-        <p className="my-4 text-sm text-muted">
-          This API is not available in the current catalog.
-        </p>
-        <Link className={primary} to="/app/marketplace">
-          Back to Marketplace
-        </Link>
+        <p className="my-4 text-sm text-muted">This API is not available in the current catalog.</p>
+        <ButtonLink to="/app/marketplace">Back to Marketplace</ButtonLink>
       </div>
     )
   return <ApiDetailContent key={api.id} api={api} />
 }
+
+function SectionLabel({ children }: { children: string }) {
+  return <h2 className="eyebrow mt-9">{children}</h2>
+}
+
 function ApiDetailContent({ api }: { api: ApiDetails }) {
-  const [copied, setCopied] = useState('')
-  const requestText = `${api.method} ${api.path}${api.request ? '\nContent-Type: application/json\n\n' + JSON.stringify(api.request, null, 2) : ''}`
-  async function copy() {
-    try {
-      await navigator.clipboard.writeText(requestText)
-      setCopied('Copied sample request.')
-    } catch {
-      setCopied('Copy unavailable. Select the sample text to copy it manually.')
-    }
-  }
+  const scope = marketplaceApis.find((entry) => entry.id === api.id)?.scope
+  const hasScope = scope && scope !== '—'
+  const isConsentFlow = api.id === 'consent-api'
+
+  const requestText = api.request
+    ? `${api.method} ${api.path}\nContent-Type: application/x-www-form-urlencoded\nAuthorization: Basic <client_id:client_secret>\n\n${Object.entries(api.request)
+        .map(([k, v]) => `${k}=${String(v)}`)
+        .join('&')}`
+    : `${api.method} ${api.path}\nAuthorization: Bearer <access_token>`
+
+  const facts: [string, string][] = [
+    ['Auth', INTEGRATION_FACTS.auth],
+    ['Scope', hasScope ? scope : 'n/a'],
+    ['Rate limit', INTEGRATION_FACTS.rateLimit],
+    ['Token life', INTEGRATION_FACTS.tokenLife],
+    ['Consent life', INTEGRATION_FACTS.consentLife],
+    ['Pricing', INTEGRATION_FACTS.pricing],
+  ]
+
   return (
     <div className="min-h-[calc(100dvh-4rem)] min-w-0 bg-canvas p-4 text-ink sm:p-6 xl:p-8">
-      <nav
-        aria-label="Breadcrumb"
-        className="mb-5 flex flex-wrap gap-3 text-xs text-body"
-      >
-        <Link to="/app/marketplace" className="hover:text-blue-600">
-          ‹ Marketplace
-        </Link>
-        <span aria-hidden="true">/</span>
-        <span>APIs</span>
-        <span aria-hidden="true">/</span>
-        <span aria-current="page" className="text-ink">
-          {api.name}
-        </span>
-      </nav>
-      <header className="mb-4 bg-white p-5 sm:p-6">
-        <div className="flex flex-wrap items-center justify-between gap-5">
-          <div>
-            <h1 className="text-[28px] font-bold tracking-tight">{api.name}</h1>
-            <p className="mt-1 max-w-sm text-sm leading-6 text-body">
-              {api.summary}
-            </p>
+      <div className="mx-auto max-w-[1220px]">
+        <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-2 text-xs text-faint">
+          <Link to="/app/marketplace" className="text-muted hover:text-primary">
+            Marketplace
+          </Link>
+          <span aria-hidden="true">/</span>
+          <span>{api.category}</span>
+          <span aria-hidden="true">/</span>
+          <span aria-current="page" className="text-ink">
+            {api.name}
+          </span>
+        </nav>
+
+        {/* Header */}
+        <header className="mt-4 flex flex-wrap items-start justify-between gap-6 border-b border-line pb-6">
+          <div className="max-w-[620px]">
+            <div className="flex flex-wrap items-center gap-2.5">
+              <h1 className="text-[28px] font-semibold leading-none tracking-[-0.03em]">{api.name}</h1>
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-[#d6ebe2] bg-[#edf7f3] px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.06em] text-live">
+                <span aria-hidden="true" className="size-[5px] rounded-full bg-live" />
+                Live
+              </span>
+            </div>
+            <p className="mt-3 text-[15px] leading-relaxed text-muted text-pretty">{api.summary}</p>
+            <div className="mt-4 inline-flex max-w-full items-center overflow-hidden rounded-lg border border-line bg-white">
+              <span
+                className={`border-r border-line px-3 py-2 font-mono text-[11px] font-semibold tracking-[0.06em] ${
+                  api.method === 'GET' ? 'bg-[#f7faf9] text-live' : 'bg-tint text-primary'
+                }`}
+              >
+                {api.method}
+              </span>
+              <span className="truncate px-3 py-2 font-mono text-xs text-ink">{api.path}</span>
+            </div>
           </div>
-          <div className="flex flex-wrap gap-3">
+
+          <div className="flex flex-wrap gap-2">
             {/* Sandbox access is immediate for every registered app; production access
                 is a verification step, not a per-API request. */}
-            <Link to={sandbox} className={primary}>
-              Try in Sandbox
-            </Link>
-            <Link to="/app/my-apis" className={secondary}>
-              Register an app
-            </Link>
+            <ButtonLink to={sandbox}>
+              <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M7 4.5v15l12-7.5-12-7.5Z" />
+              </svg>
+              Try in sandbox
+            </ButtonLink>
+            <ButtonLink to={docs} secondary>
+              Documentation
+            </ButtonLink>
           </div>
-        </div>
-        <div className="mt-5 flex items-center justify-between gap-3 border-t border-slate-100 pt-4">
-          <div className="flex flex-wrap items-center gap-1 text-xs">
-            <span className="rounded bg-slate-100 px-2 py-1">
-              {api.category}
-            </span>
-            <span>·</span>
-            <span className="rounded bg-slate-100 px-2 py-1">OAuth 2.0</span>
-          </div>
-          <Link to={docs} className={secondary}>
-            ↗ View docs
-          </Link>
-        </div>
-      </header>
-      <section className={panel}>
-        <h2 className="text-lg font-semibold">Overview</h2>
-        <p className="mt-2 text-sm leading-6 text-body">{api.overview}</p>
-        <h3 className="mb-3 mt-7 text-sm font-semibold">Built for</h3>
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          {api.useCases.map((item) => (
-            <article
-              key={item.title}
-              className="rounded-xl border border-line bg-tint p-4"
-            >
-              <h4 className="text-xs font-semibold text-bank">
-                {item.title}
-              </h4>
-              <p className="mt-1 text-xs leading-5 text-muted">
-                {item.description}
-              </p>
-            </article>
-          ))}
-        </div>
-        <h3 className="mb-3 mt-7 text-sm font-semibold">What you can do</h3>
-        <ul className="grid gap-x-8 gap-y-2 text-xs sm:grid-cols-2">
-          {api.features.map((feature) => (
-            <li key={feature} className="flex items-start gap-2">
-              <span aria-hidden="true" className="font-bold text-blue-600">
-                ✓
-              </span>
-              {feature}
-            </li>
-          ))}
-        </ul>
-      </section>
-      <section className={`${panel} mt-4`}>
-        <h2 className="text-lg font-semibold">Quick Start</h2>
-        <h3 className="mt-5 text-sm font-semibold">
-          Make your first {api.category === 'Payments' ? 'transfer ' : ''}
-          request
-        </h3>
-        <p className="mt-2 text-sm leading-6 text-body">
-          Test the {api.name} in the Sandbox environment before going live.
-        </p>
-        <h4 className="mb-2 mt-6 text-sm font-semibold">Sample Request</h4>
-        <div className="overflow-hidden rounded-lg border border-line">
-          <div className="flex items-center justify-between border-b border-line bg-tint px-3">
-            <span className="border-b-2 border-blue-600 px-3 py-3 text-xs font-semibold">
-              {api.request ? 'JSON' : 'HTTP'}
-            </span>
-            <button
-              onClick={() => void copy()}
-              className="rounded p-2 text-xs text-body"
-              aria-label="Copy sample request"
-            >
-              {copied === 'Copied sample request.' ? 'Copied ✓' : 'Copy ▢'}
-            </button>
-          </div>
-          <pre
-            tabIndex={0}
-            aria-label="Sample API request"
-            className="m-4 overflow-x-auto rounded-lg bg-canvas p-4 text-xs leading-6 text-body"
-          >
-            <code>{requestText}</code>
-          </pre>
-        </div>
-        {copied && (
-          <p role="status" className="mt-2 text-xs text-blue-600">
-            {copied}
-          </p>
-        )}
-        <div className="mt-4 flex flex-col items-start gap-3 text-xs text-blue-600">
-          <Link to={sandbox} className="hover:underline">
-            Open Sandbox →
-          </Link>
-          <Link to={docs} className="hover:underline">
-            View full documentation →
-          </Link>
-        </div>
-      </section>
-      <section className="mt-7">
-        <h2 className="mb-4 text-base font-semibold">Pricing</h2>
-        <div className={panel}>
-          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-4">
-            <div>
-              <h3 className="text-base font-semibold">
-                {api.paid ? 'Pay as you use' : 'Free'}
-              </h3>
-              <p className="mt-1 text-sm text-body">
-                {api.paid
-                  ? 'No monthly subscription. Pay only for your API usage.'
-                  : 'Explore this API without usage charges in this preview.'}
-              </p>
+        </header>
+
+        {/* Body */}
+        <div className="mt-7 flex flex-wrap items-start gap-10">
+          <div className="min-w-0 flex-[1_1_380px]">
+            <p className="text-[15px] leading-7 text-body text-pretty">
+              {api.overview}
+              {hasScope && (
+                <>
+                  {' '}
+                  Requires the <span className="code-chip text-[13px]">{scope}</span> scope.
+                </>
+              )}
+            </p>
+
+            <SectionLabel>What teams build with it</SectionLabel>
+            <div className="tile-grid mt-3.5 grid-cols-1 sm:grid-cols-2">
+              {api.useCases.map((item) => (
+                <article key={item.title} className="bg-white p-[18px]">
+                  <h3 className="text-[13px] font-semibold tracking-[-0.01em]">{item.title}</h3>
+                  <p className="mt-1.5 text-xs leading-relaxed text-muted text-pretty">{item.description}</p>
+                </article>
+              ))}
             </div>
-            <span className="rounded border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs text-emerald-800">
-              {api.paid ? 'Pay as you use' : 'Free'}
-            </span>
-          </div>
-          <div className="mt-4 flex items-center justify-between gap-4 text-xs">
-            <div>
-              <h4 className="font-semibold">Sandbox</h4>
-              <p className="mt-1 text-sm text-body">
-                Test without charges
-              </p>
+
+            <SectionLabel>Capabilities</SectionLabel>
+            <ul className="mt-3 flex flex-col">
+              {api.features.map((feature) => (
+                <li
+                  key={feature}
+                  className="flex items-start gap-3 border-b border-line-soft py-[11px] text-[13px] leading-relaxed text-body"
+                >
+                  <svg
+                    aria-hidden="true"
+                    width="15"
+                    height="15"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="mt-[3px] shrink-0 text-primary"
+                  >
+                    <path d="m4.5 12.5 5 5 10-11" />
+                  </svg>
+                  <span>{feature}</span>
+                </li>
+              ))}
+            </ul>
+
+            <SectionLabel>Example request</SectionLabel>
+            <div className="mt-3">
+              <CodeBlock title={`${api.method} · ${api.request ? 'form-encoded' : 'bearer token'}`} text={requestText} />
             </div>
-            <strong>Free</strong>
-          </div>
-          <div className="mt-5 flex items-center justify-between gap-4 text-xs">
-            <div>
-              <h4 className="font-semibold">Production</h4>
-              <p className="mt-1 text-sm text-body">
-                {api.paid
-                  ? 'Rate per 1,000 calls to be confirmed'
-                  : 'No usage charges in this preview'}
-              </p>
+
+            <SectionLabel>Example response</SectionLabel>
+            <div className="mt-3">
+              <CodeBlock title="200 OK · application/json" text={JSON.stringify(api.exampleResponse, null, 2)} />
             </div>
-            <strong>{api.paid ? 'Pay-per-call' : 'Free'}</strong>
           </div>
+
+          <aside className="flex min-w-0 flex-[1_1_260px] flex-col gap-3.5 lg:sticky lg:top-24 lg:max-w-[300px]">
+            <section className="rounded-xl border border-line bg-white p-[18px]">
+              <h2 className="eyebrow">Integration facts</h2>
+              <dl className="mt-3 flex flex-col">
+                {facts.map(([label, value], index) => (
+                  <div
+                    key={label}
+                    className={`flex items-center justify-between gap-3 py-[9px] ${
+                      index < facts.length - 1 ? 'border-b border-line-soft' : ''
+                    }`}
+                  >
+                    <dt className="text-xs text-muted">{label}</dt>
+                    <dd className="font-mono text-[11px] text-ink">{value}</dd>
+                  </div>
+                ))}
+              </dl>
+            </section>
+
+            <section className="rounded-xl border border-line bg-white p-[18px]">
+              <h2 className="text-[13px] font-semibold tracking-[-0.01em]">
+                {isConsentFlow ? 'How the flow runs' : 'Before you call this'}
+              </h2>
+              <ol className="mt-2.5 flex list-decimal flex-col gap-2 pl-[18px] text-xs leading-relaxed text-muted">
+                <li>Register an app to get a client ID and secret.</li>
+                <li>
+                  Send the customer through <span className="font-mono text-[11px] text-ink">/oauth/authorize</span>.
+                </li>
+                <li>
+                  Exchange the code at <span className="font-mono text-[11px] text-ink">/oauth/token</span>.
+                </li>
+                {!isConsentFlow && (
+                  <li>
+                    Call this endpoint with the token; the consent must include{' '}
+                    <span className="font-mono text-[11px] text-ink">{scope}</span>.
+                  </li>
+                )}
+              </ol>
+              <ButtonLink
+                to={isConsentFlow ? docs : '/app/marketplace/consent-api'}
+                secondary
+                size="sm"
+                className="mt-3.5"
+              >
+                {isConsentFlow ? 'Read the full guide' : 'Read the consent guide'}
+                <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <path d="M5 12h13M13 6l6 6-6 6" />
+                </svg>
+              </ButtonLink>
+            </section>
+          </aside>
         </div>
-      </section>
-      <section className="mt-7">
-        <h2 className="mb-4 text-base font-semibold">API Information</h2>
-        <dl className="divide-y divide-slate-200 rounded-xl bg-canvas px-5">
-          {[
-            ['Category', api.category],
-            ['Version', 'v1.0'],
-            ['Response Format', 'JSON'],
-            ['Authentication', 'OAuth 2.0'],
-            ['Environment', 'Sandbox & Production'],
-          ].map(([label, value]) => (
-            <div key={label} className="py-5 text-sm">
-              <dt className="text-xs text-body">{label}</dt>
-              <dd className="mt-2 font-medium">{value}</dd>
-            </div>
-          ))}
-        </dl>
-      </section>
+      </div>
     </div>
   )
 }

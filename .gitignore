@@ -37,3 +37,7 @@ CLAUDE.md
 
 # Patch for the core-banking repo (hand to the Go dev)
 core-banking-*.patch
+
+# Local reference material, not source
+*.pptx
+Stanbic API Marketplace - Premium Screens.html

@@ -265,40 +265,36 @@ export default function DashboardPage() {
         {/* Summary cards */}
         <section
           aria-label="Workspace statistics"
-          className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4"
+          className="tile-grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4"
         >
           {summaryCards.map((card) => (
             <article
               key={card.label}
-              className={`${panelClass} flex min-h-40 flex-col p-5`}
+              className="flex min-h-33 flex-col bg-white p-5"
             >
-              <h2 className="text-xs text-body">
-                {card.label}
-              </h2>
+              <h2 className="eyebrow">{card.label}</h2>
 
-              <p className="mt-2 text-lg font-semibold leading-6">
+              <p className="mt-3.5 text-[21px] font-semibold leading-none tracking-[-0.03em]">
                 {card.value}
               </p>
 
               <p
-                className={`mt-2 min-h-4 text-xs ${
+                className={`mt-2 min-h-4 text-[11.5px] leading-5 ${
                   card.positive
-                    ? 'text-emerald-600'
-                    : 'text-muted'
+                    ? 'text-live'
+                    : 'text-faint'
                 }`}
               >
                 {card.detail}
               </p>
 
-              <div className="mt-auto pt-4">
-                <Link
-                  to={card.to}
-                  className={`flex min-h-9 items-center gap-1 border-t border-canvas pt-3 text-xs font-medium text-primary hover:underline ${focusClass}`}
-                >
-                  {card.linkLabel}
-                  <span aria-hidden="true">→</span>
-                </Link>
-              </div>
+              <Link
+                to={card.to}
+                className={`mt-auto inline-flex min-h-9 items-center gap-1 pt-3 text-[11.5px] font-semibold text-primary hover:underline ${focusClass}`}
+              >
+                {card.linkLabel}
+                <span aria-hidden="true">→</span>
+              </Link>
             </article>
           ))}
         </section>

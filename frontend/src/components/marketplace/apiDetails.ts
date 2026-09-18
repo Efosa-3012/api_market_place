@@ -12,8 +12,23 @@ export type ApiDetails = {
   method: 'GET' | 'POST'
   path: string
   request: Record<string, unknown> | null
+  /** What the gateway actually returns — same fields as backend/src/modules/resources/routes.ts. */
+  exampleResponse: Record<string, unknown>
   paid: boolean
 }
+
+/**
+ * What the gateway enforces on every product. Mirrors the backend defaults
+ * (RATE_LIMIT_MAX, ACCESS_TOKEN_TTL_SECONDS, CONSENT_TTL_DAYS) and the figures
+ * the Documentation tab quotes, so the two never disagree.
+ */
+export const INTEGRATION_FACTS = {
+  auth: 'OAuth 2.0',
+  rateLimit: '60 / min',
+  tokenLife: '24 h',
+  consentLife: '90 days',
+  pricing: 'Free in sandbox',
+} as const
 
 export const apiDetails: ApiDetails[] = [
   {
@@ -22,7 +37,7 @@ export const apiDetails: ApiDetails[] = [
     category: 'Accounts',
     summary: 'List the accounts a customer has agreed to share.',
     overview:
-      'Returns only the accounts the customer ticked on the consent screen — never their full portfolio. Account numbers are masked and internal fields (branch, relationship manager, ledger internals) are never exposed. Requires the accounts:read scope.',
+      'Returns only the accounts the customer ticked on the consent screen — never their full portfolio. Account numbers are masked and internal fields (branch, relationship manager, ledger internals) are never exposed.',
     useCases: [
       { title: 'Account aggregation', description: 'Show a customer all their Stanbic accounts inside your app.' },
       { title: 'Onboarding', description: 'Confirm a customer holds an account before offering a product.' },
@@ -40,6 +55,19 @@ export const apiDetails: ApiDetails[] = [
     method: 'GET',
     path: '/api/v1/accounts',
     request: null,
+    exampleResponse: {
+      data: [
+        {
+          account_id: 'acct-demo-001',
+          account_number_masked: '****0001',
+          account_type: 'current',
+          currency: 'NGN',
+          status: 'active',
+          opened_at: '2025-06-01T00:00:00Z',
+        },
+      ],
+      meta: { consent_id: '3f0c1d2e-8a4b-4c1f-9e2d-7b6a5c4d3e2f' },
+    },
     paid: false,
   },
   {
@@ -48,7 +76,7 @@ export const apiDetails: ApiDetails[] = [
     category: 'Accounts',
     summary: 'Available and ledger balances for a consented account.',
     overview:
-      'Each balance carries a type (available, ledger), amount, currency, credit limit and an as-of timestamp. Amounts are decimal strings — never floats — so nothing is lost in transit. Requires the balances:read scope and an account the customer shared.',
+      'Each balance carries a type (available, ledger), amount, currency, credit limit and an as-of timestamp. Amounts are decimal strings — never floats — so nothing is lost in transit. Works only on an account the customer chose to share.',
     useCases: [
       { title: 'Balance widgets', description: 'Show a live balance next to a payment or savings goal.' },
       { title: 'Affordability checks', description: 'Confirm funds before a customer commits to a purchase plan.' },
@@ -66,6 +94,18 @@ export const apiDetails: ApiDetails[] = [
     method: 'GET',
     path: '/api/v1/accounts/{accountId}/balances',
     request: null,
+    exampleResponse: {
+      data: [
+        {
+          account_id: 'acct-demo-001',
+          type: 'available',
+          amount: '1250500.50',
+          currency: 'NGN',
+          credit_limit: '0.00',
+          as_of: '2026-09-17T08:42:11Z',
+        },
+      ],
+    },
     paid: false,
   },
   {
@@ -74,7 +114,7 @@ export const apiDetails: ApiDetails[] = [
     category: 'Accounts',
     summary: 'Paginated, filterable transaction history.',
     overview:
-      'Cursor-paginated transactions with amount, direction, reference, narration, counterparty, booking and value dates. Filter by date range, direction and sort order. Pass meta.pagination.next_cursor back as cursor for the next page. Requires the transactions:read scope.',
+      'Cursor-paginated transactions with amount, direction, reference, narration, counterparty, booking and value dates. Filter by date range, direction and sort order. Pass meta.pagination.next_cursor back as cursor for the next page.',
     useCases: [
       { title: 'Budgeting apps', description: 'Categorise spending and show trends over time.' },
       { title: 'Lending decisions', description: 'Assess income and outgoings from real transaction data.' },
@@ -92,6 +132,23 @@ export const apiDetails: ApiDetails[] = [
     method: 'GET',
     path: '/api/v1/accounts/{accountId}/transactions?limit=20&type=debit',
     request: null,
+    exampleResponse: {
+      data: [
+        {
+          transaction_id: 'txn-001-004',
+          account_id: 'acct-demo-001',
+          type: 'debit',
+          amount: '45000.00',
+          currency: 'NGN',
+          reference: 'POS-202609-001',
+          narration: 'POS purchase - Shoprite Lekki',
+          counterparty: 'Shoprite Nigeria',
+          booked_at: '2026-09-15T14:07:22Z',
+          value_date: '2026-09-15T14:07:22Z',
+        },
+      ],
+      meta: { pagination: { limit: 20, has_more: true, next_cursor: 'eyJiIjoiMjAyNi0wOS0xNVQxNDowNzoyMloifQ' } },
+    },
     paid: false,
   },
   {
@@ -121,6 +178,13 @@ export const apiDetails: ApiDetails[] = [
       grant_type: 'authorization_code',
       code: '<code from the redirect>',
       redirect_uri: 'http://localhost:3000/callback',
+    },
+    exampleResponse: {
+      access_token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9…',
+      token_type: 'Bearer',
+      expires_in: 86400,
+      scope: 'accounts:read balances:read transactions:read',
+      consent_id: '3f0c1d2e-8a4b-4c1f-9e2d-7b6a5c4d3e2f',
     },
     paid: false,
   },
