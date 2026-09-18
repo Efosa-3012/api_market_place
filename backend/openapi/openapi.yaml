@@ -520,7 +520,7 @@ paths:
                     items:
                       type: object
                       properties:
-                        path: { type: string, example: /api/v1/accounts/{accountId}/balances }
+                        path: { type: string, example: '/api/v1/accounts/{accountId}/balances' }
                         method: { type: string, example: GET }
                         calls: { type: integer }
                         errors: { type: integer }
