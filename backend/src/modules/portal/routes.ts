@@ -326,13 +326,13 @@ portalRouter.get('/summary', requirePortalAuth, async (req, res, next) => {
         errors: number;
         client_errors: number;
         server_errors: number;
-        p95_latency_ms: number;
+        p99_latency_ms: number;
       }>(
         `SELECT (count(*))::int AS calls,
                 (count(*) FILTER (WHERE ac.status_code >= 400))::int AS errors,
                 (count(*) FILTER (WHERE ac.status_code BETWEEN 400 AND 499))::int AS client_errors,
                 (count(*) FILTER (WHERE ac.status_code >= 500))::int AS server_errors,
-                (coalesce(percentile_disc(0.95) WITHIN GROUP (ORDER BY ac.duration_ms), 0))::int AS p95_latency_ms
+                (coalesce(percentile_disc(0.99) WITHIN GROUP (ORDER BY ac.duration_ms), 0))::int AS p99_latency_ms
            FROM api_calls ac
            JOIN clients cl ON cl.id = ac.client_id
           WHERE cl.developer_id = $1 AND ac.created_at > now() - $2::interval`,
@@ -369,7 +369,7 @@ portalRouter.get('/summary', requirePortalAuth, async (req, res, next) => {
       client_errors: t.client_errors,
       server_errors: t.server_errors,
       error_rate: t.calls > 0 ? Math.round((t.errors / t.calls) * 10000) / 10000 : 0,
-      p95_latency_ms: t.p95_latency_ms,
+      p99_latency_ms: t.p99_latency_ms,
       apps_total: apps.length,
       apps_active: apps.filter((a) => a.status === 'active').length,
       ...consents.rows[0]!,

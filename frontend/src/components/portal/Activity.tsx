@@ -42,11 +42,11 @@ export default function Activity({
           hint="Share of calls answered with status 400 or above."
         />
         <StatTile
-          label="p95 latency"
-          value={summary.calls === 0 ? '—' : duration(summary.p95_latency_ms)}
-          detail="95th percentile"
+          label="p99 latency"
+          value={summary.calls === 0 ? '—' : duration(summary.p99_latency_ms)}
+          detail="99th percentile"
           tone="neutral"
-          hint="95% of calls completed faster than this."
+          hint="99% of calls completed faster than this."
         />
         <StatTile
           label="Live consents"

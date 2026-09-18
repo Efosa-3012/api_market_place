@@ -111,7 +111,7 @@ export function TopEndpoints({ endpoints, windowLabel }: { endpoints: EndpointTr
                 <ShareBar fraction={endpoint.calls / busiest} tone={endpoint.errors > 0 ? 'warn' : 'accent'} />
               </div>
               <p className="mt-1.5 text-[11px] text-faint">
-                p95 {duration(endpoint.p95_latency_ms)}
+                p99 {duration(endpoint.p99_latency_ms)}
                 {endpoint.errors > 0 && <span className="text-amber-700"> · {endpoint.errors} rejected</span>}
               </p>
             </li>

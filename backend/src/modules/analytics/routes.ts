@@ -86,14 +86,14 @@ analyticsRouter.get('/summary', async (req, res, next) => {
         errors: number;
         client_errors: number;
         server_errors: number;
-        p95_latency_ms: number;
+        p99_latency_ms: number;
         avg_latency_ms: number;
       }>(
         `SELECT (count(*))::int AS calls,
                 (count(*) FILTER (WHERE status_code >= 400))::int AS errors,
                 (count(*) FILTER (WHERE status_code BETWEEN 400 AND 499))::int AS client_errors,
                 (count(*) FILTER (WHERE status_code >= 500))::int AS server_errors,
-                (coalesce(percentile_disc(0.95) WITHIN GROUP (ORDER BY duration_ms), 0))::int AS p95_latency_ms,
+                (coalesce(percentile_disc(0.99) WITHIN GROUP (ORDER BY duration_ms), 0))::int AS p99_latency_ms,
                 (coalesce(round(avg(duration_ms)), 0))::int AS avg_latency_ms
            FROM api_calls
           WHERE created_at > now() - $1::interval`,
@@ -125,7 +125,7 @@ analyticsRouter.get('/summary', async (req, res, next) => {
       client_errors: t.client_errors,
       server_errors: t.server_errors,
       error_rate: t.calls > 0 ? Math.round((t.errors / t.calls) * 10000) / 10000 : 0,
-      p95_latency_ms: t.p95_latency_ms,
+      p99_latency_ms: t.p99_latency_ms,
       avg_latency_ms: t.avg_latency_ms,
       ...consents.rows[0]!,
       ...partners.rows[0]!,
@@ -251,7 +251,7 @@ analyticsRouter.get('/top-endpoints', async (req, res, next) => {
               method,
               (count(*))::int AS calls,
               (count(*) FILTER (WHERE status_code >= 400))::int AS errors,
-              (coalesce(percentile_disc(0.95) WITHIN GROUP (ORDER BY duration_ms), 0))::int AS p95_latency_ms
+              (coalesce(percentile_disc(0.99) WITHIN GROUP (ORDER BY duration_ms), 0))::int AS p99_latency_ms
          FROM api_calls
         WHERE created_at > now() - $1::interval
           AND path LIKE '/api/v1/%'
@@ -280,7 +280,7 @@ analyticsRouter.get('/endpoints', async (req, res, next) => {
               method,
               (count(*))::int AS calls,
               (count(*) FILTER (WHERE status_code >= 400))::int AS errors,
-              (coalesce(percentile_disc(0.95) WITHIN GROUP (ORDER BY duration_ms), 0))::int AS p95_latency_ms,
+              (coalesce(percentile_disc(0.99) WITHIN GROUP (ORDER BY duration_ms), 0))::int AS p99_latency_ms,
               (count(DISTINCT client_id))::int AS partners,
               max(created_at) AS last_call_at
          FROM api_calls

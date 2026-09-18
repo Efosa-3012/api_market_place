@@ -160,13 +160,13 @@ function LiveNumbers({ liveCount }: { liveCount: number }) {
   }, [])
 
   const calls = summary === undefined ? '…' : summary === null ? '—' : compactNumber(summary.calls)
-  const p95 =
-    summary === undefined ? '…' : !summary || summary.calls === 0 ? '—' : duration(summary.p95_latency_ms)
+  const p99 =
+    summary === undefined ? '…' : !summary || summary.calls === 0 ? '—' : duration(summary.p99_latency_ms)
 
   const items: [string, string][] = [
     [String(liveCount).padStart(2, '0'), 'Live products'],
     [calls, 'Your calls · 24h'],
-    [p95, 'p95 latency · 24h'],
+    [p99, 'p99 latency · 24h'],
   ]
 
   return (

@@ -54,7 +54,7 @@ export interface PortalSummary {
   client_errors: number
   server_errors: number
   error_rate: number
-  p95_latency_ms: number
+  p99_latency_ms: number
   apps_total: number
   apps_active: number
   active_consents: number

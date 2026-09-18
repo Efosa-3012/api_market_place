@@ -28,9 +28,9 @@ interface ProductUsage {
   calls: number
   errors: number
   partners: number
-  p95: number
+  p99: number
   lastCallAt: string | null
-  endpoints: (EndpointUsage | { method: string; path: string; calls: 0; errors: 0; p95_latency_ms: 0; partners: 0; last_call_at: null })[]
+  endpoints: (EndpointUsage | { method: string; path: string; calls: 0; errors: 0; p99_latency_ms: 0; partners: 0; last_call_at: null })[]
 }
 
 /** Fold per-route usage into per-product usage using each product's declared routes. */
@@ -38,7 +38,7 @@ function attribute(usage: EndpointUsage[]): ProductUsage[] {
   const byRoute = new Map(usage.map((u) => [`${u.method} ${u.path}`, u]))
   return marketplaceApis.map((api) => {
     const endpoints = api.endpoints.map(
-      (e) => byRoute.get(`${e.method} ${e.path}`) ?? { ...e, calls: 0 as const, errors: 0 as const, p95_latency_ms: 0 as const, partners: 0 as const, last_call_at: null },
+      (e) => byRoute.get(`${e.method} ${e.path}`) ?? { ...e, calls: 0 as const, errors: 0 as const, p99_latency_ms: 0 as const, partners: 0 as const, last_call_at: null },
     )
     const calls = endpoints.reduce((n, e) => n + e.calls, 0)
     const errors = endpoints.reduce((n, e) => n + e.errors, 0)
@@ -49,7 +49,7 @@ function attribute(usage: EndpointUsage[]): ProductUsage[] {
       errors,
       // Distinct partners per route is the best the endpoint rows can give; the max is a floor, never an overcount.
       partners: Math.max(0, ...endpoints.map((e) => e.partners)),
-      p95: Math.max(0, ...endpoints.map((e) => e.p95_latency_ms)),
+      p99: Math.max(0, ...endpoints.map((e) => e.p99_latency_ms)),
       lastCallAt,
       endpoints,
     }
@@ -229,7 +229,7 @@ function ProductRow({
         </span>
         <span className="w-20 shrink-0 text-right text-xs tabular-nums text-muted">
           {p.lastCallAt ? relativeTime(p.lastCallAt) : '—'}
-          <span className="block text-[10px] text-faint">{p.calls > 0 ? `p95 ${duration(p.p95)}` : 'no traffic'}</span>
+          <span className="block text-[10px] text-faint">{p.calls > 0 ? `p99 ${duration(p.p99)}` : 'no traffic'}</span>
         </span>
       </button>
 
@@ -251,7 +251,7 @@ function ProductRow({
                   <span className="font-mono text-ink">{e.partners}</span> {e.partners === 1 ? 'partner' : 'partners'}
                 </span>
                 <span className="text-xs tabular-nums text-muted">
-                  {e.calls > 0 ? `p95 ${duration(e.p95_latency_ms)}` : '—'}
+                  {e.calls > 0 ? `p99 ${duration(e.p99_latency_ms)}` : '—'}
                 </span>
               </li>
             ))}

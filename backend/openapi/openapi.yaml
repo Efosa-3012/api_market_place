@@ -359,7 +359,7 @@ paths:
   /analytics/summary:
     get:
       tags: [Analytics]
-      summary: Headline tiles — traffic, error rate, p95 latency, consent counts
+      summary: Headline tiles — traffic, error rate, p99 latency, consent counts
       security: [{ adminKey: [] }, { portalToken: [] }]
       parameters: [{ $ref: '#/components/parameters/window' }]
       responses:
@@ -376,7 +376,7 @@ paths:
                   client_errors: { type: integer, description: Status 400–499 }
                   server_errors: { type: integer, description: Status 500 and above }
                   error_rate: { type: number, example: 0.1667, description: Ratio of calls with status >= 400 }
-                  p95_latency_ms: { type: integer }
+                  p99_latency_ms: { type: integer }
                   avg_latency_ms: { type: integer }
                   active_consents: { type: integer }
                   new_consents: { type: integer, description: Consents authorised within the window }
@@ -491,7 +491,7 @@ paths:
                         method: { type: string, example: GET }
                         calls: { type: integer }
                         errors: { type: integer }
-                        p95_latency_ms: { type: integer }
+                        p99_latency_ms: { type: integer }
         '401': { $ref: '#/components/responses/AdminUnauthorized' }
 
   /analytics/endpoints:
@@ -524,7 +524,7 @@ paths:
                         method: { type: string, example: GET }
                         calls: { type: integer }
                         errors: { type: integer }
-                        p95_latency_ms: { type: integer }
+                        p99_latency_ms: { type: integer }
                         partners: { type: integer, description: Distinct clients that called the route }
                         last_call_at: { type: string, format: date-time, nullable: true }
         '401': { $ref: '#/components/responses/AdminUnauthorized' }
@@ -809,7 +809,7 @@ paths:
                   client_errors: { type: integer }
                   server_errors: { type: integer }
                   error_rate: { type: number }
-                  p95_latency_ms: { type: integer }
+                  p99_latency_ms: { type: integer }
                   apps_total: { type: integer }
                   apps_active: { type: integer }
                   active_consents: { type: integer, description: Live customer consents across your apps }
