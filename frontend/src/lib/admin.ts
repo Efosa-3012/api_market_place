@@ -106,7 +106,39 @@ export interface ConsentBreakdown {
   recent: ConsentRecord[]
 }
 
+/** One registered app, as listed under its developer on the partner register. */
+export interface DeveloperApp {
+  id: string
+  client_id: string
+  name: string
+  status: 'active' | 'deactivated'
+  created_at: string
+  deactivated_at: string | null
+  calls: number
+  active_consents: number
+  last_call_at: string | null
+}
+
+/** A developer account and everything registered under it. */
+export interface DeveloperAccount {
+  id: string
+  email: string
+  name: string
+  company: string | null
+  created_at: string
+  apps_total: number
+  apps_active: number
+  calls: number
+  errors: number
+  active_consents: number
+  last_call_at: string | null
+  apps: DeveloperApp[]
+}
+
 export const admin = {
+  developers() {
+    return api<{ data: DeveloperAccount[] }>('/analytics/developers', { auth: 'portal' })
+  },
   summary(window: AnalyticsWindow) {
     return api<AnalyticsSummary>(`/analytics/summary?window=${window}`, { auth: 'portal' })
   },

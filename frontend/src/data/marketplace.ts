@@ -65,4 +65,47 @@ export const marketplaceApis: MarketplaceApi[] = [
         availability: 'live',
         scope: '—',
     },
+
+    // ------------------------------------------------------------------
+    // Roadmap. Listed so partners can see where the platform is going, but
+    // not callable: each needs a capability the core does not expose yet
+    // (name lookup by account number, credit decisioning, a transfer rail).
+    // Flip to 'live' only when the gateway route exists.
+    // ------------------------------------------------------------------
+    {
+        id: 'confirmation-of-payee-api',
+        category: 'Payments',
+        title: 'Confirmation of Payee',
+        description:
+            'Check that the name a customer typed matches the account they are about to pay, before any money moves. Built to stop authorised push-payment fraud on NIP transfers.',
+        pricing: 'Free',
+        authentication: 'OAuth 2.0',
+        popularity: 'New',
+        availability: 'coming-soon',
+        scope: 'payee:confirm',
+    },
+    {
+        id: 'loan-eligibility-api',
+        category: 'Lending',
+        title: 'Loan Eligibility',
+        description:
+            'A yes/no pre-approval and an indicative limit for a consenting customer, so a marketplace can offer finance at checkout. Returns a decision, never the score behind it.',
+        pricing: 'Paid',
+        authentication: 'OAuth 2.0',
+        popularity: 'New',
+        availability: 'coming-soon',
+        scope: 'loans:eligibility',
+    },
+    {
+        id: 'payment-initiation-api',
+        category: 'Payments',
+        title: 'Payment Initiation',
+        description:
+            'Pay-by-bank: push an account-to-account transfer from a consenting customer, with a one-time code on every payment, amount limits and idempotency keys. The first write scope on the platform.',
+        pricing: 'Paid',
+        authentication: 'OAuth 2.0',
+        popularity: 'New',
+        availability: 'coming-soon',
+        scope: 'payments:initiate',
+    },
 ]

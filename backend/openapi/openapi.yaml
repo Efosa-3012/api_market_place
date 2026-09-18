@@ -415,6 +415,54 @@ paths:
                         errors: { type: integer }
         '401': { $ref: '#/components/responses/AdminUnauthorized' }
 
+  /analytics/developers:
+    get:
+      tags: [Analytics]
+      summary: The partner register — every developer account and its apps
+      description: >-
+        Developer accounts (staff accounts excluded), each with the apps registered under it, all-time
+        traffic, live consents and last activity. Busiest first.
+      security: [{ adminKey: [] }, { portalToken: [] }]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id: { type: string, format: uuid }
+                        email: { type: string, example: dev@budgetbuddy.example }
+                        name: { type: string, example: Demo Developer }
+                        company: { type: string, nullable: true, example: BudgetBuddy Ltd }
+                        created_at: { type: string, format: date-time }
+                        apps_total: { type: integer }
+                        apps_active: { type: integer }
+                        calls: { type: integer }
+                        errors: { type: integer }
+                        active_consents: { type: integer }
+                        last_call_at: { type: string, format: date-time, nullable: true }
+                        apps:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              id: { type: string, format: uuid }
+                              client_id: { type: string, example: budgetbuddy }
+                              name: { type: string, example: BudgetBuddy }
+                              status: { type: string, enum: [active, deactivated] }
+                              created_at: { type: string, format: date-time }
+                              deactivated_at: { type: string, format: date-time, nullable: true }
+                              calls: { type: integer }
+                              active_consents: { type: integer }
+                              last_call_at: { type: string, format: date-time, nullable: true }
+        '401': { $ref: '#/components/responses/AdminUnauthorized' }
+
   /analytics/top-endpoints:
     get:
       tags: [Analytics]

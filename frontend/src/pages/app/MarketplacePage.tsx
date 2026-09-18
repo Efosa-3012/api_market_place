@@ -5,7 +5,7 @@ import type { MarketplaceApi } from '../../data/marketplace'
 import { compactNumber, duration } from '../../lib/admin'
 import { portal, type PortalSummary } from '../../lib/portal'
 
-const categories = ['Accounts', 'Consent']
+const categories = [...new Set(marketplaceApis.map((api) => api.category))]
 
 const authenticationTypes = ['OAuth 2.0']
 const popularityOptions = ['Most used', 'Trending', 'New']
@@ -285,9 +285,8 @@ export default function MarketplacePage() {
         </h1>
 
         <p className="mt-3 max-w-lg text-sm leading-6 text-muted text-pretty">
-          Discover, test and integrate Stanbic IBTC banking capabilities. Every
-          product listed here is live on the gateway and callable from the
-          sandbox today.
+          Discover, test and integrate Stanbic IBTC banking capabilities. Live
+          products are callable from the sandbox today; the rest is the roadmap.
         </p>
       </section>
 
@@ -405,7 +404,12 @@ export default function MarketplacePage() {
           <p role="status" className="mb-3.5 text-xs text-faint">
             <span className="font-mono text-ink">{filteredApis.length}</span>{' '}
             {filteredApis.length === 1 ? 'product' : 'products'}
-            {filteredApis.length > 0 && filteredApis.every((api) => api.availability === 'live') && ' · all live in sandbox'}
+            {(() => {
+              const live = filteredApis.filter((api) => api.availability === 'live').length
+              if (filteredApis.length === 0) return null
+              if (live === filteredApis.length) return ' · all live in sandbox'
+              return ` · ${live} live · ${filteredApis.length - live} on the roadmap`
+            })()}
           </p>
 
           {filteredApis.length > 0 ? (

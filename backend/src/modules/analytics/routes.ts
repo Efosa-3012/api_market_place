@@ -161,6 +161,80 @@ analyticsRouter.get('/calls-per-client', async (_req, res, next) => {
   }
 });
 
+// GET /analytics/developers — every developer account on the platform, with the
+// apps registered under it. The partner register: who signed up, what they have
+// built, whether it is being used. Staff accounts are not partners and are left out.
+interface DeveloperRow {
+  id: string;
+  email: string;
+  name: string;
+  company: string | null;
+  created_at: Date;
+  apps_total: number;
+  apps_active: number;
+  calls: number;
+  errors: number;
+  active_consents: number;
+  last_call_at: Date | null;
+}
+
+interface DeveloperAppRow {
+  developer_id: string;
+  id: string;
+  client_id: string;
+  name: string;
+  status: string;
+  created_at: Date;
+  deactivated_at: Date | null;
+  calls: number;
+  active_consents: number;
+  last_call_at: Date | null;
+}
+
+analyticsRouter.get('/developers', async (_req, res, next) => {
+  try {
+    const [developers, apps] = await Promise.all([
+      pool.query<DeveloperRow>(
+        `SELECT d.id, d.email, d.name, d.company, d.created_at,
+                (count(DISTINCT cl.id))::int AS apps_total,
+                (count(DISTINCT cl.id) FILTER (WHERE cl.status = 'active'))::int AS apps_active,
+                (count(ac.id))::int AS calls,
+                (count(ac.id) FILTER (WHERE ac.status_code >= 400))::int AS errors,
+                (SELECT count(*) FROM consents c JOIN clients c2 ON c2.id = c.client_id
+                  WHERE c2.developer_id = d.id AND c.status = 'authorised' AND NOT c.sandbox)::int AS active_consents,
+                max(ac.created_at) AS last_call_at
+           FROM developers d
+           LEFT JOIN clients cl ON cl.developer_id = d.id
+           LEFT JOIN api_calls ac ON ac.client_id = cl.id
+          WHERE d.role = 'developer'
+          GROUP BY d.id
+          ORDER BY calls DESC, d.created_at ASC`,
+      ),
+      pool.query<DeveloperAppRow>(
+        `SELECT cl.developer_id, cl.id, cl.client_id, cl.name, cl.status::text AS status, cl.created_at, cl.deactivated_at,
+                (count(ac.id))::int AS calls,
+                (SELECT count(*) FROM consents c
+                  WHERE c.client_id = cl.id AND c.status = 'authorised' AND NOT c.sandbox)::int AS active_consents,
+                max(ac.created_at) AS last_call_at
+           FROM clients cl
+           LEFT JOIN api_calls ac ON ac.client_id = cl.id
+          GROUP BY cl.id
+          ORDER BY calls DESC, cl.created_at ASC`,
+      ),
+    ]);
+
+    const byDeveloper = new Map<string, Omit<DeveloperAppRow, 'developer_id'>[]>();
+    for (const { developer_id, ...app } of apps.rows) {
+      const list = byDeveloper.get(developer_id) ?? [];
+      list.push(app);
+      byDeveloper.set(developer_id, list);
+    }
+    res.json({ data: developers.rows.map((d) => ({ ...d, apps: byDeveloper.get(d.id) ?? [] })) });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // GET /analytics/top-endpoints?window=24h — which APIs partners actually use.
 //
 // Only the partner surface (/api/v1/*) counts: the bank's own consent pages and
