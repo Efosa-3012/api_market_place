@@ -1,0 +1,55 @@
+%% The domain tables and the fields the code branches on. Deliberately not
+%% the full schema: no created_at, no indexes. Two things worth noticing:
+%% there is no password column for customers (the bank's IdP owns them, so
+%% customer_id is text, not a foreign key), and consent is the hub.
+erDiagram
+    DEVELOPER ||--o{ CLIENT : "registers"
+    CLIENT ||--o{ CONSENT : "is granted"
+    CONSENT ||--o{ AUTHORIZATION_CODE : "mints"
+    CONSENT ||--o{ API_CALL : "is audited under"
+    CLIENT ||--o{ API_CALL : "makes"
+
+    DEVELOPER {
+        uuid id PK
+        text email UK
+        text password_hash
+        text company
+        enum role "developer | admin"
+    }
+
+    CLIENT {
+        uuid id PK
+        text client_id UK "public id, e.g. budgetbuddy"
+        text client_secret_hash "bcrypt; shown once"
+        text_array redirect_uris
+        text_array allowed_scopes
+        enum status "active | deactivated"
+        timestamptz deactivated_at
+    }
+
+    CONSENT {
+        uuid id PK
+        text customer_id "from the bank's IdP, not an FK"
+        text_array scopes
+        text_array account_ids "chosen by the customer"
+        enum status "awaiting | authorised | rejected | revoked | expired"
+        timestamptz expires_at "authorised_at + 90 days"
+        text revoked_by "customer | bank | client_deactivated"
+        bool sandbox
+    }
+
+    AUTHORIZATION_CODE {
+        text code PK
+        timestamptz expires_at "5 minutes"
+        timestamptz used_at "single use"
+    }
+
+    API_CALL {
+        text correlation_id
+        text customer_id "on whose behalf"
+        text method
+        text path
+        int status_code
+        text error_code "e.g. consent_revoked"
+        int duration_ms
+    }

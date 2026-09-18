@@ -1,0 +1,44 @@
+%% How does a fintech get a customer's data — and lose it?
+%% One happy path, plus the one failure that proves the model: revoke → 403.
+sequenceDiagram
+    autonumber
+    actor Ada as Customer (Ada)
+    participant BB as BudgetBuddy<br/>(fintech app)
+    participant GW as API Gateway
+    participant UI as Bank consent UI
+    participant Core as Core banking
+
+    BB->>GW: GET /oauth/authorize<br/>client_id · scope · redirect_uri · state
+    GW->>GW: create consent<br/>status = awaiting_authorisation
+    GW-->>Ada: 302 → bank login
+
+    Ada->>UI: username + password
+    UI->>Core: POST /v1/authorize
+    Core-->>UI: customer_id
+    Note over UI,Core: The marketplace never sees or stores the password
+
+    UI->>GW: GET /bank/consents/:id
+    GW->>GW: bind consent to this customer
+    GW-->>UI: who · what · which accounts · how long
+    Ada->>UI: choose accounts, Approve
+    UI->>GW: POST /bank/consents/:id/authorise
+    GW->>GW: status = authorised · expires in 90 days<br/>mint single-use code (5 min)
+    GW-->>BB: 302 redirect_uri?code=…&state=…
+
+    BB->>GW: POST /oauth/token<br/>Basic client_id:secret · code
+    GW-->>BB: access_token (JWT bound to consent, 24 h)
+
+    BB->>GW: GET /api/v1/accounts<br/>Bearer token
+    GW->>GW: verify JWT · re-read consent · check scope · rate limit
+    GW->>Core: GET /v1/customers/:id/accounts
+    Core-->>GW: accounts
+    GW-->>BB: only the consented accounts, numbers masked
+    Note over GW: one api_calls row per request — the audit trail
+
+    Ada->>UI: Connected Apps → Revoke
+    UI->>GW: POST /bank/connected-apps/:id/revoke
+    GW->>GW: status = revoked
+
+    BB->>GW: GET /api/v1/accounts (same token)
+    GW-->>BB: 403 consent_revoked
+    Note over BB,GW: Revocation is enforced on the next call, not on token expiry

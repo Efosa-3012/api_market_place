@@ -1,0 +1,44 @@
+%% What are the parts, and who talks to whom? Boxes are deployable things,
+%% arrows are network calls. The one seam that matters is the core-banking
+%% adapter: the marketplace never touches the ledger directly.
+flowchart LR
+    subgraph browser["Browser · React + Vite"]
+        direction TB
+        portal["Developer portal<br/>/app — marketplace, apps, sandbox"]
+        bank["Bank consent UI<br/>/bank, /consent — login, approve, revoke"]
+        admin["Control room<br/>/admin — dashboard, partners, APIs"]
+        sample["BudgetBuddy<br/>/budgetbuddy — sample fintech"]
+    end
+
+    subgraph gateway["API Gateway · Node · Express 5 · TypeScript"]
+        direction TB
+        oauth["OAuth 2.0 server<br/>/oauth/authorize · /oauth/token"]
+        consent["Consent service<br/>state machine · auth codes"]
+        resources["Resource APIs<br/>/api/v1/accounts…"]
+        guard["authenticate · scope · rate limit<br/>audit log · correlation id"]
+        portalsvc["Portal + analytics<br/>/portal/* · /analytics/*"]
+        adapter["Core-banking adapter<br/>one narrow interface"]
+    end
+
+    pg[("PostgreSQL<br/>developers · clients · consents<br/>authorization_codes · api_calls")]
+    core["Core banking · Go<br/>accounts · balances · transactions<br/>customer identity"]
+    redis[("Redis<br/>verification codes")]
+
+    portal --> portalsvc
+    admin --> portalsvc
+    bank --> consent
+    sample --> oauth
+    sample --> resources
+
+    oauth --> consent
+    resources --> guard --> consent
+    consent -. "customer accounts for the consent screen" .-> adapter
+    resources --> adapter
+    consent --> pg
+    portalsvc --> pg
+    guard -. "one row per request" .-> pg
+    adapter ==> core
+    core --> redis
+
+    classDef seam stroke:#0450ff,stroke-width:3px
+    class adapter seam

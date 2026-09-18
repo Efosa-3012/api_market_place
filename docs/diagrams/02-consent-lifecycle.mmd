@@ -1,0 +1,25 @@
+%% The consent record's lifecycle. consents.status is the security model:
+%% authenticate re-reads it on every partner call, so a change here takes
+%% effect on the next request.
+stateDiagram-v2
+    direction LR
+
+    [*] --> awaiting_authorisation : GET /oauth/authorize<br/>(fintech starts the flow)
+
+    awaiting_authorisation --> authorised : customer approves<br/>chooses accounts
+    awaiting_authorisation --> rejected : customer declines
+    awaiting_authorisation --> expired : not acted on<br/>within 15 minutes
+
+    authorised --> revoked : customer revokes<br/>(Connected Apps)
+    authorised --> revoked : app deactivated<br/>(blast-radius switch)
+    authorised --> expired : 90 days pass
+
+    rejected --> [*]
+    revoked --> [*]
+    expired --> [*]
+
+    note right of authorised
+        Only state in which
+        /api/v1/* calls succeed.
+        Checked on every call.
+    end note
