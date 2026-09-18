@@ -2,8 +2,8 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, NavLink, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { portalSession } from '../lib/api'
-// Only screens backed by real data are navigable. The catalogue / settings
-// screens exist as mock-ups but are not wired, so they are not offered.
+// Only screens backed by real data are navigable. The settings screen and the
+// old catalogue-management mock-up are not wired, so they are not offered.
 const navigation = [
   {
     label: 'Dashboard',
@@ -14,6 +14,11 @@ const navigation = [
     label: 'Partners',
     path: '/admin/partners',
     icon: 'M16 11a4 4 0 1 0-8 0 4 4 0 0 0 8 0M4 21a8 8 0 0 1 16 0',
+  },
+  {
+    label: 'APIs',
+    path: '/admin/apis',
+    icon: 'M4 7h16M4 12h16M4 17h10M17 15l2 2 3-3',
   },
 ]
 export default function AdminLayout() {

@@ -135,7 +135,23 @@ export interface DeveloperAccount {
   apps: DeveloperApp[]
 }
 
+/** Usage of one gateway route in a window, for the admin catalogue. */
+export interface EndpointUsage {
+  path: string
+  method: string
+  calls: number
+  errors: number
+  p95_latency_ms: number
+  partners: number
+  last_call_at: string | null
+}
+
 export const admin = {
+  endpoints(window: AnalyticsWindow) {
+    return api<{ window: AnalyticsWindow; data: EndpointUsage[] }>(`/analytics/endpoints?window=${window}`, {
+      auth: 'portal',
+    })
+  },
   developers() {
     return api<{ data: DeveloperAccount[] }>('/analytics/developers', { auth: 'portal' })
   },

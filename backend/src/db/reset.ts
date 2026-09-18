@@ -17,7 +17,7 @@ import { config } from '../config.js';
 import { pool } from '../lib/db.js';
 import { isMain } from '../lib/isMain.js';
 import { logger } from '../lib/logger.js';
-import { DEMO_CLIENT, seed } from './seed.js';
+import { SEEDED_CLIENT_IDS, SEEDED_DEVELOPER_EMAILS, seed } from './seed.js';
 
 /** Hosts we accept. A demo reset must never reach a deployed database. */
 const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '::1', 'postgres', 'host.docker.internal']);
@@ -36,13 +36,14 @@ export async function reset() {
   await pool.query('TRUNCATE authorization_codes, consents RESTART IDENTITY CASCADE');
   await pool.query('TRUNCATE bank_sessions RESTART IDENTITY CASCADE');
 
-  // Keep the seeded demo client; drop everything demo-flow.sh created along the way.
-  const { rowCount: apps } = await pool.query(`DELETE FROM clients WHERE client_id <> $1`, [DEMO_CLIENT.client_id]);
+  // Keep everything the seed owns; drop what demo-flow.sh and rehearsals created along the way.
+  const { rowCount: apps } = await pool.query(`DELETE FROM clients WHERE client_id <> ALL($1::text[])`, [SEEDED_CLIENT_IDS]);
   const { rowCount: developers } = await pool.query(
     `DELETE FROM developers d
       WHERE d.role <> 'admin'
-        AND d.email <> 'dev@budgetbuddy.example'
+        AND d.email <> ALL($1::text[])
         AND NOT EXISTS (SELECT 1 FROM clients c WHERE c.developer_id = d.id)`,
+    [SEEDED_DEVELOPER_EMAILS],
   );
 
   logger.info({ apps: apps ?? 0, developers: developers ?? 0 }, 'cleared demo debris');

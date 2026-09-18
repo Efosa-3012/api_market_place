@@ -494,6 +494,41 @@ paths:
                         p95_latency_ms: { type: integer }
         '401': { $ref: '#/components/responses/AdminUnauthorized' }
 
+  /analytics/endpoints:
+    get:
+      tags: [Analytics]
+      summary: Usage of every product route in a window
+      description: >-
+        Like top-endpoints but unbounded and including the OAuth routes, so the admin catalogue can attribute
+        usage to every product, consent included. Account ids are collapsed to {accountId}.
+      security: [{ adminKey: [] }, { portalToken: [] }]
+      parameters:
+        - in: query
+          name: window
+          schema: { type: string, enum: [1h, 6h, 24h, 7d, 30d], default: 24h }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  window: { type: string }
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        path: { type: string, example: /api/v1/accounts/{accountId}/balances }
+                        method: { type: string, example: GET }
+                        calls: { type: integer }
+                        errors: { type: integer }
+                        p95_latency_ms: { type: integer }
+                        partners: { type: integer, description: Distinct clients that called the route }
+                        last_call_at: { type: string, format: date-time, nullable: true }
+        '401': { $ref: '#/components/responses/AdminUnauthorized' }
+
   /analytics/timeseries:
     get:
       tags: [Analytics]

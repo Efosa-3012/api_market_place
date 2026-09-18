@@ -14,6 +14,8 @@ export interface MarketplaceApi {
     availability: 'live' | 'coming-soon'
     /** OAuth scope a consent must include to call it. */
     scope: string
+    /** Gateway routes that make up the product; how the admin catalogue attributes usage. */
+    endpoints: { method: string; path: string }[]
 }
 
 export const marketplaceApis: MarketplaceApi[] = [
@@ -28,6 +30,10 @@ export const marketplaceApis: MarketplaceApi[] = [
         popularity: 'Most used',
         availability: 'live',
         scope: 'accounts:read',
+        endpoints: [
+            { method: 'GET', path: '/api/v1/accounts' },
+            { method: 'GET', path: '/api/v1/accounts/{accountId}' },
+        ],
     },
     {
         id: 'balances-api',
@@ -40,6 +46,7 @@ export const marketplaceApis: MarketplaceApi[] = [
         popularity: 'Most used',
         availability: 'live',
         scope: 'balances:read',
+        endpoints: [{ method: 'GET', path: '/api/v1/accounts/{accountId}/balances' }],
     },
     {
         id: 'transactions-api',
@@ -52,6 +59,7 @@ export const marketplaceApis: MarketplaceApi[] = [
         popularity: 'Trending',
         availability: 'live',
         scope: 'transactions:read',
+        endpoints: [{ method: 'GET', path: '/api/v1/accounts/{accountId}/transactions' }],
     },
     {
         id: 'consent-api',
@@ -64,6 +72,10 @@ export const marketplaceApis: MarketplaceApi[] = [
         popularity: 'New',
         availability: 'live',
         scope: '—',
+        endpoints: [
+            { method: 'GET', path: '/oauth/authorize' },
+            { method: 'POST', path: '/oauth/token' },
+        ],
     },
 
     // ------------------------------------------------------------------
@@ -83,6 +95,7 @@ export const marketplaceApis: MarketplaceApi[] = [
         popularity: 'New',
         availability: 'coming-soon',
         scope: 'payee:confirm',
+        endpoints: [],
     },
     {
         id: 'loan-eligibility-api',
@@ -95,6 +108,7 @@ export const marketplaceApis: MarketplaceApi[] = [
         popularity: 'New',
         availability: 'coming-soon',
         scope: 'loans:eligibility',
+        endpoints: [],
     },
     {
         id: 'payment-initiation-api',
@@ -107,5 +121,6 @@ export const marketplaceApis: MarketplaceApi[] = [
         popularity: 'New',
         availability: 'coming-soon',
         scope: 'payments:initiate',
+        endpoints: [],
     },
 ]

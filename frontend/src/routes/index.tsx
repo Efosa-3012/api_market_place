@@ -28,6 +28,7 @@ import BudgetBuddyPage from '../pages/sample/BudgetBuddyPage'
 import AdminDashboardPage from '../pages/admin/AdminDashboardPage'
 import AdminAnalyticsPage from '../pages/admin/AdminAnalyticsPage'
 import AdminPartnersPage from '../pages/admin/AdminPartnersPage'
+import AdminCatalogPage from '../pages/admin/AdminCatalogPage'
 
 const router = createBrowserRouter([
   {
@@ -119,6 +120,10 @@ const router = createBrowserRouter([
       {
         path: 'partners',
         element: <AdminPartnersPage />,
+      },
+      {
+        path: 'apis',
+        element: <AdminCatalogPage />,
       },
     ],
   },

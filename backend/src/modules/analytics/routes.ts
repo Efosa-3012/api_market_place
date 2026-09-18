@@ -267,6 +267,36 @@ analyticsRouter.get('/top-endpoints', async (req, res, next) => {
   }
 });
 
+// GET /analytics/endpoints?window=24h — usage of every product endpoint, for the
+// catalogue view. Unlike top-endpoints this is unbounded and includes the OAuth
+// endpoints, so the consent product can be shown alongside the data products.
+analyticsRouter.get('/endpoints', async (req, res, next) => {
+  try {
+    const { window } = parse(windowQuery, req.query);
+    const { interval } = WINDOWS[window];
+
+    const { rows } = await pool.query(
+      `SELECT regexp_replace(path, '/api/v1/accounts/[^/]+', '/api/v1/accounts/{accountId}') AS path,
+              method,
+              (count(*))::int AS calls,
+              (count(*) FILTER (WHERE status_code >= 400))::int AS errors,
+              (coalesce(percentile_disc(0.95) WITHIN GROUP (ORDER BY duration_ms), 0))::int AS p95_latency_ms,
+              (count(DISTINCT client_id))::int AS partners,
+              max(created_at) AS last_call_at
+         FROM api_calls
+        WHERE created_at > now() - $1::interval
+          AND (path LIKE '/api/v1/%' OR path LIKE '/oauth/%')
+          AND method <> 'OPTIONS'
+        GROUP BY 1, 2
+        ORDER BY calls DESC`,
+      [interval],
+    );
+    res.json({ window, data: rows });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // GET /analytics/timeseries?window=24h — calls per bucket, gaps filled so the
 // line chart has a continuous x-axis.
 analyticsRouter.get('/timeseries', async (req, res, next) => {
